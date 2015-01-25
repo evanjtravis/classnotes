@@ -1,20 +1,25 @@
-What is AI?
-    # Think like a human
-    # Act like a human
-    # Think rationally
-    # Act Rationally
-
-#####################################################################
-# Thinking Humanly
-#####################################################################
+[NOTES]
+notes:
+    #####################################################################
+    # Intro
+    #####################################################################
+    What is AI?
+        # Think like a human
+        # Act like a human
+        # Think rationally
+        # Act Rationally
+    
+    #####################################################################
+    # Thinking Humanly
+    #####################################################################
     Study brain structure, cognitive science and neuroscience
     Some projects build computers modeled after brains:
         # Brain Initiative
         # Human Brain Project
-
-#####################################################################
-# Acting Humanly
-#####################################################################
+    
+    #####################################################################
+    # Acting Humanly
+    #####################################################################
     Turing Test
         # A computer needs THESE for successful turing test:
             Natural language processing
@@ -48,9 +53,9 @@ What is AI?
             Questions cannot be evaded using verbal dodges: "cheap tricks"
             questions can be made "google-proof"
 
-#####################################################################
-# Thinking Rationally
-#####################################################################
+    #####################################################################
+    # Thinking Rationally
+    #####################################################################
     Idealized or "right" way of thinking
     # Logic
         Patterns of argument that always yield correct conclusions when supplied with correct premises
@@ -64,13 +69,13 @@ What is AI?
             reflexes
             folkways
             some mores
-'
-#####################################################################
-# Acting Rationally ---> THE FOCUS FOR THIS COURSE
-#####################################################################'
+    '
+    #####################################################################
+    # Acting Rationally ---> THE FOCUS FOR THIS COURSE
+    #####################################################################'
     A "Rational Agent" acts to optimally acheive goals
-        Goals are application dependent and expressed in terms of the "utility of outcomes"
-        Being Rational means "Maximizing your (expected) utility"
+    Goals are application dependent and expressed in terms of the "utility of outcomes"
+    Being Rational means "Maximizing your (expected) utility"
     This definition of rationality only concerns the decisions/actions that are made/executed , !'NOT'! the underlying cognitive processes involved.
     In practice, utility optimization is subject to the agent''s computational constraints
         # Bounded rationality
@@ -101,3 +106,38 @@ What is AI?
                     "I will give you 10 dollars but take away 5" <
                     "I will give you 5 dollars."
 
+;`
+#####################################################################
+# Vocabulary
+;#####################################################################`
+[VOCABULARY]
+AI.Thinking Humanly:
+AI.Acting Humanly:
+AI.Thinking Rationally:
+AI.Acting Rationally:
+Turing Test:
+Loebner Prize:
+Eugene Goostman:
+Chatbot:
+Eliza:
+Chinese Room Argument:
+A Better Turing Test:
+A Better Turing Test.Advantages:
+A Better Turing Test.Disadvantages:
+Logic:
+Logicist Approach to AI:
+Logicist Approach to AI.problems:
+Rational Agent:
+Utility of Outcomes:
+Expected Utililty Maximization:
+Utility Maximization.Advantages:
+Utility Maximization.Disadvantages:
+Bounded Rationality:
+Bounded Optimality:
+
+;`
+#####################################################################
+# Timeline
+;#####################################################################`
+[TIMELINE]
+Eliza=1966
