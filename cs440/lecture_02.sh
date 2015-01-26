@@ -5,7 +5,7 @@
 [NOTES]
 notes: AI, History and Themes
     #################################################################
-    What are some successes of AI today?
+    # What are some successes of AI today?
     #################################################################
     IBM Watson and "Cognitive Computing"
         (2010) NY Times Article # TODO read Times article
@@ -52,7 +52,62 @@ notes: AI, History and Themes
     #################################################################
     (1940 s)
         First model of a neuron W.S. @(McCulloch & W. Pitts)
-    (1950 s) Turing Test
+    (1950 s)
+        Turing Test
+        """Perceptrons""" @(F. Rosenblatt)
+        Computer Chess and Checkers @(C. Shannon, A. Samuel)
+            """Reinforcment Training"""
+                Learned to play checkers better by playing itself
+        Machine Translation
+            Georgetown-IBM experiemtn
+        Theorem Provers
+            @(A. Newell, H. Simon)
+            @(H. Gelernter, N. Rochester)
+    (1956)
+        Dartmouth Meeting, "Artificial Intelligence" adopted into use
+    (1957)
+        Herbert Simon
+    #################################################################
+    # AI Problems are Harder than Originally Thought
+    #################################################################
+    (1966)
+        Eliza Chatbot @(Weizenbaum)
+            "...mother..." --> "Tell me more about your mother."
+            "I wanted to adopt a puppy, but it was too young to take from its Mother."
+    (1954)
+        """Georgetown-IBM Experiment"""
+            Automatic translation from Russian to English: 60 sentences
+            6 Grammar rules, 250 vocabulary words, subject was limited to organic chemistry
+            Promised that machine translation would be solved in 3 to 5 years
+                "The spirit is willing but the flesh is weak."
+                    translated (roughly) to:
+                "The vodka is strong but the meat is rotten."
+            Had Cold-War importance to translate Russian scientific papers
+    (1960 s - 1970 s)
+        Blocks World
+            Associated with computer vision
+            Proved that extrapolation from simple objects to more complex ones was misguided.
+            Blocks != Real Life objects
+    #################################################################
+    # History of AI: A Taste of Failure
+    #################################################################
+    Late (1960 s)
+        Machine Translation deemed a failure
+        (1960) Neural nets are Deprecated @(M. Minsky, S. Papert)
+            A sociological study of the official history of the """perceptrons controversy"""
+    Early (1970 s)
+        Intractibility recognized as fundamental problem
+    Late (1970 s)
+        The first """AI Winter"""
+    #################################################################
+    # History of AI to Present Day
+    #################################################################
+    (1980 s)
+        Expert Systems BOOM
+    Late (1980 s)
+        Expert Systems BUST, the second """AI Winter"""
+
+
 
 `
 #####################################################################
