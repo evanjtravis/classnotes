@@ -144,6 +144,8 @@ Machine Learning:
 # Timeline
 ;#####################################################################`
 [TIMELINE]
-FORMAT=dd.mm.yyy
-Eliza=00.00.1966
-Eugene Goostman=00.06.2014
+FORMAT=[LATE,EARLY,MID][dd.mm.]yyyy[S]
+1966:
+    Eliza
+06.2014:
+    Eugene Goostman
