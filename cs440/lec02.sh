@@ -50,9 +50,9 @@ notes: AI, History and Themes
     #################################################################
     # Origins of early AI excitement.
     #################################################################
-    (1940 s)
+    (1940)s
         First model of a neuron W.S. @(McCulloch & W. Pitts)
-    (1950 s)
+    (1950)s
         Turing Test
         """Perceptrons""" @(F. Rosenblatt)
         Computer Chess and Checkers @(C. Shannon, A. Samuel)
@@ -84,7 +84,7 @@ notes: AI, History and Themes
                     translated (roughly) to:
                 "The vodka is strong but the meat is rotten."
             Had Cold-War importance to translate Russian scientific papers
-    (1960 s - 1970 s)
+    (1960)s thru (1970)s
         Blocks World
             Associated with computer vision
             Proved that extrapolation from simple objects to more complex ones was misguided.
@@ -92,26 +92,26 @@ notes: AI, History and Themes
     #################################################################
     # History of AI: A Taste of Failure
     #################################################################
-    Late (1960 s)
+    Late (1960)s
         Machine Translation deemed a failure
         (1960) Neural nets are Deprecated @(M. Minsky, S. Papert)
             A sociological study of the official history of the """perceptrons controversy"""
-    Early (1970 s)
+    Early (1970)s
         Intractibility recognized as fundamental problem
-    Late (1970 s)
+    Late (1970)s
         The first """AI Winter"""
     #################################################################
     # History of AI to Present Day
     #################################################################
-    (1980 s)
+    (1980)s
         Expert Systems BOOM
-    Late (1980 s) thru Early (1990 s)
+        Late (1980)s thru Early (1990)s
         Expert Systems BUST, the second """AI Winter"""
-    Mid (1980 s)
+    Mid (1980)s
         Neural networks and """back propogation"""
-    Late (1980 s)
+    Late (1980)s
         Probilistic reasoning on the ascent
-    (1990 s) thru Present
+    (1990)s thru Present
         Machine learning everywhere
         Big Data
         Deep Learning
@@ -131,7 +131,7 @@ notes: AI, History and Themes
     #################################################################
     Boom and Bust Cycles
         Periods of ('unjustified') optimism followed by periods of disillusionment and reduced funding
-    (2013) Silver Bulletism @(Levesque)
+    (2013) """Silver Bulletism""" @(Levesque)
         "The tendency to believe in a silver bullet for AI, coupled with the belief that previous beliefs about silver bullets were hopelessly naive."
     Image Problems
     """AI Effect"""
@@ -177,6 +177,7 @@ Big Data:
 Crowd Sourcing:
 AI Effect:
 Moravec Paradox:
+Silver Bulletism:
 
 ;`
 #####################################################################

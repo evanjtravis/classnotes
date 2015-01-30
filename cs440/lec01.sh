@@ -1,25 +1,25 @@
 [NOTES]
 notes: What is AI?
-    #####################################################################
+    #################################################################
     # Intro
-    #####################################################################
+    #################################################################
     What is AI?
         """Think like a human"""
         """Act like a human"""
         """Think rationally"""
         """Act Rationally"""
     
-    #####################################################################
+    #################################################################
     # Thinking Humanly
-    #####################################################################
+    #################################################################
     Study brain structure, cognitive science and neuroscience
     Some projects build computers modeled after brains:
         """Brain Initiative"""
         """Human Brain Project"""
     
-    #####################################################################
+    #################################################################
     # Acting Humanly
-    #####################################################################
+    #################################################################
     Turing Test
         A computer needs """THESE""" for successful turing test:
             Natural language processing
@@ -53,9 +53,9 @@ notes: What is AI?
             Questions cannot be evaded using verbal dodges: "cheap tricks"
             questions can be made "google-proof"
 
-    #####################################################################
+    #################################################################
     # Thinking Rationally
-    #####################################################################
+    #################################################################
     Idealized or "right" way of thinking
     """Logic"""
         Patterns of argument that always yield correct conclusions when supplied with correct premises
@@ -70,9 +70,10 @@ notes: What is AI?
             folkways
             some mores
     '
-    #####################################################################
+    #################################################################
     # Acting Rationally ---> THE FOCUS FOR THIS COURSE
-    #####################################################################'
+    #################################################################
+    '
     A """Rational Agent""" acts to optimally acheive goals
     Goals are application dependent and expressed in terms of the """utility of outcomes"""
     Being Rational means """Maximizing your (expected) utility"""
@@ -109,7 +110,8 @@ notes: What is AI?
 ;`
 #####################################################################
 # Vocabulary
-;#####################################################################`
+####################################################################
+;`
 [VOCABULARY]
 AI.Thinking Humanly:
 AI.Acting Humanly:
@@ -142,7 +144,8 @@ Machine Learning:
 ;`
 #####################################################################
 # Timeline
-;#####################################################################`
+#####################################################################
+;`
 [TIMELINE]
 FORMAT=[LATE,EARLY,MID][dd.mm.]yyyy[S]
 1966:
