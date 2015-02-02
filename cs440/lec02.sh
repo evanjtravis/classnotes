@@ -184,7 +184,7 @@ Silver Bulletism:
 # Timeline
 ;#####################################################################`
 [TIMELINE]
-FORMAT=[LATE,EARLY,MID][dd.mm.]yyyy[S]
+FORMAT=[LATE,EARLY,MID][[[dd.mm.]yyyy],PRESENT][S]
 1940S:
     First model of a neuron
 1950S:
@@ -199,7 +199,7 @@ FORMAT=[LATE,EARLY,MID][dd.mm.]yyyy[S]
     Dartmouth Meeting, Adoption of "Aritficial Intelligence"
 1957:
     "...within 10 years a computer would be chess champion, and an important new mathematical theorem would be proved by a computer." - Herbert Simon
-late1960S:
+LATE1960S:
     Machine Translation Deemed a Failure
     Blocks World usage Starts
 1960:
