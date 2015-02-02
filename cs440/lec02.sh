@@ -184,7 +184,6 @@ Silver Bulletism:
 # Timeline
 ;#####################################################################`
 [TIMELINE]
-FORMAT=[LATE,EARLY,MID][[[dd.mm.]yyyy],PRESENT][S]
 1940S:
     First model of a neuron
 1950S:

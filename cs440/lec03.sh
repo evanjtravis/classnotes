@@ -39,5 +39,4 @@ notes: Chapter 2: Rational Agents
 #####################################################################
 ;`
 [TIMELINE]
-FORMAT=[LATE,EARLY,MID][dd.mm.]yyyy[S]
 

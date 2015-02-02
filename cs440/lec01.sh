@@ -147,7 +147,6 @@ Machine Learning:
 #####################################################################
 ;`
 [TIMELINE]
-FORMAT=[LATE,EARLY,MID][dd.mm.]yyyy[S]
 1966:
     Eliza
 06.2014:
