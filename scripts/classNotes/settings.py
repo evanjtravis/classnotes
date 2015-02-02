@@ -2,7 +2,7 @@
 
 from ConfigParser import ConfigParser
 
-CONFIG_FILE = '../config/classNotes.config'
+CONFIG_FILE = '../../config/classNotes.config'
 _PARSER = ConfigParser()
 _PARSER.read(CONFIG_FILE)
 _SECTION = ''

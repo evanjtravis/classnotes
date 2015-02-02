@@ -1,7 +1,8 @@
 #!/bin/env/python
 
+import settings
 from ConfigParser import ConfigParser
-
+import os
 
 parser = ConfigParser()
 parser.read('config/classNotes.config')
@@ -12,7 +13,7 @@ parser.read('config/classNotes.config')
 # copy over template
 
 def main():
-    pass    
+    pass
 
 
 if __name__ == '__main__':
