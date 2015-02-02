@@ -26,6 +26,194 @@ notes: Chapter 2: Rational Agents
             compare 2 washing machines for overall value
             Fill out a tax form
             Check the validity of a complex logical argument
+    In this class
+        >>> More coding for Part 1 assignments correlates to more points and effort. This is a frontloaded course.
+        Part 1: Sequential Reasoning
+            !!! Mini Project 1: Solving mazes, assigned Feb 03.
+            Mini Project 2: Gameplay
+        Part 2: Pattern Recognition and learning
+            Mini projects 2 & 4
+                Learning
+                    """Neural networks""" and """deep learning"""
+                One project on """probabilistic reasoning"""
+                    """perceptrons"""
+                    basic neural networks
+                One project on """Reinforcement Learning"""
+    #################################################################
+    # Agents
+    #################################################################
+    """Agents""": Anything that can be viewed as percieving (precepts) its environment through """sensors""" and acting upon that environment through """acuators""".
+    EXAMPLE: Vacuum Agent
+        Percepts:
+            Location
+            Status [i.e. dirty, clean]
+        Actions:
+            Move Left
+            Move Right
+            Suck
+            Nop
+        function Vacuum-Agent(location, status) return """action"""
+            if status == dirty:
+                return suck
+            elif location = A
+                return Right
+            elif location = B
+                return Left
+    #################################################################
+    # Rational Agents
+    #################################################################
+    For each possible percept sequence, a """rational agent""" should select an action that is expected to maximize its """performance measure""" given the evidence provided by the percept sequence and the agent''s built in knowledge.
+    """Performance Measure"""(Utility function)
+        An objective criterion for success of an Agent'' behavior
+    """Expected Utility"""
+        EU(action)=sigma.outcome(P(outcome | action) union (outcome))
+    !!! Can a rational agent make mistakes?
+        This is a question for the midterm
+        specification of question could be wrong
+        unknown or unforseen variables
+    Back to the vacuum agent:
+        Is this agent rational?
+            Not really. Once sections are cleaned, it will continue to move back and forth.
+            Code will break if more sections are added or taken away.
+            Would need to determine if a cell could become dirty again
+            Doesn''t really have a untility function
+            Would need to determine performance measure
+    #################################################################
+    # Specifying the Task Environment
+    #################################################################
+    """Problem Specification"""
+        P:  Performance Measure
+        E:  Environment
+        A:  Actuators
+        S:  Sensors
+    Examples: Autonomous Taxi, Spam Filter
+        Autonomous Taxi, P: Performance Measure
+            safety
+            avoid traffic
+            efficiency
+            destination confirmation
+            monetary gain
+            safe, fast, legal, comfortable trip, maximum money earned
+        E: Environment
+            cars
+            streets
+            buildings
+            gas levels
+            pedestrians
+            distance traveled
+            signs
+            weather
+            customers
+            Roads, other traffic, pedestrians, customers
+        A: Actuators
+            wheel
+            gas pedal
+            brake pedal
+            emergency brake
+            windows
+            steering wheel, accelerator, brake, signal, horn
+        S: Sensors
+            GPS
+            Camera
+            Mirror(?)
+            odometer
+            Gas guage
+            dispatch
+            ranger finder
+            cameras, LIDAR (depth sensing), speedometer, gps, odometer, engine sensors, keyboard
+        Spam Filter, P: Performance Measure
+            correctly sort messages
+            processing speed(?)
+                overhead and memory
+            minimizing false positives/negatives
+        E: Environment
+            user''s email account
+            email server
+        A: Actuators
+            Moving messages
+            deleting messages
+            mark as spam, delete, etc.
+        S: Sensors
+            Incoming messages, other information about the user''s account.
+    #################################################################
+    # Environment Types
+    #################################################################
+    """Fully Observable"""  vs.     """Partially Observable"""
+    """Deterministic"""     vs.     """Stochastic"""
+    """Episodic"""          vs.     """Sequential"""
+    """Static"""            vs.     """Dynamic"""
+    """Discrete"""          vs.     """Continuous"""
+    """Single-agent"""      vs.     """Multi-agent"""
+    """Known"""             vs.     """Unknown"""
+    
+    "Fully observable vs Partially observable"
+        Do the Agen''t sensors give it access to the complete state of the environment?
+    
+            
+    "Deterministic vs Stochastic"
+        Is the next state of the environment completely determined by the current state and the agent''s action?
+            """Strategic""": The environment is deterministic except for the actions of the other agents.
+    
+    "Episodic vs. Sequential"
+        Is the Agent''s experience divided into unconnected episodes or is it a coherent sequence of observations and reactions?
+
+    "Static vs. Dynamic"
+        Is the world changing while the agent is thinking? ///do
+            """Semidynamic""": The environment does not change with the passageof time, but the agent''s performance score does.
+    
+    "Discrete vs. Continuous"
+        Does the environment provide a fixed number of distinct percepts, actions, and environment states?
+            Time can also evolve in a discrete or continuous fashion.
+    
+    "Known vs. Unknown"
+        Are the rules of the environment (transitions and rewards) known to the agent?
+            Strictly speaking, not a property of the environment, but the agent''s state of knowledge.
+    
+    !!! MIDTERM QUESTION: Identifying and categorizing different environments based on type
+        Examples:
+            Word Jumble Solver:
+                Fully Observable  or     Partially Observable? --->     Fully Observable
+                Deterministic     or     Stochastic?           --->     Deterministic
+                Episodic          or     Sequential?           --->     Depends on what you define as an action, but ultimiately Episodic
+                Static            or     Dynamic?              --->     Static
+                Discrete          or     Continuous?           --->     Discrete
+                Single-agent      or     Multi-agent?          --->     Single Agent
+             Chess with a Clock on Software:
+                Fully Observable  or     Partially Observable? --->     Fully Observable
+                Deterministic     or     Stochastic?           --->     Deterministic
+                Episodic          or     Sequential?           --->     Sequential
+                Static            or     Dynamic?              --->     Semi-Dynamic
+                Discrete          or     Continuous?           --->     Discrete
+                Single-agent      or     Multi-agent?          --->     Multi-Agent
+            Scrabble:
+                Fully Observable  or     Partially Observable? --->     Partially Observable
+                Deterministic     or     Stochastic?           --->     Stochastic
+                Episodic          or     Sequential?           --->     Sequential
+                Static            or     Dynamic?              --->     Static
+                Discrete          or     Continuous?           --->     Discrete
+                Single-agent      or     Multi-agent?          --->     Multi Agent
+            Autonomous Driving:
+                Fully Observable  or     Partially Observable? --->     Partially Observable
+                Deterministic     or     Stochastic?           --->     Stochastic
+                Episodic          or     Sequential?           --->     Sequential
+                Static            or     Dynamic?              --->     Dynamic
+                Discrete          or     Continuous?           --->     Continuous
+                Single-agent      or     Multi-agent?          --->     Multi Agent
+    >>> If stochastic, is it always dynamic?
+        No, think of die rolls, where the world doesn''t change between moves
+    >>> To an extent, continous (vs. discrete) environments must be represented as discrete within a system, but the environment itself is still continuous.
+    #################################################################
+    # Preview of Course
+    #################################################################
+    Deterministic Environments
+        Search, constraint statisfaction, logic
+    Multi-Agent Strategic Environments
+        minimax search, games
+        can also be stochastic, partially observable
+    Stochastic Environments
+        Episodic: Bayesian networks, pattern classifiers
+        Sequential, Known: Markov Decision processes
+        Sequential, Unknown: Reinforcement learning
 
 ;`
 #####################################################################
