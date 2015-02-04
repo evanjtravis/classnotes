@@ -16,8 +16,8 @@ _ARGS = {
     'COPY_CHAPTER': False,
     'COURSE': None
 }
-TEMPLATE = os.path.join(settings['DIRS']['templates'], 'notes.template')
-COURSES_DIR = os.listdir(settings['DIRS']['courses'])
+TEMPLATE = os.path.join(settings.DIRS['templates'], 'notes.template')
+COURSES_DIR = os.listdir(settings.DIRS['courses'])
 
 #####################################################################
 # Module Specific Definitions
