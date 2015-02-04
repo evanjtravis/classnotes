@@ -15,11 +15,11 @@ class AttriDict(dict):
     the dictionary's dir() is not being overwritten. An error is
     thrown when this occurs.
     """
-    INITIALIZE = True
+    _INITIALIZE = True
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         self.__dict__ = self
-        self.INITIALIZE = False
+        self._INITIALIZE = False
 
     def __setitem__(self, index, value):
         if not self._is_invalid(index):
@@ -34,7 +34,7 @@ class AttriDict(dict):
         existing in the dictionary readonly attributes, or by containing
         leading underscores.
         """
-        if self.INITIALIZE == False:
+        if self._INITIALIZE == False:
             dict_dir = dir(dict())
             if attr in dict_dir:
                 raise AttributeError(
