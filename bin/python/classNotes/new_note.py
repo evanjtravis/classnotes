@@ -5,7 +5,7 @@ from optparse import OptionParser
 import shutil
 import os
 
-# determine if looking for new chapter or new lecture
+# determine if looking for new chapter and/or new lecture
 # look for files with lec.## naming convention in pwd
 # find file w/ largest suffix number
 # copy over template
@@ -17,7 +17,8 @@ _ARGS = {
     'COURSE': None
 }
 TEMPLATE = os.path.join(settings.DIRS['templates'], 'notes.template')
-COURSES_DIR = os.listdir(settings.DIRS['courses'])
+COURSES_PATH = os.listdir(settings.DIRS['courses'])
+COURSES_BASE = os.path.basename(COURSES_PATH)
 
 #####################################################################
 # Module Specific Definitions
@@ -84,7 +85,24 @@ def _validate_options(options):
         else
             error
         """
-        pass
+        course = _ARGS['COURSE']
+        pwd = os.getcwd()
+        pwd_base = os.path.basename(pwd)
+        if course == None:
+            if (os.path.commonprefix(pwd, COURSES_PATH) == COURSES_PATH):
+                if (len(pwd) > len(COURSES_PATH)):
+                    course = pwd
+                else:
+                    raise Exception(
+                        "Current working directory '%s' is not a course." \
+                        %(pwd))
+            else:
+                raise Exception(
+                    "Current working directory '%s' is not a course within %s." \
+                    %(pwd, COURSES_PATH))
+        else:
+            pass
+
 
     validate_copy_chapter(options.copy_chapter)
     validate_copy_lecture(options.copy_lecture)
