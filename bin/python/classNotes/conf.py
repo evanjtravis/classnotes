@@ -30,7 +30,7 @@ _DIRS_SECTION = 'DIRS'
 _TMP_BASE = _PARSER.get(_DIRS_SECTION, 'BASE')
 if _TMP_BASE != _BASE:
     _PARSER.set('DIRS', 'BASE', _BASE)
-    # Eventually log this change
+    # TODO Eventually log this change
 
 class AttriDict(dict):
     """A dict whose items can also be accessed as member variables.

@@ -1,5 +1,5 @@
 #!/bin/env/python
-
+# TODO put error messages into config
 from classNotes.conf import settings
 from optparse import OptionParser
 import shutil
@@ -87,22 +87,27 @@ def _validate_options(options):
         """
         course = _ARGS['COURSE']
         pwd = os.getcwd()
-        pwd_base = os.path.basename(pwd)
         if course == None:
             if (os.path.commonprefix(pwd, COURSES_PATH) == COURSES_PATH):
-                if (len(pwd) > len(COURSES_PATH)):
-                    course = pwd
+                # If current working directory is 1 level below COURSES_PATH
+                if (len(pwd) == (len(COURSES_PATH) + 1)):
+                    _ARGS['COURSE'] = pwd
                 else:
+                    # TODO Rectify exception duplication
                     raise Exception(
-                        "Current working directory '%s' is not a course." \
-                        %(pwd))
+                        "Current working directory '%s' is not a course within %s." \
+                        %(pwd, COURSES_PATH))
             else:
                 raise Exception(
                     "Current working directory '%s' is not a course within %s." \
                     %(pwd, COURSES_PATH))
         else:
-            pass
-
+            if course in os.listdir(COURSES_PATH):
+                _ARGS['COURSE'] = course
+            else:
+                raise Exception(
+                    "'%s' is not a valid course directory argument." \
+                    %(course))
 
     validate_copy_chapter(options.copy_chapter)
     validate_copy_lecture(options.copy_lecture)
