@@ -160,7 +160,66 @@ notes: Chapter 3: Solving Problems by Searching
         For a 24-puzzle:
             approx. 10**25 states
         ??? What if there is more than one null square?
-    
+    Actions:
+        Slide a number into a blank location
+        or
+        Move "blank" left, up, right, or down
+    Path Cost:
+        The number of slides required to move from the start state to the end state.
+        1 per slide.
+    >>> Finding the optimal solution of an n-puzzle is """NP-hard"""
+    #################################################################
+    # Search Example: Robot Motion Planning
+    #################################################################
+    States:
+        Real-valued joint parameters such as angles and displacements
+    Actions:
+        Continuous motions of robot joints
+    Goal State:
+        Configuration in which the robot is able to "grasp" the object
+    Path Cost:
+        The time taken to execute the action, the smoothness of the path, etc.
+    #################################################################
+    # Search, Continued
+    #################################################################
+    Givens:
+        """Initial State"""
+        """Actions"""
+        """Transition Model"""
+        """Goal State"""
+        """Path Cost"""
+        """T.I.G.P.A."""
+    How do we find the optimal solution?
+        How about building a state space and then using """Dijkstra's Shortest Path Algorithm"""?
+            !!!Complexity of Dijkstra is O(E + V log V)
+                V is the number of vertices
+                E is the number of edges
+                E and V comprise the state space
+            In practice, this is very hard to do. Instead of building the entire graph, build the graph incrementally
+            Prune impossible/obviously non-optimal solutions
+    #################################################################
+    # Search: The Basic Idea
+    #################################################################
+    Let us begin at the start state and EXPAND it by making a list of al possible """successor states""".
+    Maintain a """Frontier""", or a list of unexpanded states
+    At each step, pick a state from the frontier to EXPAND
+    Keep going until you reach the goal state ///do
+    Try to expand as few states as possible.
+    >>> A tradeoff exists between the optimality of solution and the time taken to compute it.
+    #################################################################
+    # Search Tree
+    #################################################################
+    "What if" tree of sequences of actions and outcomes
+    Root node corresponds to the starting state
+    The children of a node correspond to the successor states of that node''s state
+    A path through the tree coresponds to a sequence of actions
+        A solution is a path ending in the goal state
+    !!! FIRST ASSIGNMENT IS TO BUILD A SEARCH TREE
+    Nodes vs. States:
+        A state is a representation of the world, while a node is a data structure that is part of a search tree. ///do
+            A node has to keep track of the pointer to its parent, the path cost, and possibly other info.
+        IN A NUTSHELL: Nodes hold data about a given state in addition to other information.
+
 
 
 
