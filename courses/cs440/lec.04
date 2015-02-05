@@ -63,6 +63,104 @@ notes: Chapter 3: Solving Problems by Searching
     #################################################################
     # Search
     #################################################################
+    We will consider the problem of designing """goal-based agents""" in fully observable, deterministic, discrete, known environments.
+        E.G. A MAZE
+        From "start state" to """goal state"""
+            The Agent must find a """sequence of actions""" that reaches the goal.
+            The performance measure is defined by:
+                (a) Reaching the goal and
+                (b) how "expensive" the path to the goal is
+            We are focused on the process of finding the solution. While executing the solution, we assume the agent can safely ignore its percepts ("""open-loop system""").
+    #################################################################
+    # Search Problem Components
+    #################################################################
+    Components:
+        State specification
+            """Initial state"""
+        Actions
+        Transition Model
+            What state results from performing a given action in a given state?
+        """Goal State"""
+        """Path Cost"""
+            Assume that it is a sum of "non-negative" """step costs""".
+    The """optimal solution""" is the sequence of actions that gives the lowest path cost for reaching the goal.
+    #################################################################
+    # Search Example: Romania
+    #################################################################
+    Given:
+        You are on a vaction in Romani.
+        You are currently in the city of Arad.
+        Your flight leaves tomorrow out of Bucharest.
+    Initial State:
+        Arad
+    Actions:
+        Drive from city A to city B
+    Transition Model:
+        If you go from city A to city B, you end up in city B.
+    Goal State:
+        Bucharest
+    Path Cost:
+        Kilometers driven i.e. sum of edge cost
+    #################################################################
+    # State Space
+    #################################################################
+    """State Space"""
+        The initial state, actions, and transition model define the state space of a problem.
+            The set of all states reachable from the initial state by any sequence of actions.
+            Can be represented as a """directed graph""" where the nodes are states and the links between nodes are actions.
+    What is the state space for the Romania problem?
+        The set of all cities in the graph
+        The set of all actions that can be taken at each city
+        !!!Set of all nodes and their connections
+        The set is definitely fininte
+        THE MAP ITSELF could be considered the state space
+    #################################################################
+    # Search Example: Vacuum World
+    #################################################################
+    States:
+        Cell A or B
+        Whether or not each cell has dirt
+        Total of 8 states
+        "What if ther are n possible locations?"
+            n * 2**n states, where n is the number of cells in the environment
+            The (2**n) is the number of combinations of dirty/clean cells possible in the environment, whereas the (n) represents ever location that the vacuum could be in at any given time.
+            !!! The size of the state space grows exponentially with the size of the world.
+    Actions:
+        Move Left/Right
+        Suck
+    Transition Model:
+        if in <certain cell>:
+            left = <valid/invalid>
+            right = <valid/invalid>
+            suck = <valid/invalid>
+    >>> Here, Dr. Lazebnik shows an image of the vacuum world """state space graph"""
+    #################################################################
+    # Search Example: The 8-Puzzle
+    #################################################################
+    start state = \
+    [
+        [7,   2,   4],
+        [5, null,  6],
+        [8,   3,   1]
+    ]
+    end state = \
+    [
+        [null,1,   2],
+        [3,   4,   5],
+        [6,   7,   8]
+    ]
+    States:
+        Set of all possible sequences on the board.
+        9!(factorial) states? Not quite.
+        For an 8-puzzle: 181,440 states=(9!/2)
+            Divided by 2 in order to excluede illegal moves, like lifting a piece up and out of the puzzle to then place it in a different spot.
+                Mathematically proving this necessity is non-trivial, but all we have to know is that it is true.
+        For a 15-puzzle:
+            approx. 10 trillion states
+        For a 24-puzzle:
+            approx. 10**25 states
+        ??? What if there is more than one null square?
+    
 
 
 

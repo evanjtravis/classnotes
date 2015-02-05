@@ -147,28 +147,21 @@ notes: Chapter 2: Rational Agents
     """Known"""             vs.     """Unknown"""
     
     "Fully observable vs Partially observable"
-        Do the Agen''t sensors give it access to the complete state of the environment?
-    
-            
+        Do the Agen''t sensors give it access to the complete state of the environment?        
     "Deterministic vs Stochastic"
         Is the next state of the environment completely determined by the current state and the agent''s action?
             """Strategic""": The environment is deterministic except for the actions of the other agents.
-    
     "Episodic vs. Sequential"
         Is the Agent''s experience divided into unconnected episodes or is it a coherent sequence of observations and reactions?
-
     "Static vs. Dynamic"
         Is the world changing while the agent is thinking? ///do
             """Semidynamic""": The environment does not change with the passageof time, but the agent''s performance score does.
-    
     "Discrete vs. Continuous"
         Does the environment provide a fixed number of distinct percepts, actions, and environment states?
             Time can also evolve in a discrete or continuous fashion.
-    
     "Known vs. Unknown"
         Are the rules of the environment (transitions and rewards) known to the agent?
             Strictly speaking, not a property of the environment, but the agent''s state of knowledge.
-    
     !!! MIDTERM QUESTION: Identifying and categorizing different environments based on type
         Examples:
             Word Jumble Solver:

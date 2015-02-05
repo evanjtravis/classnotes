@@ -13,8 +13,7 @@ notes: What is AI?
         """Think like a human"""
         """Act like a human"""
         """Think rationally"""
-        """Act Rationally"""
-    
+        """Act Rationally"""    
     #################################################################
     # Thinking Humanly
     #################################################################
@@ -22,7 +21,6 @@ notes: What is AI?
     Some projects build computers modeled after brains:
         """Brain Initiative"""
         """Human Brain Project"""
-    
     #################################################################
     # Acting Humanly
     #################################################################
@@ -35,7 +33,6 @@ notes: What is AI?
     """Loebner Prize"""
     """Eugene Goostman"""
         June (2014), passed Turing Test
-    
     Turing Test """Criticisms"""
        Variability in protocols and judges
         Success depends on deception
@@ -58,7 +55,6 @@ notes: What is AI?
             Does not require the ability to generate english sentences
             Questions cannot be evaded using verbal dodges: "cheap tricks"
             questions can be made "google-proof"
-
     #################################################################
     # Thinking Rationally
     #################################################################
