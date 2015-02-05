@@ -9,6 +9,62 @@ notes: Chapter 3: Solving Problems by Searching
     #################################################################
     # Review
     #################################################################
+    Agents and Rationality
+    PEAS:
+        Performance Measure
+        Environment
+        Acutators
+        Sensors
+    """Agent""": An agent is anything that can be viewed as percieving its environment through sensors and acting upon that environment through actuators.
+    Review Environment Types
+        F   --> Fully observable   vs.   Partially Observable
+        E   --> Episodic           vs.   Sequential
+        K   --> Known              vs.   Unknown
+        D   --> Discrete           vs.   Continuous
+        D   --> Deterministic      vs.   Stochastic
+        A-S --> Single-Agent       vs.   Multi-Agent
+        S   --> Static             vs.   Dynamic
+        """F.E.K.D.D.A.S.S."""
+    #################################################################
+    # Preview
+    #################################################################
+    Part 1:
+        Deterministic environments:
+            search
+            constraint satifaction
+            logic
+        Multi-Agent, strategic environments:
+            minimax search
+            games
+            >>> Can also be stochastic and partially observable
+    Part 2:
+        Stochastic environments:
+            Episodic:
+                """Bayesian Networks"""
+                """Pattern Classifiers"""
+            Sequential, Known:
+                """Markov Decision Processes"""
+            Sequential, Unknown:
+                """Reinforcement Learning"""
+    #################################################################
+    # Chapter 3: Solving Problems By Searching
+    #################################################################
+    Types of Agents
+        """Reflex Agent"""
+            consider how the world IS
+            choose action based on current percept (and maybe memory or a model of the world''s current state).
+            do not consider the furture consequences of the actions
+            Ex: Bacteria, Republicans
+        """Planning Agent"""
+            consider how the world WOULD BE
+            decisions based on (hypothesized) consequences of actions
+            must have a model on how the world responds to actions
+            must formulate goal
+    #################################################################
+    # Search
+    #################################################################
+
+
 
 
 ;`
