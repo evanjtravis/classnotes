@@ -183,17 +183,17 @@ notes: Chapter 3: Solving Problems by Searching
     # Search, Continued
     #################################################################
     Givens:
-        """Initial State"""
-        """Actions"""
-        """Transition Model"""
-        """Goal State"""
-        """Path Cost"""
+        T -->   """Transition Model"""
+        I -->   """Initial State"""
+        G -->   """Goal State"""
+        P -->   """Path Cost"""
+        A -->   """Actions"""
         """T.I.G.P.A."""
     How do we find the optimal solution?
         How about building a state space and then using """Dijkstra's Shortest Path Algorithm"""?
             !!!Complexity of Dijkstra is O(E + V log V)
-                V is the number of vertices
-                E is the number of edges
+                V --> the number of vertices
+                E --> the number of edges
                 E and V comprise the state space
             In practice, this is very hard to do. Instead of building the entire graph, build the graph incrementally
             Prune impossible/obviously non-optimal solutions
@@ -219,10 +219,22 @@ notes: Chapter 3: Solving Problems by Searching
         A state is a representation of the world, while a node is a data structure that is part of a search tree. ///do
             A node has to keep track of the pointer to its parent, the path cost, and possibly other info.
         IN A NUTSHELL: Nodes hold data about a given state in addition to other information.
-
-
-
-
+    The farther down the tree you can calculate, the smarter the AI
+    #################################################################
+    # The Search Algorithm Outline
+    #################################################################
+    !!! Following pseudocode to be implemented in the assignment
+    :::
+    Initialize the """frontier""" using the """starting state"""
+    while frontier is not empty do
+        choose a frontier node according to a """search strategy""" and remove it from the frontier
+        if the node contains the """goal state""", return solution
+        else EXPAND the node and add its children to the frontier
+    :::
+    >>> Possible recursion solution?
+    Handling Repeated States:
+        Every time you EXPAND a node, add that state to the """explored set""", and do not put explored states on the frontier again
+        Every time you add a node to the frontier, check whether it already exists in the frontier with a higher path cost, and if yes, replace that node with the new one.
 
 ;`
 #####################################################################
