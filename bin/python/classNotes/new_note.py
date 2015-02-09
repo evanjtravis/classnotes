@@ -17,15 +17,46 @@ _ARGS = {
     'COURSE': None
 }
 TEMPLATE = os.path.join(settings.DIRS['templates'], 'notes.template')
-COURSES_PATH = os.listdir(settings.DIRS['courses'])
+COURSES_PATH = settings.DIRS['courses']
 COURSES_BASE = os.path.basename(COURSES_PATH)
-
+# TODO have functions take arguments instead of read from globals
 #####################################################################
 # Module Specific Definitions
 #####################################################################
 def copy_new_notes():
     """Copy over notes template to desired course.
     """
+    lecture_num, reading_num = determine_next_note_numbers()
+
+
+def determine_next_note_numbers():
+    """Determines the extension given to a note based on the numbered
+    extensions in the course directory.
+    """
+    course = _ARGS['COURSE']
+    lecture_notes = []
+    reading_notes = []
+
+    lecture = settings.FILETYPES['lecture']
+    reading = settings.FILETYPES['reading']
+
+    lec_highest = 0
+    read_highest = 0
+
+    for doc in os.path.listdir(course):
+        parts = doc.split('.')
+        name = parts[0]
+        number_ext = parts[1]
+        try:
+            number_ext = int(number_ext)
+        except ValueError:
+            continue
+        if (name is lecture) and (number_ext > lec_highest):
+            lec_highest = number_ext
+
+        if (name is reading) and (number_ext > read_highest):
+            read_highest = number_ext
+    return (lec_highest + 1, read_highest + 1)
 
 def is_not_a_boolean(arg):
     """Returns true if arg is not a boolean value.
@@ -75,38 +106,17 @@ def _validate_options(options):
 
     def validate_course(course):
         """Determine the validity of the course option.
-        If course is unspecified:
-            If current working directory is a level below COURSES_DIR:
-                set COURSE to pwd
-            Else
-                error
-        elif course in COURSES_DIR
-            set COURSE to COURSE
-        else
-            error
         """
         course = _ARGS['COURSE']
         pwd = os.getcwd()
         if course == None:
-            if (os.path.commonprefix(pwd, COURSES_PATH) == COURSES_PATH):
-                # If current working directory is 1 level below COURSES_PATH
-                if (len(pwd) == (len(COURSES_PATH) + 1)):
-                    _ARGS['COURSE'] = pwd
-                else:
-                    # TODO Rectify exception duplication
-                    raise Exception(
-                        "Current working directory '%s' is not a course within %s." \
-                        %(pwd, COURSES_PATH))
-            else:
-                raise Exception(
-                    "Current working directory '%s' is not a course within %s." \
-                    %(pwd, COURSES_PATH))
+            course = pwd
         else:
-            if course in os.listdir(COURSES_PATH):
-                _ARGS['COURSE'] = course
+            if os.path.isdir(course):
+                _ARGS['COURSE'] = os.path.join(COURSES_PATH, course)
             else:
                 raise Exception(
-                    "'%s' is not a valid course directory argument." \
+                    "'%s' is not a directory." \
                     %(course))
 
     validate_copy_chapter(options.copy_chapter)
