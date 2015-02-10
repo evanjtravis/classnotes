@@ -1,0 +1,63 @@
+#!/bin/bash
+;`
+#####################################################################
+# Notes
+#####################################################################
+;`
+[NOTES]
+notes: Search Continued
+    #################################################################
+    # Review
+    #################################################################
+    Search Problem Components
+        """Initial State"""
+        """Actions"""
+        """Final state/ goal state"""
+        """State space"""
+            A graph whose nodes are states
+            A set of all states and how one moves in between each state
+        """Transition model"""
+        """Path Cost"""
+            Assume that it is a sum of nonnegative step costs
+        The """optimal solution""" is the sequence of actions that gives the lowest path cost for reaching the goal.
+        >>> The transition model and actions are problem specific
+            The transition model can be stochastic, but we are working with deterministic environments
+    Search Problem Givens
+        T -->   Transition Model
+        I -->   Initial State
+        G -->   Goal State
+        P -->   Path Cost
+        A -->   Actions
+        """T.I.G.P.A."""
+    How to find the optimal solution?
+        Expand initial state into successor states
+        Maintain a frontier or a list of unexpanded states
+        At each step, choose a state from the frontier to expand
+        Keep going until you reach the goal date ///do
+    Search Tree
+        A "what if" tree of sequences of actions and outcomes
+        root = initial state
+        children of the node refer to the successor states of that node'' state
+        A path through the tree corresponds to a sequence of actions
+            A solution is a path ending in the goal state
+        #TODO review nodes vs. states
+    #################################################################
+    # Handling Repeated States
+    #################################################################
+
+
+
+;`
+#####################################################################
+# Vocabulary
+#####################################################################
+;`
+[VOCABULARY]
+
+;`
+#####################################################################
+# Timeline
+#####################################################################
+;`
+[TIMELINE]
+
