@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import copy
+
 class State():
     """Represents a state within a given state space.
     """
@@ -28,7 +30,7 @@ class Node():
         self.successors = []
 
     
-    def get_total_path_cost(self):
+    def generate_path_cost(self):
         """c
         """
         if self.parent is not None:
@@ -40,6 +42,9 @@ class Node():
     def generate_successors(self, state_space):
         """Generate the successor states of the state.
         """
+        # Skip generating successors if already generated
+        if self.successors:
+            return
         x, y = self.state.coordinates
         children = [
             (x - 1, y),
@@ -52,8 +57,17 @@ class Node():
                 node = Node(
                     state=state_space[child],
                     parent=self,
-                    node_cost=1)
+                    cost=1)
                 self.successors.append(child)
+
+
+    def generate_path(self):
+        """c
+        """
+        if self.parent is not None:
+            return self.parent.get_generated_path() + [self.state.coordinates]
+        else:
+            return [self.state.coordinates]
 
 
 class Search():
@@ -67,6 +81,9 @@ class Search():
         self.goal_state_symbol = '.'
         self.wall_symbol = '%'
         self.state_symbol = ' '
+        # Data to keep up-to-date for output
+        self.maze_array = None
+        self.count_of_expanded_nodes = 0
         ##############################
         self.frontier = []
         self.visited_states = []
@@ -84,7 +101,6 @@ class Search():
             state=self.start_state,
             parent=None,
             cost=0)
-        self.start_node.generate_successors(self.state_space)
 
 
 
@@ -100,6 +116,8 @@ class Search():
         # Break file text into 2D array of characters
         for line in range(len(array)):
             array[line] = list(array[line])
+        # Keep the array for use in printing out solution later
+        self.maze_array = array
         # Create states from 2D array
         for row in range(len(array)):
             for col in range(len(array[row])):
@@ -122,8 +140,10 @@ class Search():
         for index in range(len(frontier)):
             frontier_node = frontier[index]
             if frontier_node.state == node.state:
-                if frontier_node.get_total_path_cost() \
-                        < node.get_total_path_cost():
+                if frontier_node.generate_path_cost() \
+                        < node.generate_path_cost():
+                    # TODO Should replace, or pop old and append new
+                    # (depending on alogrithm?)
                     frontier[index] = node
                     self.frontier = frontier
                 return True
@@ -135,8 +155,8 @@ class Search():
         """
         if visited_states == None:
             visited_states = self.visited_states
-        for visited_state in visited_states:
-            if node.state == visited_state:
+        for state in visited_states:
+            if node.state == state:
                 return True
         return False
 
@@ -144,52 +164,120 @@ class Search():
     def node_is_valid(self, node):
         """c
         """
-        # Check if node's state already exists in frontier.
         # Check if node's state already exists in visited nodes.
+        # Check if node's state already exists in frontier.
         if (not self.already_visited(node)):
             if (not self.already_in_frontier(node)):
                 return True
         return False
 
 
-    def breadth_first_search(self):
+    def _breadth_first_search(self):
         """c
         """
-        self.frontier = []
-        self.visited_states = []
         current_node = self.start_node
         while current_node.state is not self.goal_state:
             # Expand the frontier specific to BFS.
             # Expand the shallowest unexpanded node.
             # Implemented with frontier as FIFO queue.
-            if self.node_is_valid(current_node):
-                for child in current_node.successors:
-                    if self.node_is_valid(child):
-                        self.frontier.append(child)
-                self.visited_states.append(current_node.state)
+            current_node.generate_successors(self.state_space)
+            for child in current_node.successors:
+                if self.node_is_valid(child):
+                    self.frontier.append(child)
+            self.visited_states.append(current_node.state)
             if self.frontier:
-                current_node = self.frontier.pop(0)
-                current_node.generate_successors()
+                current_node = self.get_node_from_frontier(0)
             else:
-                raise Exception('Solution not found using BFS.')
-    
-    def depth_first_search(self):
-        """c
-        """
-        pass
+                raise Exception('Solution not found using BFS. Empty frontier.')
+        return current_node
 
     
-    def greedy_best_first_search(self):
+    def _depth_first_search(self):
         """c
         """
-        pass
+        return None
 
     
-    def a_star_search(self):
+    def get_node_from_frontier(self, index):
         """c
         """
-        pass
+        self.count_of_expanded_nodes += 1
+        return self.frontier.pop(index)
 
+
+    def _greedy_best_first_search(self):
+        """c
+        """
+        return None
+
+    
+    def _a_star_search(self):
+        """c
+        """
+        return None
+
+    
+    def reset_search(self):
+        """c
+        """
+        self.frontier = []
+        self.visited_states = []
+        self.start_node = Node(
+            state=self.start_state,
+            parent=None,
+            cost=0)
+        self.count_of_expanded_nodes = 0
+
+    def search(self, search_name):
+        """c
+        """
+        functions = {
+            'bfs': self._breadth_first_search(),
+            'dfs': self._depth_first_search(),
+            'gbfs': self._greedy_best_first_search(),
+            'a*': self._a_star_search()
+        }
+        solution_node = functions[search_name.lower()]
+        if solution_node is None:
+            print "'%s' search is not yet implemented." %(search_name)
+        else:
+            solutions = self.generate_solutions_dict(solution_node)
+            self.print_solutions_dict(solutions)
+            self.reset_search()
+
+    def generate_solutions_dict(self, solution_node):
+        """c
+        """
+        solutions = {}
+        path = solution_node.generate_path()
+        solutions['Maze Solution'] = self.generate_maze_solution(path)
+        solutions['Path Cost'] = solution_node.generate_path_cost()
+        solutions['Expanded Node Count'] = self.count_of_expanded_nodes
+        return solutions
+
+    def generate_maze_solution(self, path):
+        """c
+        """
+        # Possibly configurable values
+        traversed_state_symbol = '.'
+        ##############################
+        array = copy.deepcopy(self.maze_array)
+        array_string = ''
+        for coordinate in path:
+            x, y = coordinate
+            array[x][y] = traversed_state_symbol
+        for row in range(len(array)):
+            for col in range(len(array[row])):
+                array_string += array[row][col]
+            array_string += '\n'
+        return array_string
+
+
+    def print_solutions_dict(self, solutions):
+        """c
+        """
+        for key in solutions.keys():
+            print "%-25s:\t%20s" %(key, solutions[key])
 
 
 
