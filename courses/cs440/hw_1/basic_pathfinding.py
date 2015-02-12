@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 import copy
 
+# Possibly configurable value
+FUN = True
+
+
 class State():
     """Represents a state within a given state space.
     """
@@ -208,10 +212,37 @@ class Search():
         return (abs(x1 - x2) + abs(y1 - y2))
     
 
+    def evaluate(self, node):
+        """c
+        """
+        man_dist = self.manhattan_distance_of(node)
+        path_cost = node.generate_path_cost()
+        return man_dist + path_cost
+
+
     def _a_star_search(self):
         """c
         """
-        return None
+        # Pick the node on the frontier with the lowest evaluation
+        # function result.
+        # Heuristic is Manhattan distance from goal
+        # Evaluation function = heuristic result + path cost
+        
+        frontier = self.frontier
+        current_node = frontier[0]
+        index_to_pop = None
+        for index in range(len(frontier)):
+            node = frontier[index]
+            current_node_evaluation = self.evaluate(current_node)
+            node_evaluation = self.evaluate(node)
+            if (node_evaluation < \
+                    current_node_evaluation):
+                current_node = node
+                index_to_pop = index
+        if index_to_pop is None:
+            index_to_pop = 0
+        current_node = frontier.pop(index_to_pop)
+        return current_node
     
         
     def search(self, search_name):
@@ -282,14 +313,20 @@ class Search():
     def generate_maze_solution(self, path):
         """c
         """
+        visited = self.visited_states
         # Possibly configurable values
-        traversed_state_symbol = '.'
+        path_state_symbol = '.'
+        traversed_state_symbol = '0'
         ##############################
         array = copy.deepcopy(self.maze_array)
         array_string = ''
+        if FUN == True:
+            for state in visited:
+                x, y = state.coordinates
+                array[x][y] = traversed_state_symbol
         for coordinate in path:
             x, y = coordinate
-            array[x][y] = traversed_state_symbol
+            array[x][y] = path_state_symbol
         for row in range(len(array)):
             for col in range(len(array[row])):
                 array_string += array[row][col]

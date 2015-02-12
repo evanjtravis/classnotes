@@ -3,19 +3,14 @@
 from basic_pathfinding import Search
 
 
-
-
 def main():
     """c
     """
     search_files = [
-        'small_maze.txt',
-        'medium_maze.txt',
-        'big_maze.txt',
+        'designed_map_1.txt',
+    #    'designed_map_2.txt',
     ]
     search_types = [
-        'bfs',
-        'dfs',
         'gbfs',
         'a*'
     ]
