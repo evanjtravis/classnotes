@@ -34,7 +34,7 @@ class Node():
         """c
         """
         if self.parent is not None:
-            return self.cost + self.parent.get_total_path_cost()
+            return self.cost + self.parent.generate_path_cost()
         else:
             return self.cost
 
@@ -58,14 +58,14 @@ class Node():
                     state=state_space[child],
                     parent=self,
                     cost=1)
-                self.successors.append(child)
+                self.successors.append(node)
 
 
     def generate_path(self):
         """c
         """
         if self.parent is not None:
-            return self.parent.get_generated_path() + [self.state.coordinates]
+            return self.parent.generate_path() + [self.state.coordinates]
         else:
             return [self.state.coordinates]
 
@@ -90,18 +90,7 @@ class Search():
         self.start_state = None
         self.goal_state = None
         self.search_file = search_file
-        self.state_space = self.generate_state_space()
-        if self.start_state == None:
-            raise Exception("Start state '%s' not found." \
-                    %(self.start_state_symbol))
-        if self.goal_state == None:
-            raise Exception("Goal state '%s' not found." \
-                    %(self.goal_state_symbol))
-        self.start_node = Node(
-            state=self.start_state,
-            parent=None,
-            cost=0)
-
+        self.state_space = None
 
 
     def generate_state_space(self, search_file=None):
@@ -137,6 +126,8 @@ class Search():
         """
         if frontier == None:
             frontier = self.frontier
+        if frontier == []:
+            return False
         for index in range(len(frontier)):
             frontier_node = frontier[index]
             if frontier_node.state == node.state:
@@ -154,8 +145,7 @@ class Search():
         """
         if visited_states == None:
             visited_states = self.visited_states
-        for state in visited_states:
-            if node.state == state:
+        if node.state in visited_states:
                 return True
         return False
 
@@ -174,75 +164,110 @@ class Search():
     def _breadth_first_search(self):
         """c
         """
-        current_node = self.start_node
-        while current_node.state is not self.goal_state:
-            # Expand the frontier specific to BFS.
-            # Expand the shallowest unexpanded node.
-            # Implemented with frontier as FIFO queue.
-            current_node.generate_successors()
-            for child in current_node.successors:
-                if self.node_is_valid(child):
-                    self.frontier.append(child)
-            self.visited_states.append(current_node.state)
-            if self.frontier:
-                current_node = self.get_node_from_frontier(0)
-            else:
-                raise Exception('Solution not found using BFS. Empty frontier.')
+        # Expand the shallowest unexpanded node.
+        # Implemented with frontier as FIFO queue
+        current_node = self.frontier.pop(0)
         return current_node
 
     
     def _depth_first_search(self):
         """c
         """
-        return None
-
-    
-    def get_node_from_frontier(self, index):
-        """c
-        """
-        self.count_of_expanded_nodes += 1
-        return self.frontier.pop(index)
+        # Expand the deepest unexpanded node.
+        # Implemented with frontier as LIFO stack. 
+        current_node = self.frontier.pop()
+        return current_node
 
 
     def _greedy_best_first_search(self):
         """c
         """
-        return None
+        # Pick the node on the frontier with the lowest heuristic
+        # function result.
+        # Heuristic is Manhattan distance from goal
+        frontier = self.frontier
+        current_node = frontier[0]
+        index_to_pop = None
+        for index in range(len(frontier)):
+            node = frontier[index]
+            if (self.manhattan_distance_of(node) < \
+                    self.manhattan_distance_of(current_node)):
+                current_node = node
+                index_to_pop = index
+        if index_to_pop is None:
+            index_to_pop = 0
+        current_node = frontier.pop(index_to_pop)
+        return current_node
 
+
+    def manhattan_distance_of(self, node):
+        """c
+        """
+        x1, y1 = self.goal_state.coordinates
+        x2, y2 = node.state.coordinates
+        return (abs(x1 - x2) + abs(y1 - y2))
     
+
     def _a_star_search(self):
         """c
         """
         return None
-
     
-    def reset_search(self):
+        
+    def search(self, search_name):
         """c
         """
-        self.frontier = []
-        self.visited_states = []
+        self.state_space = self.generate_state_space()
+        
+        if self.start_state == None:
+            raise Exception("Start state '%s' not found." \
+                    %(self.start_state_symbol))
+        if self.goal_state == None:
+            raise Exception("Goal state '%s' not found." \
+                    %(self.goal_state_symbol))
+        
         self.start_node = Node(
             state=self.start_state,
             parent=None,
             cost=0)
-        self.count_of_expanded_nodes = 0
-
-    def search(self, search_name):
-        """c
-        """
         functions = {
-            'bfs': self._breadth_first_search(),
-            'dfs': self._depth_first_search(),
-            'gbfs': self._greedy_best_first_search(),
-            'a*': self._a_star_search()
+            'bfs': self._breadth_first_search,
+            'dfs': self._depth_first_search,
+            'gbfs': self._greedy_best_first_search,
+            'a*': self._a_star_search
         }
-        solution_node = functions[search_name.lower()]
+        search_name = search_name.lower()
+        # COMMON PARTS OF SEARCH ALGORITHM
+        current_node = self.start_node
+        while current_node.state is not self.goal_state:
+            self.visited_states.append(current_node.state)
+            current_node.generate_successors(self.state_space)
+            self.count_of_expanded_nodes += 1
+            for child in current_node.successors:
+                if self.node_is_valid(child):
+                    self.frontier.append(child)
+            if self.frontier:
+                current_node = functions[search_name]()
+            else:
+                raise Exception(
+                    "Solution not found using '%s' search. Empty frontier." \
+                            %(search_name))
+            if current_node is None:
+                break
+
+        solution_node = current_node
+
         if solution_node is None:
-            print "'%s' search is not yet implemented." %(search_name)
+            print "'%s' search is not yet implemented. File = '%s'" \
+                    %(search_name, self.search_file)
         else:
             solutions = self.generate_solutions_dict(solution_node)
-            self.print_solutions_dict(solutions)
-            self.reset_search()
+            self.print_solutions_dict(search_name, solutions)
+            # Restart the state of the Search object
+            self.frontier = []
+            self.visited_states = []
+            self.count_of_expanded_nodes = 0
+
 
     def generate_solutions_dict(self, solution_node):
         """c
@@ -272,11 +297,14 @@ class Search():
         return array_string
 
 
-    def print_solutions_dict(self, solutions):
+    def print_solutions_dict(self, search_name, solutions):
         """c
         """
+        search_name = search_name.upper()
+        print "########## %s SEARCH RESULTS for '%s' ##########" \
+                %(search_name, self.search_file)
         for key in solutions.keys():
-            print "%-25s:\t%20s" %(key, solutions[key])
+            print "%25s:\n%s" %(key, solutions[key])
 
 
 
