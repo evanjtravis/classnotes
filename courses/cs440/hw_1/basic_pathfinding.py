@@ -121,18 +121,18 @@ class Search():
         # Create states from 2D array
         for row in range(len(array)):
             for col in range(len(array[row])):
-                current_cell = array[row][col]
-                if current_cell not in self.wall_symbol:
-                    current_state = State((row, col), current_cell)
-                    if current_cell in self.start_state_symbol:
+                cell_text = array[row][col]
+                if cell_text not in self.wall_symbol:
+                    current_state = State((row, col), cell_text)
+                    if cell_text in self.start_state_symbol:
                         self.start_state = current_state
-                    if current_cell in self.goal_state_symbol:
+                    if cell_text in self.goal_state_symbol:
                         self.goal_state = current_state
                     state_space[(row, col)] = current_state
         return state_space
 
 
-    def already_in_frontier(node, frontier=None):
+    def already_in_frontier(self, node, frontier=None):
         """c
         """
         if frontier == None:
@@ -145,12 +145,11 @@ class Search():
                     # TODO Should replace, or pop old and append new
                     # (depending on alogrithm?)
                     frontier[index] = node
-                    self.frontier = frontier
                 return True
         return False
 
 
-    def already_visited(node, visited_states=None):
+    def already_visited(self, node, visited_states=None):
         """c
         """
         if visited_states == None:
@@ -180,7 +179,7 @@ class Search():
             # Expand the frontier specific to BFS.
             # Expand the shallowest unexpanded node.
             # Implemented with frontier as FIFO queue.
-            current_node.generate_successors(self.state_space)
+            current_node.generate_successors()
             for child in current_node.successors:
                 if self.node_is_valid(child):
                     self.frontier.append(child)
