@@ -2,7 +2,7 @@
 import copy
 
 # Possibly configurable value
-FUN = True
+SHOW_VISITED = True
 
 
 class State():
@@ -320,7 +320,7 @@ class Search():
         ##############################
         array = copy.deepcopy(self.maze_array)
         array_string = ''
-        if FUN == True:
+        if SHOW_VISITED == True:
             for state in visited:
                 x, y = state.coordinates
                 array[x][y] = traversed_state_symbol
