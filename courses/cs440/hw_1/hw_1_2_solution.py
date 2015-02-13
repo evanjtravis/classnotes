@@ -8,7 +8,7 @@ def main():
     """
     search_files = [
         'designed_map_1.txt',
-    #    'designed_map_2.txt',
+        'designed_map_2.txt',
     ]
     search_types = [
         'gbfs',
