@@ -2,11 +2,16 @@
 import copy
 
 # Possibly configurable value
-SHOW_VISITED = True
+SHOW_VISITED = False
 
-
+# TODO move manhattan distance algorithm to State class
+# TODO expand state space once but keep track of old file read in with
+# private variable
 class State():
-    """Represents a state within a given state space.
+    """This class represents a state within a given state space.
+    Each state is comprised of 2 attributes:
+        coordinates --> tuple
+        state_type  --> char
     """
     def __init__(self, coordinates, state_type):
         """
@@ -18,14 +23,19 @@ class State():
 
 
 class Node():
-    """c
+    """This class represents a node within a search algorithm.
+    Each Node is comprised of 3 attributes:
+        state      --> State
+        parent     --> Node
+        cost       --> int
+        successors --> Node list
     """
     def __init__(
             self,
             state,
             parent,
             cost):
-        """c
+        """Initialize state, parent, and node cost of Node.
         """
         self.state = state
         self.parent = parent
@@ -35,7 +45,8 @@ class Node():
 
     
     def generate_path_cost(self):
-        """c
+        """Recursively works its way down the Node's ancestors to
+        the start state, aggregating the cost of each node.
         """
         if self.parent is not None:
             return self.cost + self.parent.generate_path_cost()
@@ -44,7 +55,9 @@ class Node():
 
 
     def generate_successors(self, state_space):
-        """Generate the successor states of the state.
+        """Generate the successor Nodes of the Node.
+        Succesor nodes can only be located in the cardinal
+        directions.
         """
         # Skip generating successors if already generated
         if self.successors:
@@ -66,7 +79,9 @@ class Node():
 
 
     def generate_path(self):
-        """c
+        """Recursively works its way down the Node's ancestors to
+        the start state, aggregating the coordinates of each node
+        into a list.
         """
         if self.parent is not None:
             return self.parent.generate_path() + [self.state.coordinates]
@@ -75,10 +90,32 @@ class Node():
 
 
 class Search():
-    """c
+    """This class represents all of the data and functions associated
+    with a search, such as the frontier and state space.
+        start_state_symbol --> char, defines the start state in the
+                                     maze
+        goal_state_symbol --> char, defines the goal state in the
+                                    maze
+        wall_symbol --> char, marks the walls in the maze
+        state_symbol --> char, marks the states in the maze
+        maze_array --> char list, contains entire maze in a 2D char
+                       list
+        count_of_expanded_nodes --> Keeps track of the running count
+                                    of expanded Nodes for a single
+                                    search
+        frontier --> Node list
+        visited_states --> State list
+        start_state --> State, Generated with the state space
+        goal_state --> State, Generated with the state space
+        search_file --> string, Name of file in local directory to
+                                read in as a maze.
+        state_space --> dict, A dictionary whose keys are state
+                              coordinates and whose values are the
+                              resultant states.
+
     """
     def __init__(self, search_file):
-        """c
+        """Initialize the search_file of the Search.
         """
         # Possible Configurable Values
         self.start_state_symbol = 'P'
@@ -98,7 +135,12 @@ class Search():
 
 
     def generate_state_space(self, search_file=None):
-        """c
+        """Iterate through the search_file, recording the States
+        along with the start and goal States. The file is broken
+        up into a 2D array, thereby determining the coordinates
+        of the generated States by using the row and column
+        numbers.
+            Returns the state_space dictionary.
         """
         if search_file == None:
             search_file = self.search_file
@@ -126,7 +168,8 @@ class Search():
 
 
     def already_in_frontier(self, node, frontier=None):
-        """c
+        """A Node given as an argument. Determines if the Node's
+        State is currently in the frontier.
         """
         if frontier == None:
             frontier = self.frontier
@@ -137,15 +180,14 @@ class Search():
             if frontier_node.state == node.state:
                 if frontier_node.generate_path_cost() \
                         < node.generate_path_cost():
-                    # TODO Should replace, or pop old and append new
-                    # (depending on alogrithm?)
                     frontier[index] = node
                 return True
         return False
 
 
     def already_visited(self, node, visited_states=None):
-        """c
+        """A Node given as an argument. Determines if the Node's
+        State has been visited by the Search.
         """
         if visited_states == None:
             visited_states = self.visited_states
@@ -155,7 +197,9 @@ class Search():
 
 
     def node_is_valid(self, node):
-        """c
+        """A Node is given as an argument. Determines if the Node
+        is valid by comparing its state with the states in the
+        visited nodes list and the frontier list.
         """
         # Check if node's state already exists in visited nodes.
         # Check if node's state already exists in frontier.
@@ -166,46 +210,48 @@ class Search():
 
 
     def _breadth_first_search(self):
-        """c
+        """Expands the shallowest unexpanded node.
+        Implemented with frontier as FIFO queue
+            Returns the next node to be expanded
         """
-        # Expand the shallowest unexpanded node.
-        # Implemented with frontier as FIFO queue
-        current_node = self.frontier.pop(0)
-        return current_node
+        next_node = self.frontier.pop(0)
+        return next_node
 
     
     def _depth_first_search(self):
-        """c
+        """Expands the deepest unexpanded node.
+        Implemented with frontier as LIFO stack.
+            Returns the next node to be expanded
         """
-        # Expand the deepest unexpanded node.
-        # Implemented with frontier as LIFO stack. 
-        current_node = self.frontier.pop()
-        return current_node
+        next_node = self.frontier.pop()
+        return next_node
 
 
     def _greedy_best_first_search(self):
-        """c
+        """Picks the node on the frontier with the lowest heuristic
+        function result.
+        The heuristic used is the Manhattan distance from goal.
+            Returns the next node to be expanded
         """
-        # Pick the node on the frontier with the lowest heuristic
-        # function result.
-        # Heuristic is Manhattan distance from goal
         frontier = self.frontier
-        current_node = frontier[0]
+        next_node = frontier[0]
         index_to_pop = None
         for index in range(len(frontier)):
             node = frontier[index]
             if (self.manhattan_distance_of(node) < \
-                    self.manhattan_distance_of(current_node)):
-                current_node = node
+                    self.manhattan_distance_of(next_node)):
+                next_node = node
                 index_to_pop = index
         if index_to_pop is None:
             index_to_pop = 0
-        current_node = frontier.pop(index_to_pop)
-        return current_node
+        next_node = frontier.pop(index_to_pop)
+        return next_node
 
 
     def manhattan_distance_of(self, node):
-        """c
+        """Given a Node, determines the manhattan distance from
+        the goal state.
+            Returns the manhattan distance --> an int
         """
         x1, y1 = self.goal_state.coordinates
         x2, y2 = node.state.coordinates
@@ -213,7 +259,9 @@ class Search():
     
 
     def evaluate(self, node):
-        """c
+        """Determines the Node's A* algorithm evaluation function.
+        Utilizes the manhattan distance.
+            Returns the sum of path_cost and manhattan distance
         """
         man_dist = self.manhattan_distance_of(node)
         path_cost = node.generate_path_cost()
@@ -221,32 +269,34 @@ class Search():
 
 
     def _a_star_search(self):
-        """c
+        """Pick the node on the frontier with the lowest evaluation
+        function result.
+        The heuristic used is the Manhattan distance from goal
+        The evaluation function = heuristic result + path cost
+            Returns the next node to be expanded
         """
-        # Pick the node on the frontier with the lowest evaluation
-        # function result.
-        # Heuristic is Manhattan distance from goal
-        # Evaluation function = heuristic result + path cost
-        
         frontier = self.frontier
-        current_node = frontier[0]
+        next_node = frontier[0]
         index_to_pop = None
         for index in range(len(frontier)):
             node = frontier[index]
-            current_node_evaluation = self.evaluate(current_node)
+            next_node_evaluation = self.evaluate(next_node)
             node_evaluation = self.evaluate(node)
             if (node_evaluation < \
-                    current_node_evaluation):
-                current_node = node
+                    next_node_evaluation):
+                next_node = node
                 index_to_pop = index
         if index_to_pop is None:
             index_to_pop = 0
-        current_node = frontier.pop(index_to_pop)
-        return current_node
+        next_node = frontier.pop(index_to_pop)
+        return next_node
     
         
     def search(self, search_name):
-        """c
+        """The main driver of the program. Generates needed data for
+        the search then calls the necessary functions to aggregate and
+        display results to stdout. Finally, resets the state of the
+        Search object for the next search. 
         """
         self.state_space = self.generate_state_space()
         
@@ -268,7 +318,7 @@ class Search():
             'a*': self._a_star_search
         }
         search_name = search_name.lower()
-        # COMMON PARTS OF SEARCH ALGORITHM
+        # COMMON PARTS OF EACH SEARCH ALGORITHM
         current_node = self.start_node
         while current_node.state is not self.goal_state:
             self.visited_states.append(current_node.state)
@@ -278,6 +328,7 @@ class Search():
                 if self.node_is_valid(child):
                     self.frontier.append(child)
             if self.frontier:
+                # Unique functions for each search called
                 current_node = functions[search_name]()
             else:
                 raise Exception(
@@ -301,7 +352,9 @@ class Search():
 
 
     def generate_solutions_dict(self, solution_node):
-        """c
+        """Calls the necessary functions to generate the solution
+        dictionary. Takes the solution node as an argument.
+            Returns the solutions dictionary.
         """
         solutions = {}
         path = solution_node.generate_path()
@@ -311,7 +364,7 @@ class Search():
         return solutions
 
     def generate_maze_solution(self, path):
-        """c
+        """Uses the maze array to build the string printed to stdout.
         """
         visited = self.visited_states
         # Possibly configurable values
@@ -335,24 +388,14 @@ class Search():
 
 
     def print_solutions_dict(self, search_name, solutions):
-        """c
+        """Iterates through the keys of the solutions dictionary
+        and prints the values in a readable format to stdout.
+        Each solution is printed out with a lable indicating the
+        search algorithm used.
         """
         search_name = search_name.upper()
         print "########## %s SEARCH RESULTS for '%s' ##########" \
                 %(search_name, self.search_file)
         for key in solutions.keys():
             print "%25s:\n%s" %(key, solutions[key])
-
-
-
-
-
-
-
-
-
-
-
-
-
 
