@@ -7,6 +7,10 @@ SHOW_VISITED = False
 # TODO move manhattan distance algorithm to State class
 # TODO expand state space once but keep track of old file read in with
 # private variable
+# TODO branch, see if still works when checking visited nodes, check Node to see if it has been expanded vs. its state exists in visited states. If it still works, get rid of visited_states list possibly.
+# TODO reorder functions within classes to be alphabetical/priavte vs. public
+# TODO add configuration
+# TODO add command-line arguments (don't use optparse, just iterate through sys.argv)
 class State():
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
@@ -15,8 +19,7 @@ class State():
     """
     def __init__(self, coordinates, state_type):
         """
-        coordinates = (x,y) coordinates within file/graph
-        state_type = character within 2D array
+        Initialize the coordinates and state type of the state.
         """
         self.coordinates = coordinates
         self.state_type = state_type
@@ -24,7 +27,7 @@ class State():
 
 class Node():
     """This class represents a node within a search algorithm.
-    Each Node is comprised of 3 attributes:
+    Each Node is comprised of 4 attributes:
         state      --> State
         parent     --> Node
         cost       --> int
@@ -121,7 +124,7 @@ class Search():
         self.start_state_symbol = 'P'
         self.goal_state_symbol = '.'
         self.wall_symbol = '%'
-        self.state_symbol = ' '
+        self.state_symbol = ' ' # Can't configure with ConfigParser
         # Data to keep up-to-date for output
         self.maze_array = None
         self.count_of_expanded_nodes = 0
@@ -168,8 +171,16 @@ class Search():
 
 
     def already_in_frontier(self, node, frontier=None):
-        """A Node given as an argument. Determines if the Node's
+        """A Node is given as an argument. Determines if the Node's
         State is currently in the frontier.
+        If the Node's state is already in the frontier, the path cost
+        of each Node is compared, and the Node in the frontier is
+        replaced if its path cost is greater than the path cost of
+        the passed Node.
+        NOTE: The passed Node will replace the old Node at the same
+        index for this implementation.
+            return True if the node is already in the frontier,
+            Else return False
         """
         if frontier == None:
             frontier = self.frontier
@@ -180,14 +191,17 @@ class Search():
             if frontier_node.state == node.state:
                 if frontier_node.generate_path_cost() \
                         < node.generate_path_cost():
+                    # TODO remove old node and insert new node based on path cost?
                     frontier[index] = node
                 return True
         return False
 
 
     def already_visited(self, node, visited_states=None):
-        """A Node given as an argument. Determines if the Node's
+        """A Node is given as an argument. Determines if the Node's
         State has been visited by the Search.
+            return True if the node has already been expanded,
+            Else returm false
         """
         if visited_states == None:
             visited_states = self.visited_states
@@ -200,6 +214,8 @@ class Search():
         """A Node is given as an argument. Determines if the Node
         is valid by comparing its state with the states in the
         visited nodes list and the frontier list.
+            return True if Node is not expanded or on the frontier,
+            Else return False
         """
         # Check if node's state already exists in visited nodes.
         # Check if node's state already exists in frontier.
@@ -211,7 +227,7 @@ class Search():
 
     def _breadth_first_search(self):
         """Expands the shallowest unexpanded node.
-        Implemented with frontier as FIFO queue
+        Implemented with frontier as FIFO queue.
             Returns the next node to be expanded
         """
         next_node = self.frontier.pop(0)
@@ -221,7 +237,7 @@ class Search():
     def _depth_first_search(self):
         """Expands the deepest unexpanded node.
         Implemented with frontier as LIFO stack.
-            Returns the next node to be expanded
+            Returns the next node to be expanded.
         """
         next_node = self.frontier.pop()
         return next_node
@@ -231,7 +247,7 @@ class Search():
         """Picks the node on the frontier with the lowest heuristic
         function result.
         The heuristic used is the Manhattan distance from goal.
-            Returns the next node to be expanded
+            Returns the next node to be expanded.
         """
         frontier = self.frontier
         next_node = frontier[0]
@@ -322,12 +338,15 @@ class Search():
         current_node = self.start_node
         while current_node.state is not self.goal_state:
             self.visited_states.append(current_node.state)
+            # TODO rename generate_successors to expand_node? (or just expand?)
             current_node.generate_successors(self.state_space)
             self.count_of_expanded_nodes += 1
             for child in current_node.successors:
                 if self.node_is_valid(child):
+                    # TODO insert to frontier based on path_cost? OR DO NEXT TODO
                     self.frontier.append(child)
             if self.frontier:
+                # TODO reheapify frontier here?
                 # Unique functions for each search called
                 current_node = functions[search_name]()
             else:
@@ -353,7 +372,7 @@ class Search():
 
     def generate_solutions_dict(self, solution_node):
         """Calls the necessary functions to generate the solution
-        dictionary. Takes the solution node as an argument.
+        dictionary. Takes the solution Node as an argument.
             Returns the solutions dictionary.
         """
         solutions = {}
@@ -370,6 +389,7 @@ class Search():
         # Possibly configurable values
         path_state_symbol = '.'
         traversed_state_symbol = '0'
+        #expanded_state_symbol = 'X'
         ##############################
         array = copy.deepcopy(self.maze_array)
         array_string = ''
@@ -394,8 +414,10 @@ class Search():
         search algorithm used.
         """
         search_name = search_name.upper()
+        # Print the search label
         print "########## %s SEARCH RESULTS for '%s' ##########" \
                 %(search_name, self.search_file)
+        # Print the solutions dictionary
         for key in solutions.keys():
             print "%25s:\n%s" %(key, solutions[key])
 
