@@ -24,6 +24,18 @@ class State():
         self.coordinates = coordinates
         self.state_type = state_type
 
+    
+    def manhattan_distance_from(self, state):
+        """Given a State, determines the manhattan distance from
+        that State.
+            Returns the manhattan distance --> an int
+        """
+        x1, y1 = self.coordinates
+        x2, y2 = state.coordinates
+        return (abs(x1 - x2) + abs(y1 - y2))
+    
+
+
 
 class Node():
     """This class represents a node within a search algorithm.
@@ -90,6 +102,18 @@ class Node():
             return self.parent.generate_path() + [self.state.coordinates]
         else:
             return [self.state.coordinates]
+
+
+    def manhattan_distance_from(self, state):
+        """Wrapper function. Returns the manhattan distance (int)
+        of Node's state to given State (int).
+        If the given state is of type Node, then it returns the
+        manhattan distance to that Node's state and this Node's
+        state.
+        """
+        if isinstance(state, Node):
+            state = state.state
+        return state.manhattan_distance_from(self.state)
 
 
 class Search():
@@ -252,10 +276,11 @@ class Search():
         frontier = self.frontier
         next_node = frontier[0]
         index_to_pop = None
+        goal = self.goal_state
         for index in range(len(frontier)):
             node = frontier[index]
-            if (self.manhattan_distance_of(node) < \
-                    self.manhattan_distance_of(next_node)):
+            if (node.manhattan_distance_from(goal) < \
+                    next_node.manhattan_distance_from(goal)):
                 next_node = node
                 index_to_pop = index
         if index_to_pop is None:
@@ -264,22 +289,13 @@ class Search():
         return next_node
 
 
-    def manhattan_distance_of(self, node):
-        """Given a Node, determines the manhattan distance from
-        the goal state.
-            Returns the manhattan distance --> an int
-        """
-        x1, y1 = self.goal_state.coordinates
-        x2, y2 = node.state.coordinates
-        return (abs(x1 - x2) + abs(y1 - y2))
-    
-
     def evaluate(self, node):
         """Determines the Node's A* algorithm evaluation function.
         Utilizes the manhattan distance.
             Returns the sum of path_cost and manhattan distance
         """
-        man_dist = self.manhattan_distance_of(node)
+        goal = self.goal_state
+        man_dist = node.manhattan_distance_from(goal)
         path_cost = node.generate_path_cost()
         return man_dist + path_cost
 
