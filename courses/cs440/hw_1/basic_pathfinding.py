@@ -1,13 +1,13 @@
 #!/usr/bin/env python
+"""c
+"""
 import copy
 
 # Possibly configurable value
 SHOW_VISITED = False
 
-# TODO reorder functions within classes to be alphabetical/priavte vs. public
 # TODO add configuration
 # TODO add command-line arguments (don't use optparse, just iterate through sys.argv)
-# TODO heapq
 class State():
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
@@ -106,13 +106,8 @@ class Node():
     def manhattan_distance_from(self, state):
         """Wrapper function. Returns the manhattan distance (int)
         of Node's state to given State (int).
-        If the given state is of type Node, then it returns the
-        manhattan distance to that Node's state and this Node's
-        state.
         """
-        if isinstance(state, Node):
-            state = state.state
-        return state.manhattan_distance_from(self.state)
+        return self.state.manhattan_distance_from(state)
 
 
 class Search():
@@ -148,6 +143,10 @@ class Search():
         self.goal_state_symbol = '.'
         self.wall_symbol = '%'
         self.state_symbol = ' ' # Can't configure with ConfigParser
+        self.path_state_symbol = '.'
+        self.traversed_state_symbol = '0'
+        self.frontier_state_symbol = 'X'
+        ##############################
         # Data to keep up-to-date for output
         self.maze_array = None
         self.count_of_expanded_nodes = 0
@@ -160,6 +159,10 @@ class Search():
         # Used to see if search_file has changed
         self._old_search_file = None
         self.state_space = None
+        # Used to customize printout
+        self.SHOW_VISITED = False
+        self.SHOW_FRONTIER = False
+
 
     def _a_star_search(self):
         """Pick the node on the frontier with the lowest evaluation
@@ -246,7 +249,6 @@ class Search():
             if frontier_node.state == node.state:
                 if frontier_node.generate_path_cost() \
                         < node.generate_path_cost():
-                    # TODO remove old node and insert new node based on path cost?
                     frontier[index] = node
                 return True
         return False
@@ -280,20 +282,20 @@ class Search():
         """Uses the maze array to build the string printed to stdout.
         """
         visited = self.visited_states
-        # Possibly configurable values
-        path_state_symbol = '.'
-        traversed_state_symbol = '0'
-        #expanded_state_symbol = 'X'
-        ##############################
+        frontier = self.frontier
         array = copy.deepcopy(self.maze_array)
         array_string = ''
-        if SHOW_VISITED == True:
+        if self.SHOW_FRONTIER == True:
+            for node in frontier:
+                x, y = node.state.coordinates
+                array[x][y] = self.frontier_state_symbol
+        if self.SHOW_VISITED == True:
             for state in visited:
                 x, y = state.coordinates
-                array[x][y] = traversed_state_symbol
+                array[x][y] = self.traversed_state_symbol
         for coordinate in path:
             x, y = coordinate
-            array[x][y] = path_state_symbol
+            array[x][y] = self.path_state_symbol
         for row in range(len(array)):
             for col in range(len(array[row])):
                 array_string += array[row][col]
@@ -416,10 +418,8 @@ class Search():
             self.count_of_expanded_nodes += 1
             for child in current_node.successors:
                 if self.node_is_valid(child):
-                    # TODO insert to frontier based on path_cost? OR DO NEXT TODO
                     self.frontier.append(child)
             if self.frontier:
-                # TODO reheapify frontier here?
                 # Unique functions for each search called
                 current_node = functions[search_name]()
             else:
