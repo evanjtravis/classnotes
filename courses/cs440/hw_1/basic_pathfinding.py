@@ -225,7 +225,6 @@ class Search():
         return next_node
 
 
-    # TODO move to Node class? Rename to 'is_already_in_the_frontier'?
     def already_in_frontier(self, node, frontier=None):
         """A Node is given as an argument. Determines if the Node's
         State is currently in the frontier.
@@ -252,7 +251,7 @@ class Search():
                 return True
         return False
 
-    # TODO move to Node class? rename to 'has_already_been_visited'?
+
     def already_visited(self, node, visited_states=None):
         """A Node is given as an argument. Determines if the Node's
         State has been visited by the Search.
@@ -265,7 +264,7 @@ class Search():
                 return True
         return False
 
-    # TODO move to Node class? provide additional argument or setting to decide heuristic?
+
     def evaluate(self, node):
         """Determines the Node's A* algorithm evaluation function.
         Utilizes the manhattan distance.
@@ -327,7 +326,7 @@ class Search():
             search_file = self.search_file
         else:
             raise Exception("Invalid search file '%s'" %(search_file))
-        # Save execution time if search file has not been changed
+        # Saves execution time if search file has not been changed
         if (search_file == self._old_search_file):
             return self.state_space
         state_space = {}
@@ -352,7 +351,7 @@ class Search():
                     state_space[(row, col)] = current_state
         return state_space
 
-    # TODO move to Node class? Rename to 'is_valid'? this_node.is_valid?
+
     def node_is_valid(self, node):
         """A Node is given as an argument. Determines if the Node
         is valid by comparing its state with the states in the
@@ -413,7 +412,6 @@ class Search():
         current_node = self.start_node
         while current_node.state is not self.goal_state:
             self.visited_states.append(current_node.state)
-            # TODO rename generate_successors to expand_node? (or just expand?)
             current_node.generate_successors(self.state_space)
             self.count_of_expanded_nodes += 1
             for child in current_node.successors:
