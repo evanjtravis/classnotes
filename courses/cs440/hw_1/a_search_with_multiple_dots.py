@@ -31,10 +31,23 @@ class DotNode(Node):
                 return add
 
 
-    def detect_dot(self, search):
+    def generate_successors(self, state_space):
         """c
         """
-        dot_symbol = search.dot_symbol
+        super(DotNode, self).generate_successors(state_space)
+        for i in range(len(self.successors)):
+            child = self.successors[i]
+            state = child.state
+            parent = child.parent
+            cost = child.cost
+            self.successors[i] = DotNode(state, parent, cost)
+
+
+    def detect_dot(self):
+        """c
+        """
+        # Configure this in line with search dot_symbol
+        dot_symbol = '.'
         if self.state.state_type == dot_symbol:
             return True
         return False
@@ -126,9 +139,22 @@ class DotSearch(Search):
     def node_has_all_dots(self, node):
         """c
         """
-        if len(node.generate_collected_dots) == len(self.dot_states):
+        if len(node.generate_collected_dots()) == len(self.dot_states):
             return True
         return False
+
+    def valid_goal_state(self):
+        """c
+        """
+        return True
+
+    def generate_start_node(self):
+        """c
+        """
+        return DotNode(
+            state=self.start_state,
+            parent=None,
+            cost=0)
 
 
     def search(self):
@@ -137,47 +163,6 @@ class DotSearch(Search):
         display results to stdout. Finally, resets the state of the
         Search object for the next search. 
         """
-        self.state_space = self.generate_state_space()
-        
-        if self.start_state == None:
-            raise Exception("Start state '%s' not found." \
-                    %(self.start_state_symbol))
-        if self.goal_state == None:
-            raise Exception("Goal state '%s' not found." \
-                    %(self.goal_state_symbol))
-        
-        self.start_node = DotNode(
-            state=self.start_state,
-            parent=None,
-            cost=0)
-        current_node = self.start_node
-        while not self.node_has_all_dots(current_node):
-            self.visited_states.append(current_node.state)
-            current_node.generate_successors(self.state_space)
-            self.count_of_expanded_nodes += 1
-            for child in current_node.successors:
-                if self.node_is_valid(child):
-                    self.frontier.append(child)
-            if self.frontier:
-                current_node = self._a_star_search()
-            else:
-                raise Exception(
-                    "Solution not found using 'a*' search. Empty frontier.")
-            if current_node is None:
-                break
-
-        solution_node = current_node
-
-        if solution_node is None:
-            print "'a*' search is not yet implemented. File = '%s'" \
-                    %(self.search_file)
-        else:
-            solutions = self.generate_solutions_dict(solution_node)
-            self.print_solutions_dict(search_name, solutions)
-            # Restart the state of the Search object
-            self.frontier = []
-            self.visited_states = []
-            self.count_of_expanded_nodes = 0
-
+        super(DotSearch, self).search('a*')
 
     

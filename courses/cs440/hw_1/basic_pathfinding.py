@@ -8,7 +8,7 @@ SHOW_VISITED = False
 
 # TODO add configuration
 # TODO add command-line arguments (don't use optparse, just iterate through sys.argv)
-class State():
+class State(object):
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
         coordinates --> tuple
@@ -36,7 +36,7 @@ class State():
         return (abs(x1 - x2) + abs(y1 - y2))
 
 
-class Node():
+class Node(object):
     """This class represents a node within a search algorithm.
     Each Node is comprised of 4 attributes:
         state      --> State
@@ -110,7 +110,7 @@ class Node():
         return self.state.manhattan_distance_from(state)
 
 
-class Search():
+class Search(object):
     """This class represents all of the data and functions associated
     with a search, such as the frontier and state space.
         start_state_symbol --> char, defines the start state in the
@@ -384,6 +384,28 @@ class Search():
             print "%25s:\n%s" %(key, solutions[key])
 
 
+    def generate_start_node(self):
+        """c
+        """
+        return Node(
+            state=self.start_state,
+            parent=None,
+            cost=0)
+
+    def valid_start_state(self):
+        """c
+        """
+        if self.start_state == None:
+            return False
+        return True
+
+    def valid_goal_state(self):
+        """c
+        """
+        if self.goal_state == None:
+            return False
+        return True
+
     def search(self, search_name):
         """The main driver of the program. Generates needed data for
         the search then calls the necessary functions to aggregate and
@@ -392,17 +414,14 @@ class Search():
         """
         self.state_space = self.generate_state_space()
         
-        if self.start_state == None:
+        if not self.valid_start_state():
             raise Exception("Start state '%s' not found." \
                     %(self.start_state_symbol))
-        if self.goal_state == None:
+        if not self.valid_goal_state():
             raise Exception("Goal state '%s' not found." \
                     %(self.goal_state_symbol))
         
-        self.start_node = Node(
-            state=self.start_state,
-            parent=None,
-            cost=0)
+        self.start_node = self.generate_start_node()
         functions = {
             'bfs': self._breadth_first_search,
             'dfs': self._depth_first_search,

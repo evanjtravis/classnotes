@@ -15,8 +15,7 @@ def main():
     ]
     for search_file in search_files:
         search = DotSearch(search_file)
-        for search_type in search_types:
-            search.search(search)
+        search.search()
 
 
 if __name__ == '__main__':
