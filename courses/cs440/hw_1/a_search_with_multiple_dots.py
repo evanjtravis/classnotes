@@ -191,7 +191,8 @@ class DotSearch(Search):
     def node_has_all_dots(self, node):
         """c
         """
-        if len(node.generate_collected_dots()) == len(self.dot_coordinates):
+        if len(node.generate_collected_dots()) == \
+                len(self.dot_coordinates):
             return True
         return False
 

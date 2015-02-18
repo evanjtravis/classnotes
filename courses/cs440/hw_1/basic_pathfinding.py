@@ -7,7 +7,8 @@ import copy
 SHOW_VISITED = False
 
 # TODO add configuration
-# TODO add command-line arguments (don't use optparse, just iterate through sys.argv)
+# TODO add command-line arguments (don't use optparse, just iterate
+# through sys.argv)
 class State(object):
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
@@ -64,7 +65,8 @@ class Node(object):
         into a list.
         """
         if self.parent is not None:
-            return self.parent.generate_path() + [self.state.coordinates]
+            return self.parent.generate_path() + \
+                [self.state.coordinates]
         else:
             return [self.state.coordinates]
 
@@ -315,7 +317,8 @@ class Search(object):
         path = solution_node.generate_path()
         solutions['Maze Solution'] = self.generate_maze_solution(path)
         solutions['Path Cost'] = solution_node.generate_path_cost()
-        solutions['Expanded Node Count'] = self.count_of_expanded_nodes
+        solutions['Expanded Node Count'] = \
+            self.count_of_expanded_nodes
 
 
     def generate_state_space(self, search_file=None):
@@ -465,7 +468,7 @@ class Search(object):
                 self.generate_solutions_dict(current_node)
                 self.print_solutions_dict(search_name)
                 raise Exception(
-                    "Solution not found using '%s' search. Empty frontier." \
+                    "'%s' search failed. Empty frontier." \
                             %(search_name))
             if current_node is None:
                 break
