@@ -21,7 +21,7 @@ class State(object):
         self.coordinates = coordinates
         self.state_type = state_type
 
-    
+
     def manhattan_distance_from(self, state):
         """Given a State, determines the manhattan distance from
         that State.
@@ -57,7 +57,7 @@ class Node(object):
         # Generated attributes
         self.successors = []
 
-    
+
     def generate_path(self):
         """Recursively works its way down the Node's ancestors to
         the start state, aggregating the coordinates of each node
@@ -95,12 +95,13 @@ class Node(object):
             (x, y - 1)
         ]
         for child in children:
-            if child in state_space.keys():
-                node = Node(
-                    state=state_space[child],
-                    parent=self,
-                    cost=1)
-                self.successors.append(node)
+            if child in state_space:
+                for state in state_space[child]:
+                    node = Node(
+                        state=state,
+                        parent=self,
+                        cost=1)
+                    self.successors.append(node)
 
 
     def manhattan_distance_from(self, state):
@@ -150,15 +151,17 @@ class Search(object):
         # Data to keep up-to-date for output
         self.maze_array = None
         self.count_of_expanded_nodes = 0
-        ##############################
+        self.solutions_dict = {
+            'Path Cost': None,
+            'Expanded Node Count': None,
+            'Maze Solution': None
+        }
         self.frontier = []
         self.visited_states = []
         self.start_state = None
         self.goal_state = None
         self.search_file = search_file
-        # Used to see if search_file has changed
-        self._old_search_file = None
-        self.state_space = None
+        self.state_space = {}
         # Used to customize printout
         self.SHOW_VISITED = False
         self.SHOW_FRONTIER = False
@@ -186,8 +189,8 @@ class Search(object):
             index_to_pop = 0
         next_node = frontier.pop(index_to_pop)
         return next_node
- 
- 
+
+
     def _breadth_first_search(self):
         """Expands the shallowest unexpanded node.
         Implemented with frontier as FIFO queue.
@@ -196,7 +199,7 @@ class Search(object):
         next_node = self.frontier.pop(0)
         return next_node
 
-    
+
     def _depth_first_search(self):
         """Expands the deepest unexpanded node.
         Implemented with frontier as LIFO stack.
@@ -263,7 +266,7 @@ class Search(object):
         if visited_states == None:
             visited_states = self.visited_states
         if node.state in visited_states:
-                return True
+            return True
         return False
 
 
@@ -308,12 +311,11 @@ class Search(object):
         dictionary. Takes the solution Node as an argument.
             Returns the solutions dictionary.
         """
-        solutions = {}
+        solutions = self.solutions_dict
         path = solution_node.generate_path()
         solutions['Maze Solution'] = self.generate_maze_solution(path)
         solutions['Path Cost'] = solution_node.generate_path_cost()
         solutions['Expanded Node Count'] = self.count_of_expanded_nodes
-        return solutions
 
 
     def generate_state_space(self, search_file=None):
@@ -328,10 +330,6 @@ class Search(object):
             search_file = self.search_file
         else:
             raise Exception("Invalid search file '%s'" %(search_file))
-        # Saves execution time if search file has not been changed
-        if (search_file == self._old_search_file):
-            return self.state_space
-        state_space = {}
         f = open(search_file, 'r')
         array = f.read().splitlines()
         f.close()
@@ -343,15 +341,23 @@ class Search(object):
         # Create states from 2D array
         for row in range(len(array)):
             for col in range(len(array[row])):
-                cell_text = array[row][col]
-                if cell_text not in self.wall_symbol:
-                    current_state = State((row, col), cell_text)
-                    if cell_text in self.start_state_symbol:
-                        self.start_state = current_state
-                    if cell_text in self.goal_state_symbol:
-                        self.goal_state = current_state
-                    state_space[(row, col)] = current_state
-        return state_space
+                self.add_to_state_space(array, row, col)
+
+    def add_to_state_space(self, array, row, col):
+        """c
+        """
+        state_space = self.state_space
+        cell_text = array[row][col]
+        if cell_text not in self.wall_symbol:
+            current_state = State((row, col), cell_text)
+            if cell_text in self.start_state_symbol:
+                self.start_state = current_state
+            if cell_text in self.goal_state_symbol:
+                self.goal_state = current_state
+            if (row, col) in state_space:
+                state_space[(row, col)].append(current_state)
+            else:
+                state_space[(row, col)] = [current_state]
 
 
     def node_is_valid(self, node):
@@ -369,12 +375,13 @@ class Search(object):
         return False
 
 
-    def print_solutions_dict(self, search_name, solutions):
+    def print_solutions_dict(self, search_name):
         """Iterates through the keys of the solutions dictionary
         and prints the values in a readable format to stdout.
         Each solution is printed out with a lable indicating the
         search algorithm used.
         """
+        solutions = self.solutions_dict
         search_name = search_name.upper()
         # Print the search label
         print "########## %s SEARCH RESULTS for '%s' ##########" \
@@ -406,21 +413,33 @@ class Search(object):
             return False
         return True
 
+    def has_reached_goal(self, current_node):
+        """c
+        """
+        if current_node.state is not self.goal_state:
+            return False
+        return True
+
+    def add_to_visited_states(self, state):
+        """c
+        """
+        if state not in self.visited_states:
+            self.visited_states.append(state)
+
     def search(self, search_name):
         """The main driver of the program. Generates needed data for
         the search then calls the necessary functions to aggregate and
         display results to stdout. Finally, resets the state of the
-        Search object for the next search. 
+        Search object for the next search.
         """
-        self.state_space = self.generate_state_space()
-        
+        self.generate_state_space()
         if not self.valid_start_state():
             raise Exception("Start state '%s' not found." \
                     %(self.start_state_symbol))
         if not self.valid_goal_state():
             raise Exception("Goal state '%s' not found." \
                     %(self.goal_state_symbol))
-        
+
         self.start_node = self.generate_start_node()
         functions = {
             'bfs': self._breadth_first_search,
@@ -431,8 +450,8 @@ class Search(object):
         search_name = search_name.lower()
         # COMMON PARTS OF EACH SEARCH ALGORITHM
         current_node = self.start_node
-        while current_node.state is not self.goal_state:
-            self.visited_states.append(current_node.state)
+        while not self.has_reached_goal(current_node):
+            self.add_to_visited_states(current_node.state)
             current_node.generate_successors(self.state_space)
             self.count_of_expanded_nodes += 1
             for child in current_node.successors:
@@ -442,6 +461,9 @@ class Search(object):
                 # Unique functions for each search called
                 current_node = functions[search_name]()
             else:
+                self.SHOW_VISITED = True
+                self.generate_solutions_dict(current_node)
+                self.print_solutions_dict(search_name)
                 raise Exception(
                     "Solution not found using '%s' search. Empty frontier." \
                             %(search_name))
@@ -454,11 +476,12 @@ class Search(object):
             print "'%s' search is not yet implemented. File = '%s'" \
                     %(search_name, self.search_file)
         else:
-            solutions = self.generate_solutions_dict(solution_node)
-            self.print_solutions_dict(search_name, solutions)
+            self.generate_solutions_dict(solution_node)
+            self.print_solutions_dict(search_name)
             # Restart the state of the Search object
             self.frontier = []
             self.visited_states = []
             self.count_of_expanded_nodes = 0
+            self.state_space = {}
 
 

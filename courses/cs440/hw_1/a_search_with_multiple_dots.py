@@ -1,7 +1,20 @@
 #!/usr/bin/env python
 """c
 """
+# TODO superfy as many functions as possible.
+import copy
 from basic_pathfinding import State, Node, Search
+from itertools import combinations
+class DotState(State):
+    """c
+    """
+    def __init__(self, coordinates, state_type, acquired_dots):
+        """c
+        """
+        super(DotState, self).__init__(coordinates, state_type)
+        self.acquired_dots = acquired_dots
+        self.is_a_dot = False
+
 
 class DotNode(Node):
     """c
@@ -60,16 +73,18 @@ class DotSearch(Search):
         """c
         """
         super(DotSearch, self).__init__(search_file)
-        self.dot_states = []
+        self.dot_coordinates = []
         self.collected_dots = []
-        self.dot_state_symbol = self.goal_state_symbol
+        self.dot_coordinate_symbol = self.goal_state_symbol
 
 
     def evaluate(self, node):
         """c
         """
+        # TODO REFACTOR basic_pathfinding for man_dist to take tuple
+        # arg
         # Look for shortest distance to dot
-        goal = self.dot_states
+        goal = self.dot_coordinates
         distance_of_closest_dot = goal[0]
         for dot_state in goal:
             man_dist = node.manhattan_distance_from(dot_state)
@@ -78,19 +93,21 @@ class DotSearch(Search):
         path_cost = node.generate_path_cost()
         return path_cost + distance_of_closest_dot
 
-        
+
     def generate_maze_solution(self, path):
         """Uses the maze array to build the string printed to stdout.
         """
-        step = 48 # The point at which '0' is ascii encoded
+        #step = 48 # The point at which '0' is ascii encoded
         array = copy.deepcopy(self.maze_array)
         array_string = ''
-        if len(path) > 36: # Number of characters from '0' to 'z'
-            return array_string
+        #if len(path) > 62: # Number of characters from '0' to 'z'
+        #    array_string = '* Path very long. *'
+        #    return array_string
         for coordinate in path:
             x, y = coordinate
-            array[x][y] = chr(step)
-            step += 1
+            #array[x][y] = chr(step)
+            array[x][y] = 'x' #TODO ERASE LINE
+            #step += 1
         for row in range(len(array)):
             for col in range(len(array[row])):
                 array_string += array[row][col]
@@ -106,47 +123,84 @@ class DotSearch(Search):
         numbers.
             Returns the state_space dictionary.
         """
-        if (search_file == None) and (self.search_file != None):
-            search_file = self.search_file
-        else:
-            raise Exception("Invalid search file '%s'" %(search_file))
-        # Saves execution time if search file has not been changed
-        if (search_file == self._old_search_file):
-            return self.state_space
-        state_space = {}
-        f = open(search_file, 'r')
-        array = f.read().splitlines()
-        f.close()
-        # Break file text into 2D array of characters
-        for line in range(len(array)):
-            array[line] = list(array[line])
-        # Keep the array for use in printing out solution later
-        self.maze_array = array
-        # Create states from 2D array
-        for row in range(len(array)):
-            for col in range(len(array[row])):
-                cell_text = array[row][col]
-                if cell_text not in self.wall_symbol:
-                    current_state = State((row, col), cell_text)
-                    if cell_text in self.start_state_symbol:
-                        self.start_state = current_state
-                    if cell_text in self.dot_state_symbol:
-                        self.dot_states.append(current_state)
-                    state_space[(row, col)] = current_state
-        return state_space
+        super(DotSearch, self).generate_state_space()
+        state_space = self.state_space
+        # Append to state space coordinates all DotStates with
+        # differing combinations of collected dots.
+        # 2**n combinations where n = number of dots.
+        dot_coordinates = self.dot_coordinates
+        dot_coordinate_combinations = []
+        for i in range(1, len(dot_coordinates)):
+            dot_coordinate_combinations += \
+                combinations(dot_coordinates, i)
+        for i in range(len(dot_coordinate_combinations)):
+            dot_coordinate_combinations[i] = \
+                list(dot_coordinate_combinations[i])
+        # Add states to state_space that represent
+        # all combinations of dot aquisition.
+        for _, value in state_space.iteritems():
+            base_state = value[0]
+            base_coordinates = base_state.coordinates
+            base_state_type = base_state.state_type
+            for dot_coord_combo in dot_coordinate_combinations:
+                value.append(
+                    DotState(
+                        coordinates=base_coordinates,
+                        state_type=base_state_type,
+                        acquired_dots=dot_coord_combo
+                    )
+                )
+            # Remove states where dot aquisition is logically true but
+            # represented as false within the data
+            if base_state_type == self.dot_coordinate_symbol:
+                self.remove_nonsensical_states(base_coordinates)
+
+
+    def remove_nonsensical_states(self, coordinates):
+        """c
+        """
+        keep_list = []
+        states = self.state_space[coordinates]
+        for i in range(len(states)):
+            state = states[i]
+            if coordinates in state.acquired_dots:
+                keep_list.append(state)
+        self.state_space[coordinates] = keep_list
+
+
+
+    def add_to_state_space(self, array, row, col):
+        """c
+
+        """
+        # TODO USE DOT STATES
+        state_space = self.state_space
+        cell_text = array[row][col]
+        if cell_text not in self.wall_symbol:
+            current_state = DotState((row, col), cell_text, {})
+            if cell_text in self.start_state_symbol:
+                self.start_state = current_state
+            if cell_text in self.dot_coordinate_symbol:
+                self.dot_coordinates.append((row, col))
+            if (row, col) in state_space:
+                state_space[(row, col)] = [current_state]
+            else:
+                state_space[(row, col)].append(current_state)
 
 
     def node_has_all_dots(self, node):
         """c
         """
-        if len(node.generate_collected_dots()) == len(self.dot_states):
+        if len(node.generate_collected_dots()) == len(self.dot_coordinates):
             return True
         return False
+
 
     def valid_goal_state(self):
         """c
         """
         return True
+
 
     def generate_start_node(self):
         """c
@@ -157,12 +211,19 @@ class DotSearch(Search):
             cost=0)
 
 
+    def has_reached_goal(self, current_node):
+        """c
+        """
+        return self.node_has_all_dots(current_node)
+
+
     def search(self):
         """The main driver of the program. Generates needed data for
         the search then calls the necessary functions to aggregate and
         display results to stdout. Finally, resets the state of the
-        Search object for the next search. 
+        Search object for the next search.
         """
         super(DotSearch, self).search('a*')
 
-    
+
+#EOF
