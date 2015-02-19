@@ -2,6 +2,8 @@
 """c
 """
 # TODO superfy as many functions as possible.
+# TODO create functions to debug. First, just generate state space and
+# whatnot, then create fake path and see successors of selected node.
 import copy
 from basic_pathfinding import State, Node, Search
 from itertools import combinations
@@ -13,7 +15,6 @@ class DotState(State):
         """
         super(DotState, self).__init__(coordinates, state_type)
         self.acquired_dots = acquired_dots
-        self.is_a_dot = False
 
 
 class DotNode(Node):
@@ -23,47 +24,95 @@ class DotNode(Node):
         """c
         """
         super(DotNode, self).__init__(state, parent, cost)
-        self.has_dot = self.detect_dot()
-        self.collected_dots = self.generate_collected_dots()
-
-
-    def generate_collected_dots(self):
-        """c
-        """
-        add = []
-        if self.has_dot:
-            add = self.state.coordinates
-            if self.parent is not None:
-                return [add] + self.parent.generate_collected_dots()
-            else:
-                return [add]
-        else:
-            if self.parent is not None:
-                return add + self.parent.generate_collected_dots()
-            else:
-                return add
 
 
     def generate_successors(self, state_space):
         """c
         """
         super(DotNode, self).generate_successors(state_space)
-        for i in range(len(self.successors)):
-            child = self.successors[i]
-            state = child.state
-            parent = child.parent
-            cost = child.cost
-            self.successors[i] = DotNode(state, parent, cost)
+        # After populating basic successors, iterate through
+        # successors list and keep the Nodes whose collected dot list
+        # is equal to this Node's.
 
+        # If we come across an unvisited Node that contains its own
+        # dot that this node has not yet collected, it is also kept
+        # on the successors list.
 
-    def detect_dot(self):
+        # These two rules also allow backtracking over already visited
+        # states containing dots without recollecting the dot.
+
+        # Check EACH of these conditions
+        ################################
+        # Unvisted      non-dot
+        # unvistied     dot
+        # visited       non-dot
+        # visited       dot
+        ################################
+        # Therefore, successors should be organized by unvisited dots
+        # and, failing that, go through the rest to see which gets us
+        # closer to the goal. --> refactor evaluate function to choose
+        # unvisited dots first.
+        # Prioritize multiple unvisited dots in successors?
+        #   how would that work?
+        keep_list = []
+        for successor in self.successors:
+            if (self.valid_unvisited_nondot(successor) or \
+                self.valid_visited_nondot(successor) or \
+                self.valid_unvisited_dot(successor) or \
+                self.valid_visited_dot(successor)):
+                # THEN
+                keep_list.append(successor)
+        self.successors = keep_list
+
+    def valid_unvisited_nondot(self, successor):
         """c
         """
-        # Configure this in line with search dot_symbol
-        dot_symbol = '.'
-        if self.state.state_type == dot_symbol:
+        if successor.state.acquired_dots == \
+                self.state.acquired_dots:
             return True
         return False
+
+    def valid_visited_nondot(self, successor):
+        """c
+        """
+        # Don't go to this coordinate if not found more dots.
+        suc_acquired = successor.state.acquired_dots
+        acquired = self.state.acquired_dots
+        difference = acquired.difference(suc_acquired)
+        if len(difference) > 0:
+            if suc_acquired.issubset(acquired):
+                return True
+        return False
+
+    def valid_unvisited_dot(self, successor):
+        """c
+        """
+        suc_acquired = successor.state.acquired_dots
+        acquired = self.state.acquired_dots
+        difference = suc_acquired.difference(acquired)
+        if len(difference) == 1:
+            if acquired.issubset(suc_acquired):
+                if successor.state.coordinates in difference:
+                    return True
+        return False
+
+    def valid_visited_dot(self, successor):
+        """c
+        """
+        suc_acquired = successor.state.acquired_dots
+        acquired = self.state.acquired_dots
+        if successor.state.coordinates in acquired:
+            if suc_acquired == acquired:
+                return True
+        return False
+
+    def create_successor(self, state):
+        """c
+        """
+        return DotNode(
+            state=state,
+            parent=self,
+            cost=1)
 
 
 class DotSearch(Search):
@@ -81,13 +130,15 @@ class DotSearch(Search):
     def evaluate(self, node):
         """c
         """
-        # TODO REFACTOR basic_pathfinding for man_dist to take tuple
-        # arg
         # Look for shortest distance to dot
         goal = self.dot_coordinates
-        distance_of_closest_dot = goal[0]
-        for dot_state in goal:
-            man_dist = node.manhattan_distance_from(dot_state)
+        distance_of_closest_dot = None
+        for dot_coord in goal:
+            if distance_of_closest_dot == None:
+                distance_of_closest_dot = \
+                    node.manhattan_distance_from(dot_coord)
+                continue
+            man_dist = node.manhattan_distance_from(dot_coord)
             if (man_dist < distance_of_closest_dot):
                 distance_of_closest_dot = man_dist
         path_cost = node.generate_path_cost()
@@ -124,6 +175,7 @@ class DotSearch(Search):
             Returns the state_space dictionary.
         """
         super(DotSearch, self).generate_state_space()
+        print "\tAdding combos of dot acquisition to state space."
         state_space = self.state_space
         # Append to state space coordinates all DotStates with
         # differing combinations of collected dots.
@@ -133,66 +185,110 @@ class DotSearch(Search):
         for i in range(1, len(dot_coordinates)):
             dot_coordinate_combinations += \
                 combinations(dot_coordinates, i)
+        # turn dot_coordinates into set in order to perform set
+        # operations on it.
+        self.dot_coordinates = set(self.dot_coordinates)
+        # Make each tuple a set
         for i in range(len(dot_coordinate_combinations)):
             dot_coordinate_combinations[i] = \
-                list(dot_coordinate_combinations[i])
+                set(dot_coordinate_combinations[i])
         # Add states to state_space that represent
         # all combinations of dot aquisition.
-        for _, value in state_space.iteritems():
-            base_state = value[0]
+        print "\tRemoving nonsensical states from state space."
+        num_states = 0
+        num_states_pre_nonsense = 0
+        for _, states in state_space.iteritems():
+            base_state = states[0]
             base_coordinates = base_state.coordinates
             base_state_type = base_state.state_type
-            for dot_coord_combo in dot_coordinate_combinations:
-                value.append(
-                    DotState(
-                        coordinates=base_coordinates,
-                        state_type=base_state_type,
-                        acquired_dots=dot_coord_combo
+            if base_state_type not in self.dot_coordinate_symbol:
+                states = \
+                    self.remove_nonsensical_non_dot_states(states)
+            if states:
+                for dot_coord_combo in dot_coordinate_combinations:
+                    states.append(
+                        DotState(
+                            coordinates=base_coordinates,
+                            state_type=base_state_type,
+                            acquired_dots=dot_coord_combo
+                        )
                     )
-                )
-            # Remove states where dot aquisition is logically true but
-            # represented as false within the data
-            if base_state_type == self.dot_coordinate_symbol:
-                self.remove_nonsensical_states(base_coordinates)
+                # Remove states where dot aquisition is logically true
+                # but represented as false within the data.
+                # I.E. A state's set of aquired dots does not
+                # contain its own dot.
+                num_states_pre_nonsense += len(states)
+                if base_state_type in self.dot_coordinate_symbol:
+                    states = \
+                        self.remove_nonsensical_dot_states(
+                            states,
+                            base_coordinates
+                        )
+                num_states += len(states)
+        # Go through state space keys and delete entries whose values
+        # are empty lists.
+        empty_coords = []
+        for coord in state_space:
+            if not state_space[coord]:
+                empty_coords.append(coord)
+        for coord in empty_coords:
+            del state_space[coord]
+        print "Finished removing invalid states."
+        print "\tNumber of States:              %d" %(num_states)
+        print "\tMax Number of Original States: %d" \
+            %(num_states_pre_nonsense)
+        print "\t  - (Includes nonsensical states)"
+        return num_states
 
-
-    def remove_nonsensical_states(self, coordinates):
+    def remove_nonsensical_dot_states(self, states, coordinates):
         """c
         """
         keep_list = []
-        states = self.state_space[coordinates]
+        # Remove states that are dot states and that do not have their
+        # own dot acquired
         for i in range(len(states)):
             state = states[i]
             if coordinates in state.acquired_dots:
                 keep_list.append(state)
-        self.state_space[coordinates] = keep_list
+        # TODO remove states that are dot states and that cannot be
+        # collected without another dot being collected before or
+        # after this dot.
+        # Get surrounding states:
+        #   if all states are dot states:
+        #       remove the states at (row, col) where 1 of the
+        #       surrounding states is not collected.
+        return keep_list
 
-
+    def remove_nonsensical_non_dot_states(self, states):
+        """c
+        """
+        # Remove states with only one entrance (dead ends).
+        # Should not effect dot states.
+        keep_list = []
+        state = states[0]
+        min_entrances = 2
+        state_keys = self.state_space.keys()
+        if state.get_entrance_count(state_keys) < min_entrances:
+            return keep_list
+        else:
+            return states
 
     def add_to_state_space(self, array, row, col):
         """c
 
         """
-        # TODO USE DOT STATES
         state_space = self.state_space
         cell_text = array[row][col]
         if cell_text not in self.wall_symbol:
-            current_state = DotState((row, col), cell_text, {})
+            current_state = DotState((row, col), cell_text, set())
             if cell_text in self.start_state_symbol:
                 self.start_state = current_state
             if cell_text in self.dot_coordinate_symbol:
                 self.dot_coordinates.append((row, col))
             if (row, col) in state_space:
-                state_space[(row, col)] = [current_state]
-            else:
                 state_space[(row, col)].append(current_state)
-
-
-    def node_has_all_dots(self, node):
-        """c
-        """
-        if len(node.generate_collected_dots()) == \
-                len(self.dot_coordinates):
+            else:
+                state_space[(row, col)] = [current_state]
             return True
         return False
 
@@ -215,7 +311,10 @@ class DotSearch(Search):
     def has_reached_goal(self, current_node):
         """c
         """
-        return self.node_has_all_dots(current_node)
+        node_has_all_dots = False
+        if current_node.state.acquired_dots == self.dot_coordinates:
+            node_has_all_dots = True
+        return node_has_all_dots
 
 
     def search(self):

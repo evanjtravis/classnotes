@@ -9,6 +9,8 @@ SHOW_VISITED = False
 # TODO add configuration
 # TODO add command-line arguments (don't use optparse, just iterate
 # through sys.argv)
+# TODO try to enact performance improvements with heap (heapq and
+# whatnot). Might cut down time for a* and gbfs execution.
 class State(object):
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
@@ -30,12 +32,33 @@ class State(object):
         inconsistency by accessing the Node's state.
             Returns the manhattan distance --> an int
         """
-        if isinstance(state, Node):
-            state = state.state
         x1, y1 = self.coordinates
-        x2, y2 = state.coordinates
+        if isinstance(state, Node):
+            node = state
+            x2, y2 = node.state.coordinates
+        elif isinstance(state, tuple):
+            coordinates = state
+            x2, y2 = coordinates
+        else:
+            x2, y2 = state.coordinates
         return (abs(x1 - x2) + abs(y1 - y2))
 
+
+    def get_entrance_count(self, state_keys):
+        """c
+        """
+        entrance_count = 0
+        x, y = self.coordinates
+        entrances = [
+            (x - 1, y),
+            (x + 1, y),
+            (x, y + 1),
+            (x, y - 1)
+        ]
+        for entre in entrances:
+            if entre in state_keys:
+                entrance_count += 1
+        return entrance_count
 
 class Node(object):
     """This class represents a node within a search algorithm.
@@ -99,12 +122,17 @@ class Node(object):
         for child in children:
             if child in state_space:
                 for state in state_space[child]:
-                    node = Node(
-                        state=state,
-                        parent=self,
-                        cost=1)
+                    node = self.create_successor(state)
                     self.successors.append(node)
 
+    def create_successor(self, state):
+        """c
+        """
+        # TODO dynamically assign cost for later version of program.
+        return Node(
+            state=state,
+            parent=self,
+            cost=1)
 
     def manhattan_distance_from(self, state):
         """Wrapper function. Returns the manhattan distance (int)
@@ -161,6 +189,7 @@ class Search(object):
         self.frontier = []
         self.visited_states = []
         self.start_state = None
+        self.start_node = None
         self.goal_state = None
         self.search_file = search_file
         self.state_space = {}
@@ -333,6 +362,8 @@ class Search(object):
             search_file = self.search_file
         else:
             raise Exception("Invalid search file '%s'" %(search_file))
+        print "Generating base state space of '%s'." %(search_file)
+        base_state_count = 0
         f = open(search_file, 'r')
         array = f.read().splitlines()
         f.close()
@@ -344,7 +375,11 @@ class Search(object):
         # Create states from 2D array
         for row in range(len(array)):
             for col in range(len(array[row])):
-                self.add_to_state_space(array, row, col)
+                if self.add_to_state_space(array, row, col):
+                    base_state_count += 1
+        print "Finished generating base state space."
+        print "\tNumber of Base States: %d" %(base_state_count)
+        return base_state_count
 
     def add_to_state_space(self, array, row, col):
         """c
@@ -361,6 +396,8 @@ class Search(object):
                 state_space[(row, col)].append(current_state)
             else:
                 state_space[(row, col)] = [current_state]
+            return True
+        return False
 
 
     def node_is_valid(self, node):
