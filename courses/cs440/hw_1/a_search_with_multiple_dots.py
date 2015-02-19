@@ -4,6 +4,7 @@
 # TODO superfy as many functions as possible.
 # TODO create functions to debug. First, just generate state space and
 # whatnot, then create fake path and see successors of selected node.
+# TODO further index visited nodes by length of visited dots.
 import copy
 from basic_pathfinding import State, Node, Search
 from itertools import combinations
@@ -125,6 +126,43 @@ class DotSearch(Search):
         self.dot_coordinates = []
         self.collected_dots = []
         self.dot_coordinate_symbol = self.goal_state_symbol
+
+
+    def already_visited(self, node, visited_states=None):
+        """c
+        """
+        state = node.state
+        coords = state.coordinates
+        acquired_count = len(state.acquired_dots)
+        states_list = []
+        # Check to see if coords exists in visited
+        if visited_states == None:
+            visited_states = self.visited_states
+
+        if coords in visited_states:
+            if acquired_count in visited_states[coords]:
+                states_list = visited_states[coords][acquired_count]
+                if state in states_list:
+                    return True
+        return False
+
+
+    def add_to_visited_states(self, state):
+        """c
+        """
+        coords = state.coordinates
+        acquired_count = len(state.acquired_dots)
+        visited_states = self.visited_states
+        states_list = []
+        if coords in visited_states:
+            if acquired_count in visited_states[coords]:
+                states_list = visited_states[coords][acquired_count]
+                states_list.append(state)
+            else:
+                visited_states[coords][acquired_count] = [state]
+        else:
+            visited_states[coords] = {}
+            visited_states[coords][acquired_count] = [state]
 
 
     def evaluate(self, node):
@@ -312,7 +350,9 @@ class DotSearch(Search):
         """c
         """
         node_has_all_dots = False
-        if current_node.state.acquired_dots == self.dot_coordinates:
+        acquired = current_node.state.acquired_dots
+        goal = self.dot_coordinates
+        if (goal.issubset(acquired) and acquired.issubset(goal)):
             node_has_all_dots = True
         return node_has_all_dots
 

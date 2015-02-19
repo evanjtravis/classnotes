@@ -11,6 +11,7 @@ SHOW_VISITED = False
 # through sys.argv)
 # TODO try to enact performance improvements with heap (heapq and
 # whatnot). Might cut down time for a* and gbfs execution.
+# TODO index visited states by coordinates for faster lookup. dict.
 class State(object):
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
@@ -59,6 +60,7 @@ class State(object):
             if entre in state_keys:
                 entrance_count += 1
         return entrance_count
+
 
 class Node(object):
     """This class represents a node within a search algorithm.
@@ -187,7 +189,8 @@ class Search(object):
             'Maze Solution': None
         }
         self.frontier = []
-        self.visited_states = []
+        self.visited_states = {} # DOCUMENT, changed to dict where
+                                 # key:value = coordinate:state_list
         self.start_state = None
         self.start_node = None
         self.goal_state = None
@@ -294,10 +297,15 @@ class Search(object):
             return True if the node has already been expanded,
             Else returm false
         """
+        coords = node.state.coordinates
+        states_list = []
         if visited_states == None:
             visited_states = self.visited_states
-        if node.state in visited_states:
-            return True
+
+        if coords in visited_states:
+            states_list = visited_states[coords]
+            if node.state in states_list:
+                return True
         return False
 
 
@@ -463,8 +471,15 @@ class Search(object):
     def add_to_visited_states(self, state):
         """c
         """
-        if state not in self.visited_states:
-            self.visited_states.append(state)
+        coords = state.coordinates
+        visited_states = self.visited_states
+        states_list = []
+        if coords in visited_states:
+            states_list = visited_states[coords]
+            states_list.append(state)
+        else:
+            visited_states[coords] = [state]
+
 
     def search(self, search_name):
         """The main driver of the program. Generates needed data for
@@ -520,7 +535,7 @@ class Search(object):
             self.print_solutions_dict(search_name)
             # Restart the state of the Search object
             self.frontier = []
-            self.visited_states = []
+            self.visited_states = {}
             self.count_of_expanded_nodes = 0
             self.state_space = {}
 
