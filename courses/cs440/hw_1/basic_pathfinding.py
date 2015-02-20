@@ -139,9 +139,9 @@ class Node(object):
         ]
         for child in children:
             if child in state_space:
-                for state in state_space[child]:
-                    node = self.create_successor(state)
-                    self.successors.append(node)
+                state = state_space[child]
+                node = self.create_successor(state)
+                self.successors.append(node)
 
     def create_successor(self, state):
         """c
@@ -205,8 +205,7 @@ class Search(object):
             'Maze Solution': None
         }
         self.frontier = []
-        self.visited_states = {} # DOCUMENT, changed to dict where
-                                 # key:value = coordinate:state_list
+        self.visited_states = []
         self.start_state = None
         self.start_node = None
         self.goal_state = None
@@ -336,15 +335,11 @@ class Search(object):
             return True if the node has already been expanded,
             Else returm false
         """
-        coords = node.state.coordinates
-        states_list = []
         if visited_states == None:
             visited_states = self.visited_states
 
-        if coords in visited_states:
-            states_list = visited_states[coords]
-            if node.state in states_list:
-                return True
+        if node.state in visited_states:
+            return True
         return False
 
 
@@ -362,9 +357,7 @@ class Search(object):
     def generate_maze_solution(self, path):
         """Uses the maze array to build the string printed to stdout.
         """
-        visited = []
-        for key in self.visited_states:
-            visited += self.visited_states[key]
+        visited = self.visited_states
         frontier = self.frontier
         array = copy.deepcopy(self.maze_array)
         array_string = ''
@@ -441,10 +434,7 @@ class Search(object):
                 self.start_state = current_state
             if cell_text in self.goal_state_symbol:
                 self.goal_state = current_state
-            if (row, col) in state_space:
-                state_space[(row, col)].append(current_state)
-            else:
-                state_space[(row, col)] = [current_state]
+            state_space[(row, col)] = current_state
             return True
         return False
 
@@ -494,7 +484,7 @@ class Search(object):
     def valid_start_state(self):
         """c
         """
-        if self.start_state == None:
+        if self.start_state is None:
             return False
         return True
 
@@ -515,14 +505,7 @@ class Search(object):
     def add_to_visited_states(self, state):
         """c
         """
-        coords = state.coordinates
-        visited_states = self.visited_states
-        states_list = []
-        if coords in visited_states:
-            states_list = visited_states[coords]
-            states_list.append(state)
-        else:
-            visited_states[coords] = [state]
+        self.visited_states.append(state)
 
 
     def search(self, search_name):
@@ -536,7 +519,7 @@ class Search(object):
         # variables can be accessed and analyzed at the end of a
         # successful or failed search.
         self.frontier = []
-        self.visited_states = {}
+        self.visited_states = []
         self.count_of_expanded_nodes = 0
         self.state_space = {}
         self.generate_state_space()
