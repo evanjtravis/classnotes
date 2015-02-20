@@ -8,11 +8,9 @@ import itertools
 SHOW_VISITED = False
 
 # TODO add configuration
-# TODO add command-line arguments (don't use optparse, just iterate
+# TODO Extra Credit add command-line arguments (don't use optparse, just iterate
 # through sys.argv)
-# TODO try to enact performance improvements with heap (heapq and
-# whatnot). Might cut down time for a* and gbfs execution.
-# TODO implement pac-man ai with ghosts? inky = bfs, blinky = dfs,
+# TODO Extra Credit implement pac-man ai with ghosts? inky = bfs, blinky = dfs,
 # pinky = greedy, clyde = a*, pacman = a* dot search with different
 # evaluation that is aware of ghost position. Ghosts have basic
 # pathfinding search.
