@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from basic_pathfinding import Search
+from basic_pathfinding import Agent
 
 
 def main():
@@ -14,11 +14,11 @@ def main():
         'gbfs',
         'a*'
     ]
-    
+
     for search_file in search_files:
-        search = Search(search_file)
+        agent = Agent(search_file)
         for search_type in search_types:
-            search.search(search_type)
+            agent.search(search_type)
 
 
 if __name__ == '__main__':

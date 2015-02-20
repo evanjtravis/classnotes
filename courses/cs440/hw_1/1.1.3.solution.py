@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """c
 """
-from a_search_with_multiple_dots import DotSearch
+from a_search_with_multiple_dots import DotAgent
 
 
 def main():
@@ -14,8 +14,8 @@ def main():
         'big_search.txt'
     ]
     for search_file in search_files:
-        search = DotSearch(search_file)
-        search.search()
+        agent = DotAgent(search_file)
+        agent.search()
 
 
 if __name__ == '__main__':

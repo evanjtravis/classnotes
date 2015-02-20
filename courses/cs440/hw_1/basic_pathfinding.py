@@ -18,6 +18,9 @@ SHOW_VISITED = False
 # to each other --> in solution scripts.
 # TODO when generating successor states, NEVER add an anscestor state
 # unless the successors would otherwise be empty.
+# TODO implement diagonal nodes --> can have up to 8 successor states
+# TODO organize functions and whatnot by function e.g. visual or
+# searching or utilities, and then alphabetize.
 class State(object):
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
@@ -30,6 +33,15 @@ class State(object):
         """
         self.coordinates = coordinates
         self.state_type = state_type
+
+
+    def compare(self, other):
+        """c
+        """
+        if self.coordinates == other.coordinates:
+            if self.state_type == other.state_type:
+                return True
+        return False
 
 
     def greedy_heuristic(self, state):
@@ -137,9 +149,15 @@ class Node(object):
         ]
         for child in children:
             if child in state_space:
-                state = state_space[child]
+                state = self.get_state_from_state_space(child, state_space)
                 node = self.create_successor(state)
                 self.successors.append(node)
+
+    def get_state_from_state_space(self, child, state_space):
+        """c
+        """
+        return state_space[child]
+
 
     def create_successor(self, state):
         """c
@@ -157,7 +175,7 @@ class Node(object):
         return self.state.manhattan_distance_from(state)
 
 
-class Search(object):
+class Agent(object):
     """This class represents all of the data and functions associated
     with a search, such as the frontier and state space.
         start_state_symbol --> char, defines the start state in the
@@ -212,7 +230,7 @@ class Search(object):
         self.heap_counter = itertools.count()
         self.status = 'Failed'
         # Used to customize printout
-        self.SHOW_VISITED = True
+        self.SHOW_VISITED = False
         self.SHOW_FRONTIER = False
 
 
@@ -290,7 +308,7 @@ class Search(object):
         for index in range(len(frontier)):
             frontier_node = frontier[index][2] # where child is
             # TODO standardize schema of heap item in class scope
-            if frontier_node.state == node.state:
+            if frontier_node.state.compare(node.state):
                 if frontier_node.generate_path_cost() \
                         < node.generate_path_cost():
                     frontier[index] = node
@@ -319,7 +337,7 @@ class Search(object):
             return self.already_in_heap(node, frontier=frontier)
         for index in range(len(frontier)):
             frontier_node = frontier[index]
-            if frontier_node.state == node.state:
+            if frontier_node.state.compare(node.state):
                 if frontier_node.generate_path_cost() \
                         < node.generate_path_cost():
                     frontier[index] = node
@@ -335,9 +353,9 @@ class Search(object):
         """
         if visited_states == None:
             visited_states = self.visited_states
-
-        if node.state in visited_states:
-            return True
+        for visited in visited_states:
+            if node.state.compare(visited):
+                return True
         return False
 
 
