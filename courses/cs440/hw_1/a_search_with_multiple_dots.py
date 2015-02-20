@@ -18,6 +18,15 @@ class DotState(State):
         super(DotState, self).__init__(coordinates, state_type)
         self.acquired_dots = acquired_dots
 
+    def compare(self, other_state):
+        """c
+        """
+        if self.coordinates == other_state.coordinates:
+            if self.state_type == other_state.state_type:
+                if self.acquired_dots == other_state.acquired_dots:
+                    return True
+        return False
+
 
 class DotNode(Node):
     """c
@@ -26,8 +35,18 @@ class DotNode(Node):
         """c
         """
         super(DotNode, self).__init__(state, parent, cost)
+        self.coordinates = state.coordinates
+        self.state_type = state.state_type
+        self.parent = parent
+        self.cost = cost
         self.acquired_dots = []
-
+        del self.state
+        self.state = None
+        self.acquired_dots = set(self.generate_acquired_dots())
+        self.state = DotState(
+            self.coordinates,
+            self.state_type,
+            self.acquired_dots)
 
     def create_successor(self, state):
         """c
@@ -46,14 +65,9 @@ class DotNode(Node):
         elif self.parent is not None:
             acquired +=\
                 list(self.parent.generate_acquired_dots())
-        if self.state.state_type == '.': # TODO put in class scope
-            acquired.append(self.state.coordinates)
-        self.acquired_dots = set(acquired)
-        self.state = DotState(
-                self.state.coordinates,
-                self.state.state_type,
-                self.acquired_dots)
-
+        if self.state_type == '.': # TODO put in class scope
+            acquired.append(self.coordinates)
+        return acquired
 
 
 class DotSearch(Search):
@@ -122,6 +136,8 @@ class DotSearch(Search):
             if cell_text in self.dot_coordinate_symbol:
                 self.dot_coordinates.update((row, col))
             state_space[(row, col)] = current_state
+            return True
+        return False
 
 
     def valid_goal_state(self):
@@ -148,6 +164,17 @@ class DotSearch(Search):
         if goal == acquired:
             node_has_all_dots = True
         return node_has_all_dots
+
+
+    def already_visited(self, node, visited_states=None):
+        """c
+        """
+        if visited_states == None:
+            visited_states = self.visited_states
+        for state in visited_states:
+            if node.state.compare(state) == True:
+                return True
+        return False
 
 
     def search(self):
