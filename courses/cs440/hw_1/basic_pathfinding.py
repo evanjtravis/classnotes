@@ -12,7 +12,14 @@ SHOW_VISITED = False
 # through sys.argv)
 # TODO try to enact performance improvements with heap (heapq and
 # whatnot). Might cut down time for a* and gbfs execution.
-# TODO index visited states by coordinates for faster lookup. dict.
+# TODO implement pac-man ai with ghosts? inky = bfs, blinky = dfs,
+# pinky = greedy, clyde = a*, pacman = a* dot search with different
+# evaluation that is aware of ghost position. Ghosts have basic
+# pathfinding search.
+# TODO print BFS and DFS next to each other, print greedy and a* next
+# to each other --> in solution scripts.
+# TODO when generating successor states, NEVER add an anscestor state
+# unless the successors would otherwise be empty.
 class State(object):
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
@@ -25,6 +32,14 @@ class State(object):
         """
         self.coordinates = coordinates
         self.state_type = state_type
+
+
+    def greedy_heuristic(self, state):
+        """c
+        """
+        # just for now
+        #TODO allow assignable heuristic.
+        return self.manhattan_distance_from(state)
 
 
     def manhattan_distance_from(self, state):
@@ -198,8 +213,9 @@ class Search(object):
         self.search_file = search_file
         self.state_space = {}
         self.heap_counter = itertools.count()
+        self.status = 'Failed'
         # Used to customize printout
-        self.SHOW_VISITED = False
+        self.SHOW_VISITED = True
         self.SHOW_FRONTIER = False
 
 
@@ -210,8 +226,7 @@ class Search(object):
         The evaluation function = heuristic result + path cost
             Returns the next node to be expanded
         """
-        frontier = self.frontier
-        next_node = heapq.heappop(frontier)
+        next_node = self.get_from_frontier_heap()
         #next_node = frontier[0]
         #index_to_pop = None
         #for index in range(len(frontier)):
@@ -227,6 +242,11 @@ class Search(object):
         #next_node = frontier.pop(index_to_pop)
         return next_node
 
+
+    def get_from_frontier_heap(self):
+        """c
+        """
+        return heapq.heappop(self.frontier)[2]
 
     def _breadth_first_search(self):
         """Expands the shallowest unexpanded node.
@@ -253,23 +273,35 @@ class Search(object):
             Returns the next node to be expanded.
         """
         frontier = self.frontier
-        next_node = heapq.heappop(frontier)
-        #next_node = frontier[0]
-        #index_to_pop = None
-        #goal = self.goal_state
-        #for index in range(len(frontier)):
-        #    node = frontier[index]
-        #    if (node.manhattan_distance_from(goal) < \
-        #            next_node.manhattan_distance_from(goal)):
-        #        next_node = node
-        #        index_to_pop = index
-        #if index_to_pop is None:
-        #    index_to_pop = 0
-        #next_node = frontier.pop(index_to_pop)
+        next_node = frontier[0]
+        index_to_pop = None
+        goal = self.goal_state
+        for index in range(len(frontier)):
+            node = frontier[index]
+            if (node.manhattan_distance_from(goal) < \
+                    next_node.manhattan_distance_from(goal)):
+                next_node = node
+                index_to_pop = index
+        if index_to_pop is None:
+            index_to_pop = 0
+        next_node = frontier.pop(index_to_pop)
         return next_node
 
+    def already_in_heap(self, node, frontier):
+        """c
+        """
+        for index in range(len(frontier)):
+            frontier_node = frontier[index][2] # where child is
+            # TODO standardize schema of heap item in class scope
+            if frontier_node.state == node.state:
+                if frontier_node.generate_path_cost() \
+                        < node.generate_path_cost():
+                    frontier[index] = node
+                heapq.heapify(frontier)
+                return True
+        return False
 
-    def already_in_frontier(self, node, frontier=None):
+    def already_in_frontier(self, node, search_name, frontier=None):
         """A Node is given as an argument. Determines if the Node's
         State is currently in the frontier.
         If the Node's state is already in the frontier, the path cost
@@ -281,10 +313,13 @@ class Search(object):
             return True if the node is already in the frontier,
             Else return False
         """
+        heap_searches = ['a*'] #TODO set in class scope
         if frontier == None:
             frontier = self.frontier
         if frontier == []:
             return False
+        if search_name in heap_searches:
+            return self.already_in_heap(node, frontier=frontier)
         for index in range(len(frontier)):
             frontier_node = frontier[index]
             if frontier_node.state == node.state:
@@ -327,7 +362,9 @@ class Search(object):
     def generate_maze_solution(self, path):
         """Uses the maze array to build the string printed to stdout.
         """
-        visited = self.visited_states
+        visited = []
+        for key in self.visited_states:
+            visited += self.visited_states[key]
         frontier = self.frontier
         array = copy.deepcopy(self.maze_array)
         array_string = ''
@@ -412,7 +449,7 @@ class Search(object):
         return False
 
 
-    def node_is_valid(self, node):
+    def node_is_valid(self, node, search_name):
         """A Node is given as an argument. Determines if the Node
         is valid by comparing its state with the states in the
         visited nodes list and the frontier list.
@@ -422,7 +459,7 @@ class Search(object):
         # Check if node's state already exists in visited nodes.
         # Check if node's state already exists in frontier.
         if (not self.already_visited(node)):
-            if (not self.already_in_frontier(node)):
+            if (not self.already_in_frontier(node, search_name)):
                 return True
         return False
 
@@ -435,6 +472,9 @@ class Search(object):
         """
         solutions = self.solutions_dict
         search_name = search_name.upper()
+        # Notify user of status of search
+        self.status = self.status.upper()
+        print "########## SEARCH STATUS: %s ##########" %(self.status)
         # Print the search label
         print "########## %s SEARCH RESULTS for '%s' ##########" \
                 %(search_name, self.search_file)
@@ -491,7 +531,17 @@ class Search(object):
         display results to stdout. Finally, resets the state of the
         Search object for the next search.
         """
+        # Restart the state of the Search object
+        # Restart at the beginning of the search so that these
+        # variables can be accessed and analyzed at the end of a
+        # successful or failed search.
+        self.frontier = []
+        self.visited_states = {}
+        self.count_of_expanded_nodes = 0
+        self.state_space = {}
         self.generate_state_space()
+        self.status = 'Failed'
+        #########################################
         if not self.valid_start_state():
             raise Exception("Start state '%s' not found." \
                     %(self.start_state_symbol))
@@ -514,7 +564,7 @@ class Search(object):
             current_node.generate_successors(self.state_space)
             self.count_of_expanded_nodes += 1
             for child in current_node.successors:
-                if self.node_is_valid(child):
+                if self.node_is_valid(child, search_name):
                     self.add_to_frontier(search_name, child)
             if self.frontier:
                 # Unique functions for each search called
@@ -535,28 +585,21 @@ class Search(object):
             print "'%s' search is not yet implemented. File = '%s'" \
                     %(search_name, self.search_file)
         else:
+            self.status = 'Success'
             self.generate_solutions_dict(solution_node)
             self.print_solutions_dict(search_name)
-            # Restart the state of the Search object
-            self.frontier = []
-            self.visited_states = {}
-            self.count_of_expanded_nodes = 0
-            self.state_space = {}
 
     def add_to_frontier(self, search_name, child):
         """c
         """
         # TODO reference once moved to class accessible location
-        heap_algos = ['a*', 'gbfs']
+        heap_algos = ['a*']
         frontier = self.frontier
         if search_name in heap_algos:
             priority = None
             count = next(self.heap_counter)
             if search_name is 'a*':
                 priority = self.evaluate(child)
-            elif search_name is 'gbfs':
-                priority = \
-                    child.manhattan_distance_from(self.goal_state)
             entry = [priority, count, child]
             heapq.heappush(frontier, entry)
         else:

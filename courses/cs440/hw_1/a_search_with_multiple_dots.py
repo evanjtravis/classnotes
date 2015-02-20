@@ -4,7 +4,8 @@
 # TODO superfy as many functions as possible.
 # TODO create functions to debug. First, just generate state space and
 # whatnot, then create fake path and see successors of selected node.
-# TODO further index visited nodes by length of visited dots.
+# TODO getting state space really out of whack. Need to rethink how to
+# generate.
 import copy
 from basic_pathfinding import State, Node, Search
 from itertools import combinations
@@ -54,7 +55,7 @@ class DotNode(Node):
         # closer to the goal. --> refactor evaluate function to choose
         # unvisited dots first.
         # Prioritize multiple unvisited dots in successors?
-        #   how would that work?
+        #   how would that work? --> prioritized in heap
         keep_list = []
         for successor in self.successors:
             if (self.valid_unvisited_nondot(successor) or \
@@ -169,18 +170,15 @@ class DotSearch(Search):
         """c
         """
         # Look for shortest distance to dot
+        # TODO Look for shortest distance to all unvisited dots
         goal = self.dot_coordinates
-        distance_of_closest_dot = None
-        for dot_coord in goal:
-            if distance_of_closest_dot == None:
-                distance_of_closest_dot = \
-                    node.manhattan_distance_from(dot_coord)
-                continue
-            man_dist = node.manhattan_distance_from(dot_coord)
-            if (man_dist < distance_of_closest_dot):
-                distance_of_closest_dot = man_dist
+        distance_of_uncollected_dots = 0
+        dots_left = goal.difference(node.state.acquired_dots)
+        for dot_coord in dots_left:
+            distance_of_uncollected_dots += \
+                node.manhattan_distance_from(dot_coord)
         path_cost = node.generate_path_cost()
-        return path_cost + distance_of_closest_dot
+        return path_cost + distance_of_uncollected_dots
 
 
     def generate_maze_solution(self, path):
@@ -302,6 +300,11 @@ class DotSearch(Search):
         """
         # Remove states with only one entrance (dead ends).
         # Should not effect dot states.
+        # TODO If a dead_end is found, add to list of dead end
+        # coordinates. Use list later to recursively remove
+        # coordinates that are not dot states and abut a dead end and
+        # one other non-dead end cell (so far). Put this in
+        # basic_pathfinding.py? Probably.
         keep_list = []
         state = states[0]
         min_entrances = 2
