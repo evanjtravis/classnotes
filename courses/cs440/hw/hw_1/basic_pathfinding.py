@@ -7,6 +7,7 @@ import itertools
 # Possibly configurable value
 SHOW_VISITED = False
 
+
 # TODO add configuration
 # TODO Extra Credit add command-line arguments (don't use optparse, just iterate
 # through sys.argv)
@@ -21,6 +22,12 @@ SHOW_VISITED = False
 # TODO implement diagonal nodes --> can have up to 8 successor states
 # TODO organize functions and whatnot by function e.g. visual or
 # searching or utilities, and then alphabetize.
+# TODO FOR REPORT: Mention how tie-breaking strategy would effect
+# different algos, e.g. for dfs, if the goal is far away on the y axis
+# but there are a bunch of dumb nodes on the x axis.
+# TODO E.C. represent wormholes --> integers 0-9 on the maze/map where
+# path can jump. The successor states of wormholes are all surrounding
+# nodes of all equal wormholes. Treat as a super-position
 class State(object):
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
@@ -108,6 +115,7 @@ class Node(object):
         self.cost = cost
         # Generated attributes
         self.successors = []
+        self.path = []
 
 
     def generate_path(self):
@@ -534,12 +542,7 @@ class Agent(object):
         # Restart at the beginning of the search so that these
         # variables can be accessed and analyzed at the end of a
         # successful or failed search.
-        self.frontier = []
-        self.visited_states = []
-        self.count_of_expanded_nodes = 0
-        self.state_space = {}
-        self.generate_state_space()
-        self.status = 'Failed'
+        self.reset()
         #########################################
         if not self.valid_start_state():
             raise Exception("Start state '%s' not found." \
@@ -604,6 +607,15 @@ class Agent(object):
         else:
             frontier.append(child)
 
+    def reset(self):
+        """c
+        """
+        self.frontier = []
+        self.visited_states = []
+        self.count_of_expanded_nodes = 0
+        self.state_space = {}
+        self.generate_state_space()
+        self.status = 'Failed'
 
 
 

@@ -8,6 +8,8 @@
 # generate.
 import copy
 from basic_pathfinding import State, Node, Agent
+
+
 class DotState(State):
     """c
     """
@@ -164,8 +166,15 @@ class DotAgent(Agent):
         node_has_all_dots = False
         acquired = current_node.acquired_dots
         goal = self.dot_coordinates
-        if goal == acquired:
+        if goal.issubset(acquired):
             node_has_all_dots = True
+        #XXX Debug
+        if not goal:
+            print "not goal"
+            raise Exception()
+        if len(acquired) > len(goal):
+            print "acquired too long"
+            raise Exception()
         return node_has_all_dots
 
 
