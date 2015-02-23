@@ -114,6 +114,8 @@ class Node(object):
         # Generated attributes
         self.successors = []
         self.path = []
+        self.heap_count = None
+        self.heap_priority = None
 
     #TODO merge generate_path and generate_path_cost
     def generate_path(self):
@@ -304,16 +306,32 @@ class Agent(object):
     def already_in_heap(self, node, frontier):
         """c
         """
+        print '(((((((((((((((((((('
+        for front in frontier:
+            print front
+        print '))))))))))))))))))))'
+        to_replace = False
+        in_frontier = False
+        index_to_pop = None
         for index in range(len(frontier)):
-            frontier_node = frontier[index][2] # where child is
+            entry = frontier[index]
+            frontier_node = entry[2] # where child is
             # TODO standardize schema of heap item in class scope
             if frontier_node.state.compare(node.state):
                 if frontier_node.generate_path_cost() \
                         < node.generate_path_cost():
-                    frontier[index] = node
-                heapq.heapify(frontier)
-                return True
-        return False
+                    to_replace = True
+                    index_to_pop = index
+                    break
+                in_frontier = True
+        if to_replace == True:
+            # Node will be added to frontier automatically during the
+            # search while loop. This function will return False in
+            # order to allow the search loop to add the replacing
+            # node.
+            frontier.pop(index_to_pop)
+            heapq.heapify(frontier)
+        return in_frontier
 
     def already_in_frontier(self, node, search_name, frontier=None):
         """A Node is given as an argument. Determines if the Node's
@@ -376,6 +394,8 @@ class Agent(object):
         frontier = self.frontier
         array = copy.deepcopy(self.maze_array)
         array_string = ''
+        if array is None:
+            return array_string
         if self.SHOW_FRONTIER == True:
             for node in frontier:
                 x, y = node.state.coordinates
@@ -427,7 +447,7 @@ class Agent(object):
         for line in range(len(array)):
             array[line] = list(array[line])
         # Keep the array for use in printing out solution later
-        self.maze_array = array
+        self.maze_array = copy.deepcopy(array)
         # Create states from 2D array
         for row in range(len(array)):
             for col in range(len(array[row])):
@@ -467,12 +487,14 @@ class Agent(object):
         return False
 
 
-    def print_solutions_dict(self, search_name):
+    def print_solutions_dict(self, search_name, do_not_print):
         """Iterates through the keys of the solutions dictionary
         and prints the values in a readable format to stdout.
         Each solution is printed out with a lable indicating the
         search algorithm used.
         """
+        if do_not_print == True:
+            return
         solutions = self.solutions_dict
         search_name = search_name.upper()
         # Notify user of status of search
@@ -571,7 +593,7 @@ class Agent(object):
             else:
                 self.SHOW_VISITED = True
                 self.generate_solutions_dict(current_node)
-                self.print_solutions_dict(search_name)
+                self.print_solutions_dict(search_name, do_not_print)
                 raise Exception(
                     "'%s' search failed. Empty frontier." \
                             %(search_name))
@@ -580,22 +602,24 @@ class Agent(object):
 
         self.solution_node = current_node
         solution_node = self.solution_node
-        if do_not_print == False:
-            self.status = 'Success'
-            self.generate_solutions_dict(solution_node)
-            self.print_solutions_dict(search_name)
+        self.status = 'Success'
+        self.generate_solutions_dict(solution_node)
+        self.print_solutions_dict(search_name, do_not_print)
 
     def add_to_frontier(self, search_name, child):
         """c
         """
-        # TODO reference once moved to class accessible location
+        # TODO reference heap_algos once moved to class accessible
+        # location
         heap_algos = ['a*']
         frontier = self.frontier
         if search_name in heap_algos:
             priority = None
             count = next(self.heap_counter)
-            if search_name is 'a*':
+            if search_name == 'a*':
                 priority = self.evaluate(child)
+            child.heap_priority = priority
+            child.heap_count = count
             entry = [priority, count, child]
             heapq.heappush(frontier, entry)
         else:

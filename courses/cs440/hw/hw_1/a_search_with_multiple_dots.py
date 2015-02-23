@@ -7,6 +7,7 @@
 # TODO getting state space really out of whack. Need to rethink how to
 # generate.
 import copy
+#import heapq
 from basic_pathfinding import State, Node, Agent
 
 
@@ -23,7 +24,7 @@ class DotState(State):
             print "Poor state creation. Coordinates are 'None'."
             raise Exception()
         super(DotState, self).__init__(coordinates, state_type)
-        #self.acquired_dots = None
+        self.acquired_dots = None
 
 
     def compare(self, other):
@@ -31,9 +32,9 @@ class DotState(State):
         """
         if super(DotState, self).compare(other):
             return True
-          #  if self.acquired_dots:
-          #      if self.acquired_dots == other.acquired_dots:
-          #          return True
+            if self.acquired_dots:
+                if self.acquired_dots == other.acquired_dots:
+                    return True
         return False
 
 
@@ -46,15 +47,16 @@ class DotNode(Node):
         super(DotNode, self).__init__(state, parent, cost)
         self.acquired_dots = None
         self.acquired_dots = self.generate_acquired_dots()
-        #self.state.acquired_dots = self.acquired_dots
+        self.state.acquired_dots = self.acquired_dots
 
 
     def generate_acquired_dots(self):
         """c
         """
         acquired = set([])
-        if self.state.state_type == '.': # TODO put in class scope
-            acquired.update(self.state.coordinates)
+        if (self.state.state_type == '.') or \
+                (self.parent is None):# TODO put state_type class scope
+            acquired.update((self.state.coordinates,))
 
         if self.acquired_dots:
             acquired = self.acquired_dots
@@ -103,8 +105,8 @@ class DotAgent(Agent):
         node_coords = node.state.coordinates
         dots_left = goal.difference(node.acquired_dots)
         for dot_coord in dots_left:
-            node = state_space[node_coords][dot_coord]
-            total_distance_from_dots += node.generate_path_cost()
+            sol_node = state_space[node_coords][dot_coord]
+            total_distance_from_dots += sol_node.generate_path_cost()
         path_cost = node.generate_path_cost()
         return path_cost + total_distance_from_dots
 
@@ -124,9 +126,10 @@ class DotAgent(Agent):
             dot_state_space[coordx] = {}
             for y in range(len(dot_coordinates)):
                 coordy = dot_coordinates[y]
-                if x == y:
-                    dot_state_space[coordx][coordy] = 0
-                    continue
+                # No need to check if the coordinates are equal. Basic
+                # pathfinding module will just check the while loop
+                # condition, and it will function as an if condition.
+                ######################################################
                 # Get optimal path cost between points coordx and
                 # coordy
                 start = copy.copy(base_space[coordx])
@@ -175,6 +178,9 @@ class DotAgent(Agent):
             current_state = DotState((row, col), cell_text)
             if cell_text in self.start_state_symbol:
                 self.start_state = current_state
+                # Treat starting position as a dot_state to be
+                # collected.
+                self.dot_coordinates.append((row, col))
             if cell_text in self.dot_coordinate_symbol:
                 self.dot_coordinates.append((row, col))
             state_space[(row, col)] = current_state
