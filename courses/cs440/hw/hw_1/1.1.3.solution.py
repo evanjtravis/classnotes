@@ -15,7 +15,7 @@ def main():
     ]
     for search_file in search_files:
         agent = DotAgent(search_file)
-        agent.search()
+        agent.search(do_not_print=False)
 
 
 if __name__ == '__main__':

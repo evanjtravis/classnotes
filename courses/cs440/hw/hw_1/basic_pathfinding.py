@@ -4,8 +4,6 @@
 import copy
 import heapq
 import itertools
-# Possibly configurable value
-SHOW_VISITED = False
 
 
 # TODO add configuration
@@ -117,7 +115,7 @@ class Node(object):
         self.successors = []
         self.path = []
 
-
+    #TODO merge generate_path and generate_path_cost
     def generate_path(self):
         """Recursively works its way down the Node's ancestors to
         the start state, aggregating the coordinates of each node
@@ -161,10 +159,10 @@ class Node(object):
                 node = self.create_successor(state)
                 self.successors.append(node)
 
-    def get_state_from_state_space(self, child, state_space):
+    def get_state_from_state_space(self, coords, state_space):
         """c
         """
-        return state_space[child]
+        return copy.copy(state_space[coords])
 
 
     def create_successor(self, state):
@@ -208,7 +206,7 @@ class Agent(object):
                               resultant states.
 
     """
-    def __init__(self, search_file):
+    def __init__(self, search_file, state_space=None):
         """Initialize the search_file of the Search.
         """
         # Possible Configurable Values
@@ -233,8 +231,14 @@ class Agent(object):
         self.start_state = None
         self.start_node = None
         self.goal_state = None
+        self.solution_node = None
         self.search_file = search_file
-        self.state_space = {}
+        # Saves time by not generating pre-made state_space
+        if state_space == None:
+            self.state_space = {}
+        else:
+            self.state_space = state_space
+        self.base_state_space = {}
         self.heap_counter = itertools.count()
         self.status = 'Failed'
         # Used to customize printout
@@ -250,19 +254,6 @@ class Agent(object):
             Returns the next node to be expanded
         """
         next_node = self.get_from_frontier_heap()
-        #next_node = frontier[0]
-        #index_to_pop = None
-        #for index in range(len(frontier)):
-        #    node = frontier[index]
-        #    next_node_evaluation = self.evaluate(next_node)
-        #    node_evaluation = self.evaluate(node)
-        #    if (node_evaluation < \
-        #            next_node_evaluation):
-        #        next_node = node
-        #        index_to_pop = index
-        #if index_to_pop is None:
-        #    index_to_pop = 0
-        #next_node = frontier.pop(index_to_pop)
         return next_node
 
 
@@ -428,7 +419,6 @@ class Agent(object):
             search_file = self.search_file
         else:
             raise Exception("Invalid search file '%s'" %(search_file))
-        print "Generating base state space of '%s'." %(search_file)
         base_state_count = 0
         f = open(search_file, 'r')
         array = f.read().splitlines()
@@ -443,8 +433,7 @@ class Agent(object):
             for col in range(len(array[row])):
                 if self.add_to_state_space(array, row, col):
                     base_state_count += 1
-        print "Finished generating base state space."
-        print "\tNumber of Base States: %d" %(base_state_count)
+        self.base_state_space = copy.deepcopy(self.state_space)
         return base_state_count
 
     def add_to_state_space(self, array, row, col):
@@ -522,7 +511,7 @@ class Agent(object):
     def has_reached_goal(self, current_node):
         """c
         """
-        if current_node.state is not self.goal_state:
+        if not current_node.state.compare(self.goal_state):
             return False
         return True
 
@@ -532,7 +521,10 @@ class Agent(object):
         self.visited_states.append(state)
 
 
-    def search(self, search_name):
+    def search(self,
+               search_name,
+               new_state_space=True,
+               do_not_print=True):
         """The main driver of the program. Generates needed data for
         the search then calls the necessary functions to aggregate and
         display results to stdout. Finally, resets the state of the
@@ -543,6 +535,11 @@ class Agent(object):
         # variables can be accessed and analyzed at the end of a
         # successful or failed search.
         self.reset()
+        if (new_state_space == True):
+            self.state_space = {}
+            self.generate_state_space()
+        if not self.state_space:
+            self.generate_state_space()
         #########################################
         if not self.valid_start_state():
             raise Exception("Start state '%s' not found." \
@@ -581,12 +578,9 @@ class Agent(object):
             if current_node is None:
                 break
 
-        solution_node = current_node
-
-        if solution_node is None:
-            print "'%s' search is not yet implemented. File = '%s'" \
-                    %(search_name, self.search_file)
-        else:
+        self.solution_node = current_node
+        solution_node = self.solution_node
+        if do_not_print == False:
             self.status = 'Success'
             self.generate_solutions_dict(solution_node)
             self.print_solutions_dict(search_name)
@@ -613,9 +607,8 @@ class Agent(object):
         self.frontier = []
         self.visited_states = []
         self.count_of_expanded_nodes = 0
-        self.state_space = {}
-        self.generate_state_space()
         self.status = 'Failed'
-
+        self.heap_counter = itertools.count()
+        self.solution_node = None
 
 

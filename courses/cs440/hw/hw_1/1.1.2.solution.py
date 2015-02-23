@@ -18,7 +18,7 @@ def main():
     for search_file in search_files:
         agent = Agent(search_file)
         for search_type in search_types:
-            agent.search(search_type)
+            agent.search(search_type, do_not_print=False)
 
 
 if __name__ == '__main__':

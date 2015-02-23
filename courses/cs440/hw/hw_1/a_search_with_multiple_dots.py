@@ -13,19 +13,27 @@ from basic_pathfinding import State, Node, Agent
 class DotState(State):
     """c
     """
-    def __init__(self, coordinates, state_type):
+    def __init__(self, coordinates=None, state_type=None, state=None):
         """c
         """
+        if isinstance(state, State):
+            coordinates = state.coordinates
+            state_type = state.state_type
+        if coordinates is None:
+            print "Poor state creation. Coordinates are 'None'."
+            raise Exception()
         super(DotState, self).__init__(coordinates, state_type)
-        self.acquired_dots = None
+        #self.acquired_dots = None
+
 
     def compare(self, other):
         """c
         """
         if super(DotState, self).compare(other):
-            if self.acquired_dots:
-                if self.acquired_dots == other.acquired_dots:
-                    return True
+            return True
+          #  if self.acquired_dots:
+          #      if self.acquired_dots == other.acquired_dots:
+          #          return True
         return False
 
 
@@ -38,31 +46,8 @@ class DotNode(Node):
         super(DotNode, self).__init__(state, parent, cost)
         self.acquired_dots = None
         self.acquired_dots = self.generate_acquired_dots()
-        self.state.acquired_dots = self.acquired_dots
-        # Debug
-        if self.acquired_dots == None:
-            print 'x'
-            raise Exception()
-        if self.state.acquired_dots == None:
-            print 'y'
-            raise Exception()
+        #self.state.acquired_dots = self.acquired_dots
 
-    def get_state_from_state_space(self, child, state_space):
-        """c
-        """
-        # MUY IMPORTANTE return a COPY of the state
-        template = state_space[child]
-        return DotState(
-            coordinates=child,
-            state_type=template.state_type)
-
-    def create_successor(self, state):
-        """c
-        """
-        return DotNode(
-            state=state,
-            parent=self,
-            cost=1)
 
     def generate_acquired_dots(self):
         """c
@@ -78,6 +63,23 @@ class DotNode(Node):
         return acquired
 
 
+    def generate_successors(self, state_space):
+        """c
+        """
+        # Skip generating successors if already generated
+        if self.successors:
+            return
+        coords = self.state.coordinates
+        adjacent = state_space[coords]
+        for coord in adjacent:
+            base_node = adjacent[coord]
+            node = DotNode(
+                state=DotState(state=base_node.state),
+                parent=self,
+                cost=base_node.generate_path_cost())
+            self.successors.append(node)
+
+
 class DotAgent(Agent):
     """c
     """
@@ -85,7 +87,7 @@ class DotAgent(Agent):
         """c
         """
         super(DotAgent, self).__init__(search_file)
-        self.dot_coordinates = set([])
+        self.dot_coordinates = []
         self.dot_coordinate_symbol = self.goal_state_symbol
 
 
@@ -94,33 +96,69 @@ class DotAgent(Agent):
         """
         # Look for shortest distance to dot
         # TODO Look for shortest distance to all unvisited dots
+        state_space = self.state_space
         goal = self.dot_coordinates
-        avg_distance_from_dots = 0
+        total_distance_from_dots = 0
         node.generate_acquired_dots()
+        node_coords = node.state.coordinates
         dots_left = goal.difference(node.acquired_dots)
         for dot_coord in dots_left:
-            avg_distance_from_dots += \
-                    node.manhattan_distance_from(dot_coord)
-        avg_distance_from_dots = int(avg_distance_from_dots/\
-                                     len(dots_left))
+            node = state_space[node_coords][dot_coord]
+            total_distance_from_dots += node.generate_path_cost()
         path_cost = node.generate_path_cost()
-        return path_cost + avg_distance_from_dots
+        return path_cost + total_distance_from_dots
+
+
+    def generate_state_space(self, search_file=None):
+        """c
+        """
+        super(DotAgent, self).generate_state_space()
+        self.dot_coordinates = set(self.dot_coordinates)
+        # Generate adjacency matrix of spaces with dots in them.
+        base_space = self.base_state_space
+        dot_state_space = {}
+        agent = Agent(search_file, state_space=base_space)
+        dot_coordinates = list(self.dot_coordinates)
+        for x in range(len(dot_coordinates)):
+            coordx = dot_coordinates[x]
+            dot_state_space[coordx] = {}
+            for y in range(len(dot_coordinates)):
+                coordy = dot_coordinates[y]
+                if x == y:
+                    dot_state_space[coordx][coordy] = 0
+                    continue
+                # Get optimal path cost between points coordx and
+                # coordy
+                start = copy.copy(base_space[coordx])
+                goal = copy.copy(base_space[coordy])
+                agent.goal_state = goal
+                agent.start_state = start
+                agent.search(
+                    'a*',
+                    new_state_space=False)
+                solution = agent.solution_node
+                dot_state_space[coordx][coordy] = solution
+        # Overwrite base state space with adjacency matrix.
+        # States should now be generated on the fly as needed based
+        # off of the adjacency matrix.
+        self.state_space = dot_state_space
+
+
 
 
     def generate_maze_solution(self, path):
         """Uses the maze array to build the string printed to stdout.
         """
-        #step = 48 # The point at which '0' is ascii encoded
+        step = 48 # The point at which '0' is ascii encoded
         array = copy.deepcopy(self.maze_array)
         array_string = ''
-        #if len(path) > 62: # Number of characters from '0' to 'z'
-        #    array_string = '* Path very long. *'
-        #    return array_string
+        if len(path) > 62: # Number of characters from '0' to 'z'
+            array_string = '* Path very long. *'
+            return array_string
         for coordinate in path:
             x, y = coordinate
-            #array[x][y] = chr(step)
-            array[x][y] = 'x' #TODO ERASE LINE
-            #step += 1
+            array[x][y] = chr(step)
+            step += 1
         for row in range(len(array)):
             for col in range(len(array[row])):
                 array_string += array[row][col]
@@ -130,7 +168,6 @@ class DotAgent(Agent):
 
     def add_to_state_space(self, array, row, col):
         """c
-
         """
         state_space = self.state_space
         cell_text = array[row][col]
@@ -139,7 +176,7 @@ class DotAgent(Agent):
             if cell_text in self.start_state_symbol:
                 self.start_state = current_state
             if cell_text in self.dot_coordinate_symbol:
-                self.dot_coordinates.update((row, col))
+                self.dot_coordinates.append((row, col))
             state_space[(row, col)] = current_state
             return True
         return False
@@ -168,23 +205,16 @@ class DotAgent(Agent):
         goal = self.dot_coordinates
         if goal.issubset(acquired):
             node_has_all_dots = True
-        #XXX Debug
-        if not goal:
-            print "not goal"
-            raise Exception()
-        if len(acquired) > len(goal):
-            print "acquired too long"
-            raise Exception()
         return node_has_all_dots
 
 
-    def search(self):
+    def search(self, do_not_print=True):
         """The main driver of the program. Generates needed data for
         the search then calls the necessary functions to aggregate and
         display results to stdout. Finally, resets the state of the
         Search object for the next search.
         """
-        super(DotAgent, self).search('a*')
+        super(DotAgent, self).search('a*', do_not_print)
 
 
 #EOF
