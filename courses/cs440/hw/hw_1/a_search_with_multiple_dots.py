@@ -90,7 +90,7 @@ class DotAgent(Agent):
         self.dot_coordinate_symbol = self.goal_state_symbol
 
 
-    def evaluate(self, node, option='e'):
+    def evaluate(self, node, option='a'):
         """c
         """
         evaluation = None
@@ -103,6 +103,7 @@ class DotAgent(Agent):
             return 0
         path_cost = node.generate_path_cost()
         # OPTION A: get total distance from unvisited nodes
+        # 27, 4
         if option == 'a':
             total_distance_from_dots = 0
             for dot_coord in dots_left:
@@ -110,6 +111,7 @@ class DotAgent(Agent):
                 total_distance_from_dots += sol_node.generate_path_cost()
             evaluation = path_cost + total_distance_from_dots
         #OPTION B: distance to closest unvisited dot
+        # 33, 6
         elif option == 'b':
             least_dist = None
             for dot_coord in dots_left:
@@ -121,6 +123,7 @@ class DotAgent(Agent):
                 least_dist = min([sol_cost, least_dist])
             evaluation = path_cost + least_dist
         #OPTION C: average distance of unvisited dots
+        # 33, 6
         elif option == 'c':
             avg_distance_from_dots = 0
             for dot_coord in dots_left:
@@ -130,6 +133,7 @@ class DotAgent(Agent):
                 int(avg_distance_from_dots/len(dots_left))
             evaluation = path_cost + avg_distance_from_dots
         #OPTION D: closest distance multiplied by length of dots_left
+        # 33, 6
         elif option == 'd':
             least_dist = None
             for dot_coord in dots_left:
@@ -141,6 +145,7 @@ class DotAgent(Agent):
                 least_dist = min([sol_cost, least_dist])
             evaluation = path_cost + (least_dist * len(dots_left))
         #OPTION E: just the distance from closest node: no path cost
+        # 45, 7
         elif option == 'e':
             least_dist = None
             for dot_coord in dots_left:
@@ -151,7 +156,6 @@ class DotAgent(Agent):
                 sol_cost = sol_node.generate_path_cost()
                 least_dist = min([sol_cost, least_dist])
             evaluation = least_dist
-        print evaluation
         return evaluation
 
 
@@ -194,12 +198,13 @@ class DotAgent(Agent):
 
 
 
-    def generate_maze_solution(self, path):
+    def generate_maze_solution(self, node):
         """Uses the maze array to build the string printed to stdout.
         """
         step = 48 # The point at which '0' is ascii encoded
         array = copy.deepcopy(self.maze_array)
         array_string = ''
+        path = node.generate_path()
         if len(path) > 62: # Number of characters from '0' to 'z'
             array_string = '* Path very long. *'
             return array_string
@@ -265,7 +270,7 @@ class DotAgent(Agent):
         display results to stdout. Finally, resets the state of the
         Search object for the next search.
         """
-        super(DotAgent, self).search('a*', do_not_print)
+        super(DotAgent, self).search('a*', do_not_print=do_not_print)
 
 
 #EOF

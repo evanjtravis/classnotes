@@ -387,9 +387,10 @@ class Agent(object):
         return man_dist + path_cost
 
 
-    def generate_maze_solution(self, path):
+    def generate_maze_solution(self, node):
         """Uses the maze array to build the string printed to stdout.
         """
+        path = node.generate_path()
         visited = self.visited_states
         frontier = self.frontier
         array = copy.deepcopy(self.maze_array)
@@ -420,8 +421,8 @@ class Agent(object):
             Returns the solutions dictionary.
         """
         solutions = self.solutions_dict
-        path = solution_node.generate_path()
-        solutions['Maze Solution'] = self.generate_maze_solution(path)
+        solutions['Maze Solution'] = self.generate_maze_solution(
+            solution_node)
         solutions['Path Cost'] = solution_node.generate_path_cost()
         solutions['Expanded Node Count'] = \
             self.count_of_expanded_nodes
@@ -601,9 +602,8 @@ class Agent(object):
                 break
 
         self.solution_node = current_node
-        solution_node = self.solution_node
         self.status = 'Success'
-        self.generate_solutions_dict(solution_node)
+        self.generate_solutions_dict(current_node)
         self.print_solutions_dict(search_name, do_not_print)
 
     def add_to_frontier(self, search_name, child):
