@@ -43,10 +43,10 @@ class State(object):
     def compare(self, other):
         """c
         """
+        same = False
         if self.coordinates == other.coordinates:
-            if self.state_type == other.state_type:
-                return True
-        return False
+            same = True
+        return same
 
 
     def greedy_heuristic(self, state):
@@ -116,6 +116,8 @@ class Node(object):
         self.path = []
         self.heap_count = None
         self.heap_priority = None
+        self.total_path_cost = 0
+        self.total_path_cost = self.generate_path_cost()
 
     #TODO merge generate_path and generate_path_cost
     def generate_path(self):
@@ -134,6 +136,8 @@ class Node(object):
         """Recursively works its way down the Node's ancestors to
         the start state, aggregating the cost of each node.
         """
+        if self.total_path_cost:
+            return self.total_path_cost
         if self.parent is not None:
             return self.cost + self.parent.generate_path_cost()
         else:
@@ -306,10 +310,6 @@ class Agent(object):
     def already_in_heap(self, node, frontier):
         """c
         """
-        print '(((((((((((((((((((('
-        for front in frontier:
-            print front
-        print '))))))))))))))))))))'
         to_replace = False
         in_frontier = False
         index_to_pop = None

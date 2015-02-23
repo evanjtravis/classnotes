@@ -7,7 +7,6 @@
 # TODO getting state space really out of whack. Need to rethink how to
 # generate.
 import copy
-#import heapq
 from basic_pathfinding import State, Node, Agent
 
 
@@ -30,12 +29,11 @@ class DotState(State):
     def compare(self, other):
         """c
         """
+        same = False
         if super(DotState, self).compare(other):
-            return True
-            if self.acquired_dots:
-                if self.acquired_dots == other.acquired_dots:
-                    return True
-        return False
+            if self.acquired_dots == other.acquired_dots:
+                same = True
+        return same
 
 
 class DotNode(Node):
@@ -54,13 +52,10 @@ class DotNode(Node):
         """c
         """
         acquired = set([])
-        if (self.state.state_type == '.') or \
-                (self.parent is None):# TODO put state_type class scope
-            acquired.update((self.state.coordinates,))
-
+        acquired.update((self.state.coordinates,))
         if self.acquired_dots:
-            acquired = self.acquired_dots
-        elif self.parent is not None:
+            return self.acquired_dots
+        if self.parent is not None:
             acquired.update(self.parent.generate_acquired_dots())
         return acquired
 
@@ -75,10 +70,12 @@ class DotNode(Node):
         adjacent = state_space[coords]
         for coord in adjacent:
             base_node = adjacent[coord]
+            state = DotState(state=base_node.state)
+            cost = base_node.generate_path_cost()
             node = DotNode(
-                state=DotState(state=base_node.state),
+                state=state,
                 parent=self,
-                cost=base_node.generate_path_cost())
+                cost=cost)
             self.successors.append(node)
 
 
@@ -93,22 +90,70 @@ class DotAgent(Agent):
         self.dot_coordinate_symbol = self.goal_state_symbol
 
 
-    def evaluate(self, node):
+    def evaluate(self, node, option='e'):
         """c
         """
-        # Look for shortest distance to dot
-        # TODO Look for shortest distance to all unvisited dots
+        evaluation = None
         state_space = self.state_space
         goal = self.dot_coordinates
-        total_distance_from_dots = 0
         node.generate_acquired_dots()
         node_coords = node.state.coordinates
         dots_left = goal.difference(node.acquired_dots)
-        for dot_coord in dots_left:
-            sol_node = state_space[node_coords][dot_coord]
-            total_distance_from_dots += sol_node.generate_path_cost()
+        if len(dots_left) == 0:
+            return 0
         path_cost = node.generate_path_cost()
-        return path_cost + total_distance_from_dots
+        # OPTION A: get total distance from unvisited nodes
+        if option == 'a':
+            total_distance_from_dots = 0
+            for dot_coord in dots_left:
+                sol_node = state_space[node_coords][dot_coord]
+                total_distance_from_dots += sol_node.generate_path_cost()
+            evaluation = path_cost + total_distance_from_dots
+        #OPTION B: distance to closest unvisited dot
+        elif option == 'b':
+            least_dist = None
+            for dot_coord in dots_left:
+                sol_node = state_space[node_coords][dot_coord]
+                if least_dist == None:
+                    least_dist = sol_node.generate_path_cost()
+                    continue
+                sol_cost = sol_node.generate_path_cost()
+                least_dist = min([sol_cost, least_dist])
+            evaluation = path_cost + least_dist
+        #OPTION C: average distance of unvisited dots
+        elif option == 'c':
+            avg_distance_from_dots = 0
+            for dot_coord in dots_left:
+                sol_node = state_space[node_coords][dot_coord]
+                avg_distance_from_dots += sol_node.generate_path_cost()
+            avg_distance_from_dots = \
+                int(avg_distance_from_dots/len(dots_left))
+            evaluation = path_cost + avg_distance_from_dots
+        #OPTION D: closest distance multiplied by length of dots_left
+        elif option == 'd':
+            least_dist = None
+            for dot_coord in dots_left:
+                sol_node = state_space[node_coords][dot_coord]
+                if least_dist == None:
+                    least_dist = sol_node.generate_path_cost()
+                    continue
+                sol_cost = sol_node.generate_path_cost()
+                least_dist = min([sol_cost, least_dist])
+            evaluation = path_cost + (least_dist * len(dots_left))
+        #OPTION E: just the distance from closest node: no path cost
+        elif option == 'e':
+            least_dist = None
+            for dot_coord in dots_left:
+                sol_node = state_space[node_coords][dot_coord]
+                if least_dist == None:
+                    least_dist = sol_node.generate_path_cost()
+                    continue
+                sol_cost = sol_node.generate_path_cost()
+                least_dist = min([sol_cost, least_dist])
+            evaluation = least_dist
+        print evaluation
+        return evaluation
+
 
 
     def generate_state_space(self, search_file=None):
