@@ -13,7 +13,11 @@ from basic_pathfinding import State, Node, Agent
 class DotState(State):
     """c
     """
-    def __init__(self, coordinates=None, state_type=None, state=None):
+    def __init__(
+            self,
+            coordinates=None,
+            state_type=None,
+            state=None):
         """c
         """
         if isinstance(state, State):
@@ -88,9 +92,12 @@ class DotAgent(Agent):
         super(DotAgent, self).__init__(search_file)
         self.dot_coordinates = []
         self.dot_coordinate_symbol = self.goal_state_symbol
+        self.loop_space = {}
+        self.corridors = []
 
 
-    def evaluate(self, node, option='a'):
+    #def evaluate(self, node, option='a'):
+    def evaluate(self, node):
         """c
         """
         evaluation = None
@@ -103,60 +110,165 @@ class DotAgent(Agent):
             return 0
         path_cost = node.generate_path_cost()
         # OPTION A: get total distance from unvisited nodes
-        # 27, 4
-        if option == 'a':
-            total_distance_from_dots = 0
-            for dot_coord in dots_left:
-                sol_node = state_space[node_coords][dot_coord]
-                total_distance_from_dots += sol_node.generate_path_cost()
-            evaluation = path_cost + total_distance_from_dots
+        # Path = 27, Expanded Node Count = 4
+        #if option == 'a':
+        total_distance_from_dots = 0
+        for dot_coord in dots_left:
+            sol_node = state_space[node_coords][dot_coord]
+            total_distance_from_dots += sol_node.generate_path_cost()
+        evaluation = path_cost + total_distance_from_dots
         #OPTION B: distance to closest unvisited dot
         # 33, 6
-        elif option == 'b':
-            least_dist = None
-            for dot_coord in dots_left:
-                sol_node = state_space[node_coords][dot_coord]
-                if least_dist == None:
-                    least_dist = sol_node.generate_path_cost()
-                    continue
-                sol_cost = sol_node.generate_path_cost()
-                least_dist = min([sol_cost, least_dist])
-            evaluation = path_cost + least_dist
+        #elif option == 'b':
+        #    least_dist = None
+        #    for dot_coord in dots_left:
+        #        sol_node = state_space[node_coords][dot_coord]
+        #        if least_dist == None:
+        #            least_dist = sol_node.generate_path_cost()
+        #            continue
+        #        sol_cost = sol_node.generate_path_cost()
+        #        least_dist = min([sol_cost, least_dist])
+        #    evaluation = path_cost + least_dist
         #OPTION C: average distance of unvisited dots
         # 33, 6
-        elif option == 'c':
-            avg_distance_from_dots = 0
-            for dot_coord in dots_left:
-                sol_node = state_space[node_coords][dot_coord]
-                avg_distance_from_dots += sol_node.generate_path_cost()
-            avg_distance_from_dots = \
-                int(avg_distance_from_dots/len(dots_left))
-            evaluation = path_cost + avg_distance_from_dots
+        #elif option == 'c':
+        #    avg_distance_from_dots = 0
+        #    for dot_coord in dots_left:
+        #        sol_node = state_space[node_coords][dot_coord]
+        #        avg_distance_from_dots += sol_node.generate_path_cost()
+        #    avg_distance_from_dots = \
+        #        int(avg_distance_from_dots/len(dots_left))
+        #    evaluation = path_cost + avg_distance_from_dots
         #OPTION D: closest distance multiplied by length of dots_left
         # 33, 6
-        elif option == 'd':
-            least_dist = None
-            for dot_coord in dots_left:
-                sol_node = state_space[node_coords][dot_coord]
-                if least_dist == None:
-                    least_dist = sol_node.generate_path_cost()
-                    continue
-                sol_cost = sol_node.generate_path_cost()
-                least_dist = min([sol_cost, least_dist])
-            evaluation = path_cost + (least_dist * len(dots_left))
+        #elif option == 'd':
+        #    least_dist = None
+        #    for dot_coord in dots_left:
+        #        sol_node = state_space[node_coords][dot_coord]
+        #        if least_dist == None:
+        #            least_dist = sol_node.generate_path_cost()
+        #            continue
+        #        sol_cost = sol_node.generate_path_cost()
+        #        least_dist = min([sol_cost, least_dist])
+        #    evaluation = path_cost + (least_dist * len(dots_left))
         #OPTION E: just the distance from closest node: no path cost
         # 45, 7
-        elif option == 'e':
-            least_dist = None
-            for dot_coord in dots_left:
-                sol_node = state_space[node_coords][dot_coord]
-                if least_dist == None:
-                    least_dist = sol_node.generate_path_cost()
-                    continue
-                sol_cost = sol_node.generate_path_cost()
-                least_dist = min([sol_cost, least_dist])
-            evaluation = least_dist
+        #elif option == 'e':
+        #    least_dist = None
+        #    for dot_coord in dots_left:
+        #        sol_node = state_space[node_coords][dot_coord]
+        #        if least_dist == None:
+        #            least_dist = sol_node.generate_path_cost()
+        #            continue
+        #        sol_cost = sol_node.generate_path_cost()
+        #        least_dist = min([sol_cost, least_dist])
+        #    evaluation = least_dist
         return evaluation
+
+
+    def look_for_loops(self):
+        """c
+        """
+        # Generate sub_searches from loops.
+        #####################################
+        # state space before adjacency matrix
+        state_space = self.state_space
+        corridors = self.corridors
+        adjacent_loops = {}
+        # First, mark all cooridors (proto-loops)
+        for coords in state_space:
+            state = state_space[coords]
+            entrances = state.get_entrance_count(state_space)
+            # if requires backtracking to access rest of search:
+            #   THEN add to loops list and adjacent_loops dict
+            #   Assumptions:
+            #       a) Agent cannot search diagonally
+            #       b) Corners are complete
+            #           i.e. all walls share an end with another wall.
+            #
+            #           %%%    --> THIS is a complete wall
+            #           %
+            #           %
+            #
+            #            %%    --> THIS is NOT a complete wall
+            #           %
+            #           %
+            if entrances <= 2 and state.state_type == '.':
+                # TODO put '.' in class scope
+                corridors.append(state)
+                adjacent_loops[coords] = set()
+
+        print '############################'
+        for coord in adjacent_loops:
+            print "### ",
+            print coord,
+            print "### "
+            for adjacent in adjacent_loops[coord]:
+                print "\t",
+                print adjacent
+        print '############################'
+        # Record sets of adjacent corridors
+        for state in corridors:
+            state_coords = state.coordinates
+            for entry in state.entrances:
+                entry_coords, _ = entry
+                # Update each corridor's adjacency lists
+                if entry_coords in adjacent_loops:
+                    adjacent_loops[entry_coords].update((state_coords,))
+                    adjacent_loops[state_coords].update((entry_coords,))
+
+        # Consolidate corridors into larger corridors. Achieve this by
+        # iterating through corridors again.
+        # FOR EACH corridor
+        #   If not adjacent to anything: leave alone
+        #   If adjacent:
+        #       FOR EACH adjacent coordinate
+        #           If coordinate exists in adjacent_loops:
+        #               update that coordinate's adjacent list
+        #               delete corridor from adjacent_loops
+        #           Elif coordinate doesn't exist in adjacent_loops:
+        #               continue
+        #           If none of the coordinates exist:
+        #               keep this corridor
+        print '**************************'
+        for coord in adjacent_loops:
+            print "### ",
+            print coord,
+            print "### "
+            for adjacent in adjacent_loops[coord]:
+                print "\t",
+                print adjacent
+        print '***************************'
+        consolidated = True
+        state_coords = None
+        while consolidated == True:
+            consolidated = False
+            for state in corridors:
+                state_coords = state.coordinates
+                if state_coords in adjacent_loops:
+                    if not adjacent_loops[state_coords]:
+                        continue
+                    for adjacent in adjacent_loops[state_coords]:
+                        if adjacent in adjacent_loops:
+                            adjacent_loops[adjacent].update(\
+                                adjacent_loops[state_coords])
+                            consolidated = True
+                            break
+                        else:
+                            continue
+            if consolidated == True:
+                del(adjacent_loops[state_coords])
+
+        print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+        for coord in adjacent_loops:
+            print "### ",
+            print coord,
+            print "### "
+            for adjacent in adjacent_loops[coord]:
+                print "\t",
+                print adjacent
+        print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+        raise Exception()
 
 
 
@@ -165,7 +277,11 @@ class DotAgent(Agent):
         """
         super(DotAgent, self).generate_state_space()
         self.dot_coordinates = set(self.dot_coordinates)
+        print '................................'
+        print self.dot_coordinates
+        print '................................'
         # Generate adjacency matrix of spaces with dots in them.
+        self.look_for_loops()
         base_space = self.base_state_space
         dot_state_space = {}
         agent = Agent(search_file, state_space=base_space)
@@ -194,8 +310,6 @@ class DotAgent(Agent):
         # States should now be generated on the fly as needed based
         # off of the adjacency matrix.
         self.state_space = dot_state_space
-
-
 
 
     def generate_maze_solution(self, node):

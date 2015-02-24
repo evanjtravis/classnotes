@@ -38,6 +38,12 @@ class State(object):
         """
         self.coordinates = coordinates
         self.state_type = state_type
+        # Used for dot searching algorithm
+        # TODO Possibly configurable values
+        self._diagonal_symbol = 'd'
+        self._cardinal_symbol = 'c'
+        ####################################
+        self.entrances = set([])
 
 
     def compare(self, other):
@@ -76,21 +82,64 @@ class State(object):
         return (abs(x1 - x2) + abs(y1 - y2))
 
 
-    def get_entrance_count(self, state_keys):
+    def generate_entrance_count(self, state_space):
         """c
         """
+        entrances = []
         entrance_count = 0
+        if self.entrances:
+            return len(self.entrances)
         x, y = self.coordinates
-        entrances = [
+        cardinal_entrances = [
             (x - 1, y),
             (x + 1, y),
             (x, y + 1),
-            (x, y - 1)
+            (x, y - 1),
         ]
-        for entre in entrances:
-            if entre in state_keys:
+        # Have to check diagonals as well, case in point, corners.
+        diagonal_entrances = [
+            (x - 1, y - 1),
+            (x + 1, y + 1),
+            (x - 1, y + 1),
+            (x + 1, y - 1)
+        ]
+        for entry in cardinal_entrances:
+            if entry in state_space:
+                # Mark with 'c' for 'cardinal'
+                entrances.append((entry, self._cardinal_symbol))
                 entrance_count += 1
+        for entry in diagonal_entrances:
+            if entry in state_space:
+                # Mark with 'd' for 'diagonal'
+                entrances.append((entry, self._diagonal_symbol))
+                entrance_count += 1
+        self.entrances = set(entrances)
         return entrance_count
+
+    def get_entrance_count(
+            self,
+            state_space,
+            cardinal=True,
+            diagonal=False):
+        """c
+        """
+        count = 0
+        if not (cardinal or diagonal):
+            return count
+        if not self.entrances:
+            self.generate_entrance_count(state_space)
+        if (cardinal and diagonal):
+            return len(self.entrances)
+        else:
+            for entry in self.entrances:
+                _, entry_type = entry
+                if (cardinal and entry_type == \
+                    self._cardinal_symbol):
+                    count += 1
+                elif (diagonal and entry_type == \
+                      self._diagonal_symbol):
+                    count += 1
+            return count
 
 
 class Node(object):
