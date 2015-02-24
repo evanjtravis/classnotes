@@ -555,7 +555,7 @@ class Agent(object):
                 %(search_name, self.search_file)
         # Print the solutions dictionary
         for key in solutions.keys():
-            print "%25s:\n%s" %(key, solutions[key])
+            print "%s: %s" %(key, solutions[key])
 
 
     def generate_start_node(self):

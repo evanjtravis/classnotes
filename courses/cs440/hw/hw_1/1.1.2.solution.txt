@@ -1,11 +1,8 @@
 ########## SEARCH STATUS: SUCCESS ##########
 ########## GBFS SEARCH RESULTS for 'designed_map_1.txt' ##########
-                Path Cost:
-27
-      Expanded Node Count:
-985
-            Maze Solution:
-%%%%%%%%%%%% .                           %
+Path Cost: 27
+Expanded Node Count: 985
+Maze Solution: %%%%%%%%%%%% .                           %
 %%%%%%%%%%% ..%%%%%%%%%%%%%%%%%%%%%%%%    %
 %%%%%%%%%% %.%                             %
 %%%%%%%%%  %.%                              %
@@ -47,12 +44,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## A* SEARCH RESULTS for 'designed_map_1.txt' ##########
-                Path Cost:
-27
-      Expanded Node Count:
-43
-            Maze Solution:
-%%%%%%%%%%%% .                           %
+Path Cost: 27
+Expanded Node Count: 43
+Maze Solution: %%%%%%%%%%%% .                           %
 %%%%%%%%%%% ..%%%%%%%%%%%%%%%%%%%%%%%%    %
 %%%%%%%%%% %.%                             %
 %%%%%%%%%  %.%                              %
@@ -94,12 +88,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## GBFS SEARCH RESULTS for 'designed_map_2.txt' ##########
-                Path Cost:
-72
-      Expanded Node Count:
-72
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 72
+Expanded Node Count: 72
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                               .%
 %                                               .%
 %                                               .%
@@ -130,12 +121,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## A* SEARCH RESULTS for 'designed_map_2.txt' ##########
-                Path Cost:
-72
-      Expanded Node Count:
-1247
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 72
+Expanded Node Count: 1247
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                               .%
 %                                               .%
 %                                               .%

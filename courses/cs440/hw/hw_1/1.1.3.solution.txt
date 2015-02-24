@@ -1,32 +1,8 @@
-!!!!!!!!!!!!!!!!!!!!!!!!
-
-    Proof of concept showing consolidated loop states.
-The file used is 'small_search.txt'.
-Future steps would include:
-    1) Generating spans, where a span is an area of the maze that is
-       encased by loop states.
-    2) Determining the start and end state for the loop where:
-            i) The coordinates are equal (a true loop)
-           ii) The coordinates are not equal (a corridor)
-    3) Executing the DotAgent search algorithm to find optimal path
-       for collecting the dots within the generated spans.
-    4) Using this data to decrease the number of dots that the main
-       search would need to be aware of. The search algorithm would
-       instead look at the loop and add the resultant path cost to its
-       path cost, and update its set of visited dots accordingly.
-
-### (3, 18) ###
-	(2, 18)
-### (2, 4) ###
-!!!!!!!!!!!!!!!!!!!!!!!!
 ########## SEARCH STATUS: SUCCESS ##########
 ########## A* SEARCH RESULTS for 'test_search.txt' ##########
-                Path Cost:
-31
-      Expanded Node Count:
-4
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 31
+Expanded Node Count: 4
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%
 %0                    4%
 %                    %%%
 %1%% %                 %

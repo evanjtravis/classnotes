@@ -1,11 +1,8 @@
 ########## SEARCH STATUS: SUCCESS ##########
 ########## BFS SEARCH RESULTS for 'small_maze.txt' ##########
-                Path Cost:
-19
-      Expanded Node Count:
-92
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 19
+Expanded Node Count: 92
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%
 % %%        % %      %
 %    %%%%%% % %%%%%% %
 %%%%%%     ...%      %
@@ -18,12 +15,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## DFS SEARCH RESULTS for 'small_maze.txt' ##########
-                Path Cost:
-49
-      Expanded Node Count:
-59
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 49
+Expanded Node Count: 59
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%
 % %%        % %      %
 %    %%%%%% % %%%%%% %
 %%%%%%......  %      %
@@ -36,12 +30,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## GBFS SEARCH RESULTS for 'small_maze.txt' ##########
-                Path Cost:
-29
-      Expanded Node Count:
-39
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 29
+Expanded Node Count: 39
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%
 % %%        % %      %
 %    %%%%%% % %%%%%% %
 %%%%%%......  %      %
@@ -54,12 +45,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## A* SEARCH RESULTS for 'small_maze.txt' ##########
-                Path Cost:
-19
-      Expanded Node Count:
-52
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 19
+Expanded Node Count: 52
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%
 % %%        % %      %
 %    %%%%%% % %%%%%% %
 %%%%%%     ...%      %
@@ -72,12 +60,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## BFS SEARCH RESULTS for 'medium_maze.txt' ##########
-                Path Cost:
-68
-      Expanded Node Count:
-269
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 68
+Expanded Node Count: 269
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        ..........%
 % %%%%%%%%%%%%%%%%%%%%%%%.%%%%%%%% %
 % %%   %   %      %%%%%%%...%%     %
@@ -98,12 +83,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## DFS SEARCH RESULTS for 'medium_maze.txt' ##########
-                Path Cost:
-130
-      Expanded Node Count:
-144
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 130
+Expanded Node Count: 144
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %..................................%
 %.%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%% %
 %.%%...%...%      %%%%%%%   %%     %
@@ -124,12 +106,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## GBFS SEARCH RESULTS for 'medium_maze.txt' ##########
-                Path Cost:
-76
-      Expanded Node Count:
-78
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 76
+Expanded Node Count: 78
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                 .%
 % %%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%.%
 % %%   %   %      %%%%%%%   %%.....%
@@ -150,12 +129,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## A* SEARCH RESULTS for 'medium_maze.txt' ##########
-                Path Cost:
-68
-      Expanded Node Count:
-221
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 68
+Expanded Node Count: 221
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        ..........%
 % %%%%%%%%%%%%%%%%%%%%%%%.%%%%%%%% %
 % %%   %   %      %%%%%%%...%%     %
@@ -176,12 +152,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## BFS SEARCH RESULTS for 'big_maze.txt' ##########
-                Path Cost:
-210
-      Expanded Node Count:
-620
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 210
+Expanded Node Count: 620
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       % % %  .......  %   %     % %
 % %%%%%%% % %%%.% %%%.%%% %%%%%%% % %
 %       %  .....% %  .  %     % %   %
@@ -221,12 +194,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## DFS SEARCH RESULTS for 'big_maze.txt' ##########
-                Path Cost:
-210
-      Expanded Node Count:
-390
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 210
+Expanded Node Count: 390
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       % % %  .......  %   %     % %
 % %%%%%%% % %%%.% %%%.%%% %%%%%%% % %
 %       %  .....% %  .  %     % %   %
@@ -266,12 +236,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## GBFS SEARCH RESULTS for 'big_maze.txt' ##########
-                Path Cost:
-210
-      Expanded Node Count:
-466
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 210
+Expanded Node Count: 466
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       % % %  .......  %   %     % %
 % %%%%%%% % %%%.% %%%.%%% %%%%%%% % %
 %       %  .....% %  .  %     % %   %
@@ -311,12 +278,9 @@
 
 ########## SEARCH STATUS: SUCCESS ##########
 ########## A* SEARCH RESULTS for 'big_maze.txt' ##########
-                Path Cost:
-210
-      Expanded Node Count:
-549
-            Maze Solution:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Path Cost: 210
+Expanded Node Count: 549
+Maze Solution: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       % % %  .......  %   %     % %
 % %%%%%%% % %%%.% %%%.%%% %%%%%%% % %
 %       %  .....% %  .  %     % %   %
