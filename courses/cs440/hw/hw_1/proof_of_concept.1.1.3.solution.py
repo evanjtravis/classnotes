@@ -8,7 +8,7 @@ def main():
     """c
     """
     search_files = [
-        'test_search.txt'
+        'big_search.txt'
     ]
     for search_file in search_files:
         agent = DotAgent(search_file)

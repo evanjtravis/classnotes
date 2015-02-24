@@ -198,15 +198,6 @@ class DotAgent(Agent):
                 corridors.append(state)
                 adjacent_loops[coords] = set()
 
-        print '############################'
-        for coord in adjacent_loops:
-            print "### ",
-            print coord,
-            print "### "
-            for adjacent in adjacent_loops[coord]:
-                print "\t",
-                print adjacent
-        print '############################'
         # Record sets of adjacent corridors
         for state in corridors:
             state_coords = state.coordinates
@@ -217,7 +208,7 @@ class DotAgent(Agent):
                     adjacent_loops[entry_coords].update((state_coords,))
                     adjacent_loops[state_coords].update((entry_coords,))
 
-        # Consolidate corridors into larger corridors. Achieve this by
+        # Consolidaate corridors into larger corridors. Achieve this by
         # iterating through corridors again.
         # FOR EACH corridor
         #   If not adjacent to anything: leave alone
@@ -230,15 +221,6 @@ class DotAgent(Agent):
         #               continue
         #           If none of the coordinates exist:
         #               keep this corridor
-        print '**************************'
-        for coord in adjacent_loops:
-            print "### ",
-            print coord,
-            print "### "
-            for adjacent in adjacent_loops[coord]:
-                print "\t",
-                print adjacent
-        print '***************************'
         consolidated = True
         state_coords = None
         while consolidated == True:
@@ -256,19 +238,38 @@ class DotAgent(Agent):
                             break
                         else:
                             continue
+                if consolidated == True:
+                    break
             if consolidated == True:
                 del(adjacent_loops[state_coords])
-
-        print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+        print '!!!!!!!!!!!!!!!!!!!!!!!!'
+        print """
+    Proof of concept showing consolidated loop states.
+The file used is '%s'.
+Future steps would include:
+    1) Generating spans, where a span is an area of the maze that is
+       encased by loop states.
+    2) Determining the start and end state for the loop where:
+            i) The coordinates are equal (a true loop)
+           ii) The coordinates are not equal (a corridor)
+    3) Executing the DotAgent search algorithm to find optimal path
+       for collecting the dots within the generated spans.
+    4) Using this data to decrease the number of dots that the main
+       search would need to be aware of. The search algorithm would
+       instead look at the loop and add the resultant path cost to its
+       path cost, and update its set of visited dots accordingly.
+""" %(self.search_file)
         for coord in adjacent_loops:
-            print "### ",
+            print '###',
             print coord,
-            print "### "
+            print '###'
             for adjacent in adjacent_loops[coord]:
                 print "\t",
                 print adjacent
-        print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-        raise Exception()
+        print '!!!!!!!!!!!!!!!!!!!!!!!!'
+        import sys
+        sys.exit(0)
+        # Lastly,
 
 
 
@@ -277,9 +278,6 @@ class DotAgent(Agent):
         """
         super(DotAgent, self).generate_state_space()
         self.dot_coordinates = set(self.dot_coordinates)
-        print '................................'
-        print self.dot_coordinates
-        print '................................'
         # Generate adjacency matrix of spaces with dots in them.
         self.look_for_loops()
         base_space = self.base_state_space
