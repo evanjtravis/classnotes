@@ -1,0 +1,85 @@
+!!!!!!!!!!!!!!!!!!!!!!!!
+
+    Proof of concept showing consolidated loop states.
+The file used is 'small_search.txt'.
+Future steps would include:
+    1) Generating spans, where a span is an area of the maze that is
+       encased by loop states.
+    2) Determining the start and end state for the loop where:
+            i) The coordinates are equal (a true loop)
+           ii) The coordinates are not equal (a corridor)
+    3) Executing the DotAgent search algorithm to find optimal path
+       for collecting the dots within the generated spans.
+    4) Using this data to decrease the number of dots that the main
+       search would need to be aware of. The search algorithm would
+       instead look at the loop and add the resultant path cost to its
+       path cost, and update its set of visited dots accordingly.
+
+### (3, 18) ###
+	(2, 18)
+### (2, 4) ###
+!!!!!!!!!!!!!!!!!!!!!!!!
+########## SEARCH STATUS: SUCCESS ##########
+########## A* SEARCH RESULTS for 'test_search.txt' ##########
+                Path Cost:
+31
+      Expanded Node Count:
+4
+            Maze Solution:
+%%%%%%%%%%%%%%%%%%%%%%%%
+%0                    4%
+%                    %%%
+%1%% %                 %
+%2%%3%                 %
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+!!!!!!!!!!!!!!!!!!!!!!!!
+
+    Proof of concept showing consolidated loop states.
+The file used is 'big_search.txt'.
+Future steps would include:
+    1) Generating spans, where a span is an area of the maze that is
+       encased by loop states.
+    2) Determining the start and end state for the loop where:
+            i) The coordinates are equal (a true loop)
+           ii) The coordinates are not equal (a corridor)
+    3) Executing the DotAgent search algorithm to find optimal path
+       for collecting the dots within the generated spans.
+    4) Using this data to decrease the number of dots that the main
+       search would need to be aware of. The search algorithm would
+       instead look at the loop and add the resultant path cost to its
+       path cost, and update its set of visited dots accordingly.
+
+### (13, 16) ###
+	(13, 17)
+### (5, 23) ###
+	(4, 22)
+	(5, 24)
+### (13, 12) ###
+	(13, 13)
+	(12, 11)
+### (1, 25) ###
+### (1, 4) ###
+	(1, 5)
+	(2, 5)
+	(1, 3)
+### (4, 29) ###
+### (13, 5) ###
+### (3, 25) ###
+### (6, 21) ###
+	(7, 20)
+	(7, 22)
+	(5, 21)
+### (1, 29) ###
+### (13, 21) ###
+	(13, 22)
+### (9, 17) ###
+	(9, 18)
+	(10, 16)
+	(9, 16)
+### (10, 1) ###
+### (13, 1) ###
+### (11, 6) ###
+	(10, 7)
+	(12, 7)
+!!!!!!!!!!!!!!!!!!!!!!!!

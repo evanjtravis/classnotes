@@ -8,13 +8,13 @@ def main():
     """c
     """
     search_files = [
-        'small_search.txt',
-        'tricky_search.txt',
-        'medium_search.txt',
-        'big_search.txt'
+        ('test_search.txt', False),
+        ('big_search.txt', True),
     ]
-    for search_file in search_files:
-        agent = DotAgent(search_file)
+    for entry in search_files:
+        search_file = entry[0]
+        check_loops = entry[1]
+        agent = DotAgent(search_file, check_loops=check_loops)
         agent.search(do_not_print=False)
 
 

@@ -86,10 +86,11 @@ class DotNode(Node):
 class DotAgent(Agent):
     """c
     """
-    def __init__(self, search_file):
+    def __init__(self, search_file, check_loops=False):
         """c
         """
         super(DotAgent, self).__init__(search_file)
+        self.check_loops = check_loops
         self.dot_coordinates = []
         self.dot_coordinate_symbol = self.goal_state_symbol
         self.loop_space = {}
@@ -279,7 +280,8 @@ Future steps would include:
         super(DotAgent, self).generate_state_space()
         self.dot_coordinates = set(self.dot_coordinates)
         # Generate adjacency matrix of spaces with dots in them.
-        self.look_for_loops()
+        if self.check_loops:
+            self.look_for_loops()
         base_space = self.base_state_space
         dot_state_space = {}
         agent = Agent(search_file, state_space=base_space)
