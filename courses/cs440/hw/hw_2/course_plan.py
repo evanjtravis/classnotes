@@ -1,48 +1,207 @@
 #!/usr/bin/env python
+"""
+CSP Specification for problem.
 
-class Course(object):
+Variables:          Semester
+Domains:            Combination of Courses taken in a given semester
+Constraints (A):    - A student cannot take more than the maximum
+                      number of credits for each semester.
+                    - A student cannot take less than the minimum
+                      number of credits for each semester.
+                    - A course can only be taken if it pre-requisite
+                      courses were taken in a previous semester.
+                    - All courses interesting to a student must be
+                      taken before graduation.
+                    - The student cannot retake any courses.
+                    - The first semester is always a Fall semester.
+
+"""
+# REMEMBER: CourseState holds information based on the semester,
+# CourseNode hold information based on a collection of CourseStates.
+from itertools import combinations
+from basic_pathfinding import Agent, Node, State
+
+class CourseState(State):
     """c
     """
-    def __init__(self, identity, FP, SP, H):
+    def __init__(self, courses, semester='F'):
         """c
         """
-        # The line number the course falls in
-        self.identity = identity
-        # Fall semester price
-        self.FP = FP
-        # Spring semester price
-        self.SP = SP
-        # Credit hours of course
-        self.H = H
-        # List of identity numbers indicateing the pre-requisite
-        # courses for this course
-        self.prereqs = []
+        super(CourseState, self).__init__(self, None, None)
+        self.courses = set(courses)
+        self.semester = semester
+        self.cost = None
+        self.hours = None
+        self._generate_semester_cost_and_credit_hours()
 
 
-class CourseSort(object):
+    def _generate_semester_cost_and_credit_hours(self):
+        """c
+        """
+        cost = 0
+        hours = 0
+        for course in self.courses:
+            if self.semester == 'F':
+                cost += course.FP
+            elif self.semester == 'S':
+                cost += course.SP
+            else:
+                raise Exception("Invalid semester season: '%s'."\
+                                %(self.semester))
+            hours += course.H
+        self.cost = cost
+        self.hours = hours
+
+
+    def is_locally_valid(self, course_sort):
+        """c
+        """
+        CMin = course_sort.CMin
+        CMax = course_sort.CMax
+        prereqs = set()
+        if (self.hours < CMin) or (self.hours > CMax):
+            return False
+        # Compare courses set and each course's prerequisite courses
+        # to see if they intersect.
+        for course in self.courses:
+            prereqs.update(course.prereqs)
+        intersection = prereqs.intersection(self.courses)
+        if len(intersection) > 0:
+            return False
+        return True
+
+    def compare(self, other):
+        """c
+        """
+        if self.courses == other.courses:
+            if self.semester == other.semester:
+                return True
+        return False
+
+
+class CourseNode(Node):
     """c
     """
-    def __init__(self, search_file):
+    def __init__(self, state, parent, cost, hours):
         """c
         """
+        # Determine cost for node based on it's state's semester cost
+        super(CourseNode, self).__init__(state, parent, cost)
+        self.hours = hours
+        self.total_hours = 0
+        self.total_hours = self.generate_hours()
+
+    def generate_hours(self):
+        """Akin to generate_path_cost, to recursively add up the hours
+        for the entire node based on parent states.
+        """
+        if self.total_hours:
+            return self.total_hours
+        if self.parent is not None:
+            return self.hours + self.parent.generate_hours()
+        else:
+            return self.hours
+
+    def generate_successors(self, state_space):
+        """c
+        """
+        if self.successors:
+            return
+        # Finalize state space format first
+
+
+    def create_successor(self, state):
+        """c
+        """
+        pass
+
+
+class CourseAgent(Agent):
+    """c
+    """
+
+    def already_visited(self, node, visited_states=None):
+        """c
+        """
+        pass
+
+    def generate_solutions_dict(self, solution_node):
+        """c
+        """
+        pass
+
+    def generate_state_space(self, search_file=None):
+        """Might have to nix, generate state space on the fly?
+        """
+        pass
+
+    def add_to_state_space(self):
+        """c
+        """
+        pass
+
+    def node_is_valid(self, node, search_name):
+        """c
+        """
+        pass
+
+    def generate_start_node(self):
+        """c
+        """
+        pass
+
+    def has_reached_goal(self, current_node):
+        """c
+        """
+        pass
+
+    def add_to_visited_states(self, state):
+        """c
+        """
+        pass
+    def __init__(self, search_file, state_space=None):
+        """c
+        """
+        super(CourseAgent, self).__init__(search_file, state_space)
         # Initialize Variables:
-        self.search_file = search_file
         self.courses = {}
         ## The following variables are populated from the file:
         ### Number of Courses
         self.N = 0
-        ### Maximum number of credits that can be taken
-        self.CMax = 0
         ### Minimum number of credits that can be taken
         self.CMin = 0
-        ### List of interesting courses to be taken
-        self.interesting = []
+        ### Maximum number of credits that can be taken
+        self.CMax = 0
+        ### Set of interesting courses to be taken
+        self.interesting = set()
         ### The budget of MC --> the student
         self.B = 0
-
         # Populate the variables with the correct values as they are
         # read in from the input file:
         self.read_search_file()
+        self.domain = self.generate_domain()
+
+
+    def generate_domain(self):
+        """c
+        """
+        course_combos = []
+        courses = self.courses.values()
+        # Create base combinations of courses
+        for i in range(len(courses)):
+            combos = combinations(courses, i + 1)
+            for combo in combos:
+                course_combos.append(combo)
+        # Iterate through combinations to weed out inconsistent ones:
+        #   > CMax
+        #   < CMin
+        #   Prerequisites in same semester
+        clean_course_combos = []
+        for course_combo in course_combos:
+            dummy = CourseState(course_combo)
+            if dummy.is_locally_valid(self):
+                clean_course_combos.append(course_combo)
+        return clean_course_combos
 
     def read_search_file(self):
         """c
@@ -81,6 +240,7 @@ class CourseSort(object):
         array.pop(0)
         return array
 
+
     def consume_n_course_lines(self, array):
         """c
         """
@@ -103,6 +263,7 @@ class CourseSort(object):
         array = array[self.N:]
         return array
 
+
     def consume_n_prereq_lines(self, array):
         """c
         """
@@ -116,9 +277,12 @@ class CourseSort(object):
             if line[0] == 0:
                 continue
             course = self.courses[identity]
-            course.prereqs = line[:]
-        array = array[self.N]
+            # Split list of pre-reqs, skipping first entry as it only
+            # indicates the number of prerequisites.
+            course.set_prereqs(self.courses, line[1:])
+        array = array[self.N:]
         return array
+
 
     def consume_interesting_courses_line(self, array):
         """c
@@ -127,9 +291,14 @@ class CourseSort(object):
         ## Set interesting courses list
         ## Remove line
         interesting_line = array[0]
-        self.interesting = interesting_line[:]
+        # Split list of interesting courses, skipping first entry as
+        # it only indicates the number of iteresting courses.
+        interesting = interesting_line[1:]
+        for course_id in interesting:
+            self.interesting.update(self.courses[course_id])
         array.pop(0)
         return array
+
 
     def consume_last_line(self, array):
         """c
@@ -142,6 +311,37 @@ class CourseSort(object):
         return
 
 
+class Course(object):
+    """c
+    """
+    def __init__(self, identity, FP, SP, H):
+        """c
+        """
+        # The line number the course falls in
+        self.identity = identity
+        # Fall semester price
+        self.FP = FP
+        # Spring semester price
+        self.SP = SP
+        # Credit hours of course
+        self.H = H
+        # List of identity numbers indicateing the pre-requisite
+        # courses for this course
+        self.prereqs = set()
+        # Has the student taken this class? Defaults to False.
+        self.is_taken = False
+
+
+    def set_prereqs(self, prereq_ids, courses):
+        """c
+        """
+        # No need to set pre-prerequisites, because by keeping track
+        # of already taken classes, semesters are either valid or
+        # invalid if the pre-req courses are already taken.
+        prereqs = set()
+        for identity in prereq_ids:
+            prereqs.update(courses[identity])
+        self.prereqs = set(prereqs)
 
 
 
