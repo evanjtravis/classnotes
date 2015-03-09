@@ -75,6 +75,14 @@ notes: Search Continued
     Expand the deepest unexpanded node
     Implementation: frontier as a LIFO stack
     #################################################################
+    # Iterative Deepening Search
+    #################################################################
+    Hybrid of BFS and DFS
+    Uses DFS as a subroutine
+        Check root
+        Do DFS for path of length 1
+        If no path of length 1, do a DFS search path of length 2 (and so on)
+    #################################################################
     # Analysis of Search Strategies
     #################################################################
     Strategies are evaluated on the following criteria:
@@ -108,7 +116,40 @@ notes: Search Continued
         No: It fails with infinited depth spaces, spaces w/loops
         >>> Can modify to avoid repeated states along the path
         Is complete in finite spaces
-
+    Optimal?
+        No, returns the first solution it finds
+    Time complexity?
+        Could be the time to reach a solution at maximum depth """m""":O(b**m)
+        Terrible if """m""" > """d""" = maxiumDepth > optimalSolutionDepth
+        But if there are lots of solutions, may be faster than BFS
+    Space Complexity?
+        O(b*m), i.e. linear space
+        Very memory inefficient as opposed to BFS
+    ##################################################################
+    # Properties of Iterative Deepening Search (IDS)
+    ##################################################################
+    Complete?
+        Yes, cuttion off DFS at a fininte depth lilmit to eliminate the chance of getting caught in an infinite loop.
+    Optimal?
+        Yes, if step cost = 1 --> same as BFS
+    Time Complexity?
+        (d + 1)b**0 + db**1 + (d-1)b**2 + ... + b**d = O(b**d)
+        >>> Not necessarily realisticaly doable, but big-O notaion still owrks out, i.e. looks good on paper.
+    Space Complexity?
+        O(bd) --> linear space
+        Same as DFS due to using it as a subroutine
+    #################################################################
+    # Search With Varying Step Costs
+    #################################################################
+    BFS find the path with the fewest steps, but does not always find the cheapest path.
+    #################################################################
+    # Uniform Cost Search
+    #################################################################
+    For each frontier node, save the toal cost of the path from the initial state to that node
+    Expand the frontier node with the lowest path cost
+    Implementation: Frontier as a priority queue ordered by path cost
+    Equivalent to BFS if the step costs are all equal
+    Equivialen to """Dijkstra''s algorithm""" in general.
         
 
 

@@ -1,0 +1,148 @@
+#!/bin/bash
+;`
+#####################################################################
+# Notes
+#####################################################################
+;`
+[NOTES]
+notes: Informed Search
+    #################################################################
+    # Review
+    #################################################################
+    Uninformed Search Strategies
+        BFS
+        DFS
+        IDS
+        !!! Be able to list advantages and disadvantages of each!
+    #################################################################
+    # Search With Varying Step Costs
+    #################################################################
+    BFS finds path with fewest steps, but does not always find the cheapest path
+    Using priority queue ordered by step cost instead of a queue remedies this
+    #################################################################
+    # Another Example of Uniform Cost Search
+    #################################################################
+    """Graph Search"""
+    Search expands uniformly in all directions from starte state
+    #################################################################
+    # Properties of Uniform Cost Search
+    #################################################################
+    Complete?
+        Yes, if step cost is greater than some positive constant """e"""
+        We do not want infinite sequences of steps that have a finite total cost
+    Optimal?
+        Yes, nodes expanded in increasing order of path cost
+    Time Complexity?
+    Number of nodes with path cost <= cost of optimal solution ("""C*** (C^*)""") O(b^(c***/e))
+        This can be greater than O(b**d): the search can explor long paths consisting of small steps before exploring shorter paths consisting of larger steps.
+        !!! Optimal in all situations whereas BFSS is optimal only with equal step costs.
+    Space Complexity?
+        O(b^(c***/e))
+        Very memory intensive
+    #################################################################
+    # Optimality of Uniform Cost Search
+    #################################################################
+    """Graph separation property""": Every path from the initial state to an unexplored state has to pass through a state on the frontier
+        - Proved inductively
+    Optimality of UCS: Proof by contradiction
+        Suppose UCS terminates at goal state n with path cost g(n) = C but there exists another goal state n'' with g(n'') < C
+        Then there must exist a node n"" on the frontier that is on the optimal path to n''
+        But because g(n"") <= g(n'') < g(n), n"" should have been expanded first!
+    #################################################################
+    # Informed Search Strategies
+    #################################################################
+    Idea: Give the algorithm "hints" about the desirability of different states
+    Use an """evaluation function""" to rank nodes and slect the most promising one for expansion.
+        Heuristic = rough estimate
+    """Greedy Best First Search"""
+    """A-star (A^*) Search"""
+    #################################################################
+    # Heuristic Function
+    #################################################################
+    """Heuristic Function""": h(n) estimates the cost of reaching the goal node from node n.
+    #################################################################
+    # Greedy Best-First Search
+    #################################################################
+    """GBFS""": Pick the node with the lowest value of the heuristic function.
+    #################################################################
+    # Properties of GBFS
+    #################################################################
+    Complete? --> Can it not get trapped in an infinite loop?
+        No, it can get stuck in loops if you do not implement repeated state detection.
+    Optimal?
+        No
+        >>> Only if h(n) == h***(n)
+    Time Complexity?
+        Worst case: O(b**m)
+        Can be much better with a good heuristic
+    Space Complexity?
+        Worst Case: O(b**m)
+    #################################################################
+    # A*** Search
+    #################################################################
+    Idea: Avoid expanding paths that are already expensive
+    The """evaluation function f(n)""" is the estimated total cost of the path through the node n to the goal.
+        f(n) = g(n) + h(n)
+        where:
+            g(n) = the cost so far to reach n (path cost)
+            h(n) = the estimated cost from n to goal (heuristic)
+    #################################################################
+    # Admissible Heuristics
+    #################################################################
+    An """admissible heuristic""" NEVER overestimates the cost to reach the goal, i.e. it is OPTIMISTIC
+    A heuristic h(n) is admissible if ro every node n, h(n) <= h***(n),
+    where:
+        h***(n) = the true cost to reach the goal state from n
+    Example: A straight line distance never overestimates the acutal road distance
+    THEOREM:
+        if h(n) is admissible, A*** is optimal
+        >>> To implement correctly, must implement handling repeated states correctly, i.e. echcking if the current node is on the frontier and whther or not the current node has smaller path cost than the one on the frontier. Additionally, the node has not already been expanded.
+    #################################################################
+    # Optimality of A***
+    #################################################################
+    A*** is """optimally efficient""" - no other tree-based algorithm that uses the same heuristic can expand fewer nodes and still be guaranteed to be find the optimal solution.
+        Any algorithm that does not expand all nodes with f(n) <= C*** risks missing the optimal solution
+    #################################################################
+    # Properties of A***
+    #################################################################
+    Complete?
+        Yes, unless there are infinitely many nodes with f(n) <= C***
+    Optimal?
+        Yes
+    Time Complexity?
+        Better than uniform cost search
+        The number of nodes for which f(n) <= C*** --> exponential
+    Space Complexity?
+        Exponential
+    #################################################################
+    # Designing Heuristic Functions
+    #################################################################
+    Heuristics for the 8-Puzzle
+        - h1(n) = the number of misplaced tiles
+        - h2(n) = sum """Manhattan Distance""" of all tiles
+    !!! Uniform cost search is a special case of A*** search where the heuristic function h(n) = 0 for all possible n (Confirm w/i lecture @47:05)
+    Both heuristics do not care if spaces are occumpied by other squares
+    h1(n) is admissible because it is VERY optimistic
+        - It thinks the puzzle can be solved in 8 moves
+        - Rules Broken: Lifting each tile up and placing it in its spot
+    h2(n) is also VERY optimistic (but less than h1(n)) and is also admissible.
+        - At least the rule of moving one tile at a time is not broken
+    To Design a good heuristic, focus on relaxing constraints or breaking rules. Only a rough estimation is needed.
+        E.G. Ignore walls in a maze
+
+        
+
+;`
+#####################################################################
+# Vocabulary
+#####################################################################
+;`
+[VOCABULARY]
+
+;`
+#####################################################################
+# Timeline
+#####################################################################
+;`
+[TIMELINE]
+
