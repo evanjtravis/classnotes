@@ -44,7 +44,72 @@ notes: Search Continued
     #################################################################
     # Handling Repeated States
     #################################################################
+    Initialize Frontier using starting state
+    While frontier is not empty
+        choose frontier node according to search strategy and take it off of the frontier
+        If the node contains the goal state, return the solution
+        Else expand the node and add its children to the frontier
+    To handle repeated states
+        Every time you expand a node, add that state to the explored set; do not put explored states on the frontier again
+    To handle if the node is already on the frontier
+        Replace if current node has a smaller path cost
+    #################################################################
+    # Uninformed Research Strategies
+    #################################################################
+    A search strategy is defined by picking the order of node expansion
+    """Uninformed search strategies""" use only the information avaailable in the problem definition (including path cost)
+        Do not know how close they are to the solution
+    Examples:
+        Breadth First Search
+        Depth first search
+        Iterative deepening search
+        Uniform cost search
+    #################################################################
+    # Breadth-First Search (BFS)
+    #################################################################
+    Expand the shallowest unexpanded node
+    Implementation: frontier is a FIFO queue
+    #################################################################
+    # Depth-First Search (DFS)
+    #################################################################
+    Expand the deepest unexpanded node
+    Implementation: frontier as a LIFO stack
+    #################################################################
+    # Analysis of Search Strategies
+    #################################################################
+    Strategies are evaluated on the following criteria:
+        C -->   """Completeness""": Does it always find a solution if one exists?
+        O -->   """Optimality""": Does it always find a least-cost solution?
+        S -->   """Space Complexity""": Maximum number of nodes in memory.
+        T -->   """Time Complexity""": Number of nodes generated.
+    Time and space complexity are measured in terms of:
+        """b""": Maximum branching factor of the search tree
+        """d""": Depth of the optimal solution
+        """m""": Maximum length of any path in the state space --> could be infinite
+    #################################################################
+    # Properties of BFS
+    #################################################################
+    Complete?
+        Yes, iff branching factor ("""b""") is finite
+    Optimal?
+        Yes, only if the cost between nodes is equal
+    Time complexity?
+        Number of nodes in a """b"""-ary tree of depth """d""": O(b**d) where """d""" is the depth of the optimal solution
+        (Pretty bad)
+    Space complexity?
+        O(b**d)
+        (Pretty bad)
+    >>> Will generally run out of space before time
+    !!! SPACE is the bigger problem
+    #################################################################
+    # Properties of DFS
+    #################################################################
+    Complete?
+        No: It fails with infinited depth spaces, spaces w/loops
+        >>> Can modify to avoid repeated states along the path
+        Is complete in finite spaces
 
+        
 
 
 ;`
