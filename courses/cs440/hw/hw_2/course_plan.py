@@ -8,7 +8,7 @@ Constraints (A):    - A student cannot take more than the maximum
                       number of credits for each semester.
                     - A student cannot take less than the minimum
                       number of credits for each semester.
-                    - A course can only be taken if it pre-requisite
+                    - A course can only be taken if its pre-requisite
                       courses were taken in a previous semester.
                     - All courses interesting to a student must be
                       taken before graduation.
@@ -20,26 +20,29 @@ Constraints (A):    - A student cannot take more than the maximum
 # CourseNode hold information based on a collection of CourseStates.
 from itertools import combinations
 from basic_pathfinding import Agent, Node, State
+from copy import deepcopy
 
 class CourseState(State):
-    """c
+    """Represents a semester.
     """
     def __init__(self, courses, semester='F'):
         """c
         """
         super(CourseState, self).__init__(self, None, None)
         self.courses = set(courses)
+        self.course_ids = None
         self.semester = semester
         self.cost = None
         self.hours = None
-        self._generate_semester_cost_and_credit_hours()
+        self._generate_None_vars()
 
 
-    def _generate_semester_cost_and_credit_hours(self):
+    def _generate_None_vars(self):
         """c
         """
         cost = 0
         hours = 0
+        course_ids = []
         for course in self.courses:
             if self.semester == 'F':
                 cost += course.FP
@@ -49,8 +52,10 @@ class CourseState(State):
                 raise Exception("Invalid semester season: '%s'."\
                                 %(self.semester))
             hours += course.H
+            course_ids.append(course.identity)
         self.cost = cost
         self.hours = hours
+        self.course_ids = set(course_ids)
 
 
     def is_locally_valid(self, course_sort):
@@ -89,7 +94,27 @@ class CourseNode(Node):
         super(CourseNode, self).__init__(state, parent, cost)
         self.hours = hours
         self.total_hours = 0
+        self.total_hours = None
         self.total_hours = self.generate_hours()
+        self.classes_taken = set()
+        self.classes_taken = self.generate_classes_taken()
+
+
+    def generate_classes_taken(self):
+        """c
+        """
+        # Save some time. Don't go all the way back to the start node
+        # if you don't have to.
+        if self.classes_taken:
+            return self.classes_taken
+
+        classes_taken = deepcopy(self.state.course_ids)
+        if self.parent is not None:
+            classes_taken.update(self.parent.generate_classes_taken())
+            return classes_taken
+        else:
+            return classes_taken
+
 
     def generate_hours(self):
         """Akin to generate_path_cost, to recursively add up the hours
@@ -159,10 +184,13 @@ class CourseAgent(Agent):
         """c
         """
         pass
+
+
     def __init__(self, search_file, state_space=None):
         """c
         """
         super(CourseAgent, self).__init__(search_file, state_space)
+        self.data = {}
         # Initialize Variables:
         self.courses = {}
         ## The following variables are populated from the file:
@@ -199,7 +227,9 @@ class CourseAgent(Agent):
         clean_course_combos = []
         for course_combo in course_combos:
             dummy = CourseState(course_combo)
-            if dummy.is_locally_valid(self):
+            if (dummy.is_locally_valid(self) and \
+                    (course_combo not in clean_course_combos)):
+                    # Preserve commutativity
                 clean_course_combos.append(course_combo)
         return clean_course_combos
 
@@ -341,7 +371,7 @@ class Course(object):
         prereqs = set()
         for identity in prereq_ids:
             prereqs.update(courses[identity])
-        self.prereqs = set(prereqs)
+        self.prereqs = prereqs
 
 
 
