@@ -43,6 +43,11 @@ class CourseState(State):
         cost = 0
         hours = 0
         course_ids = []
+        if self.semester == None: # Indicates the starting node
+            self.corse_ids = set()
+            self.cost = 0
+            self.hourse = 0
+            return
         for course in self.courses:
             if self.semester == 'F':
                 cost += course.FP
@@ -130,6 +135,11 @@ class CourseNode(Node):
     def generate_successors(self, state_space):
         """c
         """
+        # iterate over domain --> course_combos
+        # if len(course_combo.intersect(classes_taken) == 0:
+        #   instantiate ClassState object --> state
+        #   child = create_successor(state)
+        #   self.successors.append(child)
         if self.successors:
             return
         # Finalize state space format first
@@ -145,27 +155,7 @@ class CourseAgent(Agent):
     """c
     """
 
-    def already_visited(self, node, visited_states=None):
-        """c
-        """
-        pass
-
     def generate_solutions_dict(self, solution_node):
-        """c
-        """
-        pass
-
-    def generate_state_space(self, search_file=None):
-        """Might have to nix, generate state space on the fly?
-        """
-        pass
-
-    def add_to_state_space(self):
-        """c
-        """
-        pass
-
-    def node_is_valid(self, node, search_name):
         """c
         """
         pass
@@ -186,6 +176,8 @@ class CourseAgent(Agent):
         pass
 
 
+    # Don't overwrite search function. Modify to fit CSP. Add to list
+    # of search names.
     def __init__(self, search_file, state_space=None):
         """c
         """

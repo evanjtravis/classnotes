@@ -6,26 +6,6 @@ import heapq
 import itertools
 
 
-# TODO add configuration
-# TODO Extra Credit add command-line arguments (don't use optparse, just iterate
-# through sys.argv)
-# TODO Extra Credit implement pac-man ai with ghosts? inky = bfs, blinky = dfs,
-# pinky = greedy, clyde = a*, pacman = a* dot search with different
-# evaluation that is aware of ghost position. Ghosts have basic
-# pathfinding search.
-# TODO print BFS and DFS next to each other, print greedy and a* next
-# to each other --> in solution scripts.
-# TODO when generating successor states, NEVER add an anscestor state
-# unless the successors would otherwise be empty.
-# TODO implement diagonal nodes --> can have up to 8 successor states
-# TODO organize functions and whatnot by function e.g. visual or
-# searching or utilities, and then alphabetize.
-# TODO FOR REPORT: Mention how tie-breaking strategy would effect
-# different algos, e.g. for dfs, if the goal is far away on the y axis
-# but there are a bunch of dumb nodes on the x axis.
-# TODO E.C. represent wormholes --> integers 0-9 on the maze/map where
-# path can jump. The successor states of wormholes are all surrounding
-# nodes of all equal wormholes. Treat as a super-position
 class State(object):
     """This class represents a state within a given state space.
     Each state is comprised of 2 attributes:
