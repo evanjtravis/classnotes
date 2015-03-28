@@ -19,16 +19,14 @@ Constraints (A):    - A student cannot take more than the maximum
 # REMEMBER: CourseState holds information based on the semester,
 # CourseNode hold information based on a collection of CourseStates.
 from itertools import combinations
-from basic_pathfinding import Agent, Node, State
 from copy import deepcopy
 
-class CourseState(State):
+class CourseState(object):
     """Represents a semester.
     """
     def __init__(self, courses, semester='F'):
         """c
         """
-        super(CourseState, self).__init__(self, None, None)
         self.courses = set(courses)
         self.course_ids = None
         self.semester = semester
@@ -44,9 +42,9 @@ class CourseState(State):
         hours = 0
         course_ids = []
         if self.semester == None: # Indicates the starting node
-            self.corse_ids = set()
+            self.course_ids = set()
             self.cost = 0
-            self.hourse = 0
+            self.hours = 0
             return
         for course in self.courses:
             if self.semester == 'F':
@@ -89,20 +87,15 @@ class CourseState(State):
         return False
 
 
-class CourseNode(Node):
-    """c
+class CourseAssignment(object):
+    """Representative of a node.
     """
-    def __init__(self, state, parent, cost, hours):
+    def __init__(self):
         """c
         """
-        # Determine cost for node based on it's state's semester cost
-        super(CourseNode, self).__init__(state, parent, cost)
-        self.hours = hours
-        self.total_hours = 0
-        self.total_hours = None
-        self.total_hours = self.generate_hours()
+        self.cost = None
+        self.hours = 0
         self.classes_taken = set()
-        self.classes_taken = self.generate_classes_taken()
 
 
     def generate_classes_taken(self):
@@ -160,6 +153,17 @@ class CourseAgent(Agent):
         """
         pass
 
+
+    def valid_start_state(self):
+        """c
+        """
+        return True
+
+    def valid_goal_state(self):
+        """c
+        """
+        return True
+
     def generate_start_node(self):
         """c
         """
@@ -168,7 +172,9 @@ class CourseAgent(Agent):
     def has_reached_goal(self, current_node):
         """c
         """
-        pass
+        if self.interesting.issubset(current_node.classes_taken):
+            return True
+        return False
 
     def add_to_visited_states(self, state):
         """c
@@ -200,6 +206,16 @@ class CourseAgent(Agent):
         # read in from the input file:
         self.read_search_file()
         self.domain = self.generate_domain()
+        self.state_space = self.domain()
+
+
+    def search(self,
+               search_name,
+               new_state_space=False,
+               do_not_print=True):
+        """Define backtracking search here.
+        """
+
 
 
     def generate_domain(self):
@@ -224,6 +240,7 @@ class CourseAgent(Agent):
                     # Preserve commutativity
                 clean_course_combos.append(course_combo)
         return clean_course_combos
+
 
     def read_search_file(self):
         """c
