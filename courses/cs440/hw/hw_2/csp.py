@@ -6,6 +6,8 @@
 NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
 FAILURE = False
 #=====================================================================
+
+
 class CSP(object):
     """A generalized framwork for implementing CSP problems. This
     class provides an interface through which CSP problems can be
@@ -38,13 +40,6 @@ class CSP(object):
 
 
     def get_start_node(self):
-        """Hollow function used to ensure implementation by child
-        classes.
-        """
-        raise Exception(NOT_IMPLEMENTED)
-
-
-    def get_start_state(self):
         """Hollow function used to ensure implementation by child
         classes.
         """
@@ -94,7 +89,6 @@ class CSP(object):
     #=================================================================
 
 
-
 class CSPAgent(object):
     """A generalized framework for solving CSP problems. This
     class provides the interface through which CSP problems are
@@ -105,7 +99,7 @@ class CSPAgent(object):
     interface functions.
     """
     #=================================================================
-    # Intialization Functions
+    # Initialization Functions
     #-----------------------------------------------------------------
     def __init__(self, csp):
         """Initialize the CSPAgent.
@@ -134,27 +128,13 @@ class CSPAgent(object):
             'MAX': self._MINIMAX,
             self.default_search_name: self._dummy,
         }
-        self.start_state = self.set_start_state()
-        self.start_node = self.set_start_node()
         self.solution = None
+        self.start_node = self.get_start_node()
 
-
-    def set_start_node(self):
-        """Function wrapper for a CSP problem. Uses the data
-        within the agent's csp to generate a value.
-        Returns:
-            Arbitrary Node object known by CSP.
+    def get_start_node(self):
+        """c
         """
         return self.csp.get_start_node()
-
-
-    def set_start_state(self):
-        """Function wrapper for a CSP problem. Uses the data within
-        the agent's csp to generate a value.
-        Returns:
-            Arbitrary State object known by CSP.
-        """
-        return self.csp.get_start_state()
     #=================================================================
 
     #=================================================================
@@ -180,11 +160,11 @@ class CSPAgent(object):
     #=================================================================
     # Search Functions
     #-----------------------------------------------------------------
-    def _ab_pruning(self, current_node):
+    def _ab_pruning(self):
         """Function wrapper for a CSP problem using alpha-beta
         pruning. Executes the steps associated with the agent's csp.
         """
-        self.csp.ab_pruning(current_node)
+        self.csp.ab_pruning()
 
 
     def _backtracking_search(self, search_name, current_node):
@@ -202,23 +182,23 @@ class CSPAgent(object):
                 or
             Node, the type of which is arbitrary and known by csp
         """
-        if self.has_reached_goal(current_node):
+        if self.assignment_is_complete(current_node):
             return current_node
         var = self.csp.select_unassigned_variable(current_node)
         for value in self.csp.order_domain_values(var,
                                                   current_node):
             if self.is_within_constraints(current_node, value):
                 current_node = self.csp.add(value, current_node)
-                #------------------------------------------------
+                #-----------------------------------------------------
                 # Apply inference to reduce the space of possible
                 # assignments and detect failure early.
                 self.search_functions[search_name](current_node)
-                #------------------------------------------------
+                #-----------------------------------------------------
                 result = self._backtracking_search(search_name,
                                               current_node)
                 if result != FAILURE:
                     return result
-                self.csp.remove(value, current_node)
+                current_node = self.csp.remove(value, current_node)
         return FAILURE
 
 
@@ -231,20 +211,20 @@ class CSPAgent(object):
         """Function wrapper for a CSP problem using minimax. Executes
         the steps associated with the agent's csp.
         """
-        self.csp.mini(current_node)
+        self.csp.mini()
 
 
     def _MINIMAX(self, current_node):
         """Function wrapper for a CSP problem using Minimax. Executes
         the steps associated with the agent's csp.
         """
-        self.csp.MAXI(current_node)
+        self.csp.MAXI()
     #=================================================================
 
     #=================================================================
     # Logic Functions
     #-----------------------------------------------------------------
-    def has_reached_goal(self, current_node):
+    def assignment_is_complete(self, current_node):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
@@ -280,7 +260,7 @@ class CSPAgent(object):
             search_name = self.default_search_name
         self._check_search_name(search_name)
         self.solution = self._backtracking_search(search_name,
-                                             self.start_node)
+                                                  self.start_node)
     #=================================================================
 
     #=================================================================
