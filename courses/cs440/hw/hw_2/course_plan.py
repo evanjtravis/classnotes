@@ -16,9 +16,14 @@ Constraints (A):    - A student cannot take more than the maximum
                     - The first semester is always a Fall semester.
 
 """
+#=====================================================================
+# Imports
+#---------------------------------------------------------------------
 import copy
+import os
 from csp import CSP
 from itertools import combinations
+#=====================================================================
 
 class Course(object):
     """c
@@ -49,17 +54,20 @@ class Course(object):
         # invalid if the pre-req courses are already taken.
         prereqs = set()
         for identity in prereq_ids:
-            prereqs.update(courses[identity])
+            prereqs.update((courses[identity],))
         self.prereqs = prereqs
 
 
-class CourseAssignment(CSP):
+class CourseAssignmentCSP(CSP):
     """Representative of a node.
     """
     def __init__(self, course_file):
         """c
         """
+        self.course_file = os.path.basename(course_file)
         self.next_semester = None
+        self.min_semester_size = 0 # Size in terms of classes taken
+        self.max_semester_size = 0
         # Initialize Variables:
         self.courses = {}
         ## The following variables are populated from the input file:
@@ -77,7 +85,7 @@ class CourseAssignment(CSP):
         #-------------------------------------------------------------
         self.domain = self.generate_domain()
     #=================================================================
-    # CSP Interface Functions
+    # CSP Logic Functions Interface
     #-----------------------------------------------------------------
     def add(self, value, current_node):
         """Value not used, next_semester, which is derived from value
@@ -99,6 +107,14 @@ class CourseAssignment(CSP):
         else:
             complete = False
         return complete
+
+
+    def clean_solution_node(self, solution_node):
+        """c
+        """
+        # Disregard root node, is considered empty
+        solution_node.semesters = solution_node.semesters[:-1]
+        return solution_node
 
 
     def get_start_node(self):
@@ -143,7 +159,7 @@ class CourseAssignment(CSP):
                 if ((not course_combo.intersection(courses_taken))\
                         and (course_combo not in bad_combos)):
                     new_domain.append(course_combo)
-            return set(new_domain)
+            return new_domain
 
 
     def remove(self, value, current_node):
@@ -155,35 +171,145 @@ class CourseAssignment(CSP):
 
 
     def select_unassigned_variable(self, current_node):
+        """Not used for this implementation. Implemented here to avoid
+        exception from base class.
+        """
+        pass
+    #=================================================================
+
+    #=================================================================
+    # CSP Display Functions Interface
+    #-----------------------------------------------------------------
+    def generate_solution_dict(self, solution_node):
         """c
         """
-        return None
+        # TODO modify semester and node __str__() functions for
+        # simpler string building.
+        msg = ''
+        # Fist Line of Output --> Total Cost, Number of Semesters
+        total_cost = solution_node.get_total_cost()
+        semester_count = solution_node.get_number_of_semesters()
+        msg += "%d %d\n\t" %(total_cost, semester_count)
+        # Next N lines of output where N = semester_count
+        for semester in solution_node.semesters:
+            msg += "%d " %(len(semester.courses))
+            for course_id in semester.course_ids:
+                msg += "%d " %(course_id)
+            msg += "\n\t"
+        # Last Line, Individual Semester Costs
+        for semester in solution_node.semesters:
+            msg += "%d " %(semester.cost)
+        label = "Course Plan: %s" %(self.course_file)
+        solution_dict = {
+            label: msg
+        }
+        return solution_dict
     #=================================================================
+
+    def determine_maximum_semester_size(self):
+        """c
+        """
+        max_credits = self.CMax
+        hours_list = self.get_course_hours_list()
+        #-------------------------------------------------------------
+        # Add all of the course hours together to see if they
+        # are equal to or greater than CMax. If not, maximum semester
+        # size defaults to number of courses.
+        all_hours = sum(hours_list)
+        if all_hours <= max_credits:
+            return len(hours_list)
+        #-------------------------------------------------------------
+        #-------------------------------------------------------------
+        # Add up the smallest credit hours and remove them from a list
+        # until we reach CMax. The number of removed courses
+        # determines the maximum semester size.
+        removed_count = 0
+        credit_sum = 0
+        hours_list.sort()
+        while ((credit_sum < max_credits) and (len(hours_list) > 0)):
+            credit_sum += hours_list[0]
+            hours_list.pop(0)
+            removed_count += 1
+        #-------------------------------------------------------------
+        return removed_count
+
+
+    def determine_minimum_semester_size(self):
+        """c
+        """
+        min_credits = self.CMin
+        hours_list = self.get_course_hours_list()
+        #-------------------------------------------------------------
+        # Add up the largest credit hours and remove them from a list
+        # until we reach CMin. The number of removed courses
+        # determines the minimum semester size.
+        removed_count = 0
+        credit_sum = 0
+        hours_list.sort()
+        while ((credit_sum < min_credits) and (len(hours_list) > 0)):
+            credit_sum += hours_list[-1]
+            hours_list.pop(-1)
+            removed_count += 1
+        #-------------------------------------------------------------
+        return removed_count
+
+
+    def get_course_hours_list(self):
+        """c
+        """
+        hours_list = []
+        for course_id in self.courses:
+            course = self.courses[course_id]
+            hours_list.append(course.H)
+        return hours_list
 
 
     def generate_domain(self):
         """c
         """
-        course_combos = []
         courses = self.courses.values()
-        # Create base combinations of courses
-        for i in range(len(courses)):
-            combos = combinations(courses, i + 1)
-            for combo in combos:
-                course_combos.append(combo)
-        # Iterate through combinations to weed out inconsistent ones:
-        #   > CMax
-        #   < CMin
-        #   Prerequisites in same semester
+        #-------------------------------------------------------------
+        # Determine minimum number of courses needed to fulfill
+        # minimum hours per semester
+        self.min_semester_size =\
+            self.determine_minimum_semester_size()
+        min_sz = self.min_semester_size
+        #-------------------------------------------------------------
+        #-------------------------------------------------------------
+        # Determine maximum number of courses allowed to be under
+        # maximum hours per semester
+        self.max_semester_size =\
+            self.determine_maximum_semester_size()
+        max_sz = self.max_semester_size
+        #-------------------------------------------------------------
+        # Dirty Trick:
+        #   If number of courses is greater than 20, just include all
+        #   combinations of length min_sz by reassigning max_sz to the
+        #   same value.
+        #   Otherwise, size complexity is an issue. On runthrough of
+        #   third scenario, my computer was thrashing and all 8 gigs
+        #   of RAM on my laptop were used.
+        #if len(courses) > 20:
+        #    max_sz = min_sz
+        #-------------------------------------------------------------
         clean_course_combos = []
-        for course_combo in course_combos:
-            dummy = Semester(course_combo)
-            if (dummy.is_locally_valid(self) and \
-                    #-------------------------------------------------
-                    # Preserve commutativity
-                    (course_combo not in clean_course_combos)):
-                    #-------------------------------------------------
-                clean_course_combos.append(course_combo)
+        #-------------------------------------------------------------
+        # Create base combinations of courses
+        for i in range(min_sz, max_sz + 1):
+            combos = combinations(courses, i)
+            for a_combo in combos:
+                course_combo = set(a_combo)
+                #-------------------------------------------------------------
+                # Iterate through combinations to weed out inconsistent ones:
+                #   Prerequisites in same semester
+                dummy = Semester(course_combo)
+                if (dummy.is_locally_valid() and \
+                        #-------------------------------------------------
+                        # Preserve commutativity
+                        (course_combo not in clean_course_combos)):
+                        #-------------------------------------------------
+                    clean_course_combos.append(course_combo)
+                #-------------------------------------------------------------
         return clean_course_combos
 
 
@@ -195,7 +321,7 @@ class CourseAssignment(CSP):
         self.CMin = data['CMin']
         self.CMax = data['CMax']
         for identity in data['interesting']:
-            self.interesting.update(self.courses[identity])
+            self.interesting.update((self.courses[identity],))
         self.B = data['B']
 
 
@@ -240,6 +366,25 @@ class CourseAssignmentNode(object):
             return 'S'
         else:
             return 'F'
+
+    #=================================================================
+    # Solution Functions
+    #-----------------------------------------------------------------
+    def get_total_cost(self):
+        """c
+        """
+        cost = 0
+        for semester in self.semesters:
+            cost += semester.cost
+        return cost
+
+
+    def get_number_of_semesters(self):
+        """c
+        """
+        return len(self.semesters)
+    #-----------------------------------------------------------------
+
 
 
 class Semester(object):
@@ -287,22 +432,18 @@ class Semester(object):
         self.prereqs = prereqs
 
 
-    def is_locally_valid(self, course_sort):
+    def is_locally_valid(self):
         """c
         """
-        CMin = course_sort.CMin
-        CMax = course_sort.CMax
+        # CMin and CMax Range is determined by finding min and max
+        # semester sizes.
         prereqs = self.prereqs
-        if (self.hours < CMin) or (self.hours > CMax):
-            return False
         # Compare courses set and each course's prerequisite courses
         # to see if they intersect.
         intersection = prereqs.intersection(self.courses)
         if len(intersection) > 0:
             return False
         return True
-
-
 
 
 class CourseFileParser(object):
@@ -394,7 +535,9 @@ class CourseFileParser(object):
             course = self.data['courses'][identity]
             # Split list of pre-reqs, skipping first entry as it only
             # indicates the number of prerequisites.
-            course.set_prereqs(self.data['courses'], line[1:])
+            prereq_ids = line[1:]
+            courses = self.data['courses']
+            course.set_prereqs(prereq_ids, courses)
         array = array[self.data['N']:]
         return array
 
@@ -410,7 +553,7 @@ class CourseFileParser(object):
         # it only indicates the number of iteresting courses.
         interesting = interesting_line[1:]
         for course_id in interesting:
-            self.data['interesting'].update(course_id)
+            self.data['interesting'].update((course_id,))
         array.pop(0)
         return array
 
