@@ -1,11 +1,18 @@
 #!/usr/bin/env python
+"""
+This module specifies the basic framework of a CSP problem. It defines
+the basic framwork used to solve such a problem.
+A CSPAgent interfaces with a CSP object in predefined ways. The
+CSP class is then subclassed by a specific CSP problem, and the needed
+functions are overridden as needed.
+"""
+
 #=====================================================================
 # Globals
 #---------------------------------------------------------------------
 NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
 FAILURE = False
 #=====================================================================
-
 
 class CSP(object):
     """A generalized framwork for implementing CSP problems. This
@@ -120,22 +127,30 @@ class CSPAgent(object):
     def __init__(self, csp):
         """Initialize the CSPAgent.
         Arguments:
-            csp     -->     CSP object
-        Variables:
+            csp:
+                An object that inherits from CSP
+        Members:
+            attempted_assignments:
+                int, A running count of how many times a newly
+                assigned variable to a value is checked against the
+                csp constraints.
+            csp:
+                SEE ARGUMENTS
+            default_search_name:
+                string, The search name used by default.
             search_functions:
                 A dictionary where:
                     KEYS = Names of valid early failure detection
                         strategies used by backtracking search.
                     VALUES = Functions to implement the early failure
                         detection strategies per the CSP object.
-            start_state:
-                The start state of the CSP object.
             start_node:
                 The root assignment of the CSPAgent.
-            solution:
+            solution_node:
                 Initialized to None. Holds the solution node of the
                 CSP after a search is executed.
         """
+        self.attempted_assignments = 0
         self.csp = csp
         self.default_search_name = 'backtracking'
         self.search_functions = {
@@ -146,12 +161,16 @@ class CSPAgent(object):
         }
         self.solution_node = None
         self.start_node = self.get_start_node()
-        self.attempted_assignments = 0
+
 
     def get_start_node(self):
-        """c
+        """A wrapper function to the CSPAgent's csp functionality.
+        Returns:
+            start_node:
+                Arbritrary node type known by csp
         """
-        return self.csp.get_start_node()
+        start_node = self.csp.get_start_node()
+        return start_node
     #=================================================================
 
     #=================================================================
@@ -161,7 +180,8 @@ class CSPAgent(object):
         """Determines if a string is a valid search name by checking
         it against the names found within search_strategies.
         Arguments:
-            search_name     -->     String
+            search_name:
+                string, A valid search name.
         Exceptions:
             Raised:
                 - On invalid search_name
@@ -188,14 +208,17 @@ class CSPAgent(object):
         intervening steps are required, they are executed depending on
         the given search_name.
         Arguments:
-            search_name     -->     String
-            current_node    -->     Arbitrary Node type known by csp
+            search_name:
+                string, A valid search name
+            current_node:
+                Arbitrary Node type known by csp
         Globals:
             FAILURE
         Returns:
-            Boolean
-                or
-            Node, the type of which is arbitrary and known by csp
+            result:
+                Boolean, False when a Boolean
+                OR
+                Node, the type of which is arbitrary and known by csp
         """
         if self.assignment_is_complete(current_node):
             solution_node = self.csp.clean_solution_node(current_node)
@@ -244,31 +267,37 @@ class CSPAgent(object):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
-            current_node        -->     Arbitrary Node type known by
-                                        csp
+            current_node:
+                Arbitrary Node type known by csp
         Returns:
-            Boolean
+            complete:
+                Boolean, True if the current node is a complete
+                assignment, false otherwise.
         """
-        return self.csp.assignment_is_complete(current_node)
+        complete = self.csp.assignment_is_complete(current_node)
+        return complete
 
 
     def is_within_constraints(self, current_node, value):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
-            current_node        -->     Arbitrary Node type known by
-                                        csp
-            value               -->     Arbitrary value type known by
-                                        csp
+            current_node:
+                Arbitrary Node type known by csp
+            value:
+                Arbitrary value type known by csp
         Returns:
-            Boolean
+            valid:
+                Boolean, True if current_node fulfills constraints of
+                csp, false otherwise.
         """
         self.attempted_assignments += 1
-        return self.csp.is_within_constraints(current_node, value)
+        valid = self.csp.is_within_constraints(current_node, value)
+        return valid
 
 
     def reset(self):
-        """c
+        """Reset the CSPAgent for the next search.
         """
         self.attempted_assignments = 0
 
@@ -277,7 +306,9 @@ class CSPAgent(object):
         """The basic search function of a CSP agent. Does some initial
         bookeeping, and then proceeds with the backtracking search.
         Arguments:
-            search_name     -->     String
+            search_name:
+                string, a valid search name indicating which search
+                algorithm to use.
         """
         self.reset()
         if search_name == None:
@@ -329,7 +360,8 @@ class CSPAgent(object):
 def list_string(alist):
     """Handy utility function for print lists.
     Arguments:
-        alist       -->     List
+        alist:
+            list, An arbitary collection of elements.
     Returns:
         A String with each element in the list prepended with
         newline and tab escape sequences.
