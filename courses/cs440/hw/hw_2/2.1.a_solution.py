@@ -3,7 +3,7 @@
 # Imports
 #---------------------------------------------------------------------
 import os
-from csp import CSPAgent
+from csp import BacktrackingCSPAgent
 from course_plan import CourseAssignmentCSP
 #=====================================================================
 
@@ -21,7 +21,7 @@ def main():
 
     for course_file in course_files:
         csp = CourseAssignmentCSP(course_file)
-        agent = CSPAgent(csp)
+        agent = BacktrackingCSPAgent(csp)
         agent.search(toprint=True)
 
 

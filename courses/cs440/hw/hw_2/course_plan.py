@@ -37,7 +37,7 @@ problem.
 # Imports
 #---------------------------------------------------------------------
 import os
-from csp import CSP
+from csp import BacktrackingCSP
 from itertools import combinations
 #=====================================================================
 
@@ -94,7 +94,7 @@ class Course(object):
         self.prereqs = prereqs
 
 
-class CourseAssignmentCSP(CSP):
+class CourseAssignmentCSP(BacktrackingCSP):
     """This class represents the interface through which the csp is
     solved. CourseAssignmentsCSP inherits from csp.CSP, which provides
     the functions used by a CSPAgent to solve the problem.
@@ -122,6 +122,9 @@ class CourseAssignmentCSP(CSP):
                 courses.
             course_file:
                 SEE ARGUMENTS
+            dirty_trick_used:
+                Boolean, Is true if the domain-shrinking dirty trick
+                is used during generate_domain()
             domain:
                 2D list of sets, In theory, contains all valid course
                 combinations. Contains the values used to create
@@ -150,6 +153,10 @@ class CourseAssignmentCSP(CSP):
         """
         self.course_file = os.path.basename(course_file)
         self.next_semester = None
+        #-------------------------------------------------------------
+        # Printed Output Specific Variables
+        self.dirty_trick_used = False
+        #-------------------------------------------------------------
         #-------------------------------------------------------------
         # The following variables are populated from the input file:
         self.B = 0 # The budget of MC --> the student
@@ -281,6 +288,7 @@ class CourseAssignmentCSP(CSP):
         #   implemented in order to cut down on the size of the
         #   initial domain.
         if len(courses) > 20:
+            self.dirty_trick_used = True
             max_sz = min_sz
         #-------------------------------------------------------------
         clean_course_combos = []
@@ -533,6 +541,7 @@ class CourseAssignmentCSP(CSP):
         #-------------------------------------------------------------
         label = "Course Plan: %s" %(self.course_file)
         solution_dict = {
+            "Dirty Trick Used?": self.dirty_trick_used,
             label: msg
         }
         return solution_dict

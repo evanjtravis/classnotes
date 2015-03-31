@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 """
 This module specifies the basic framework of a CSP problem. It defines
-the basic framwork used to solve such a problem.
+the basic framework used to solve such a problem.
 A CSPAgent interfaces with a CSP object in predefined ways. The
-CSP class is then subclassed by a specific CSP problem, and the needed
-functions are overridden as needed.
+CSP class is then subclassed by a specific CSP problem-solving
+approach, which is then subclassed by a specific CSP problem.
+The needed functions are overridden as needed within the concrete
+class definitions of the specific CSP problems.
 """
 
 #=====================================================================
@@ -14,23 +16,44 @@ NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
 FAILURE = False
 #=====================================================================
 
+#=====================================================================
+# ABSTRACT CLASSES
+#---------------------------------------------------------------------
+#####=================================================================
+##### CSP Classes
+#####-----------------------------------------------------------------
 class CSP(object):
-    """A generalized framwork for implementing CSP problems. This
-    class provides an interface through which CSP problems can be
-    represented. This class insures that any CSP problem that
-    inherits from this class implements their own versions of basic
-    functions needed in order to solve the CSP problem.
+    """A class that contains all of the interfaces that
+    backtracking, alpha-beta pruning, and minimax CSPs share.
     """
     #=================================================================
-    # Logic Functions Interface
+    # Display Functions Interface
     #-----------------------------------------------------------------
-    def ab_pruning(self, current_node):
-        """Hollow function used to ensure implementation by child
-        classes.
+    def generate_solution_dict(self, solution_node):
+        """Hollow function used to ensure implementation by
+        non-abstract child classes. Requires those classes to
+        implement a standard for printing output to stdout.
+        Arguments:
+            solution_node:
+                Arbitrary Node whose type is known by csp
+        Returns:
+            A dictionary with arbitrary key-value pairs.
         """
         raise Exception(NOT_IMPLEMENTED)
+    #=================================================================
+
+class AlphaBetaPruningCSP(CSP):
+    pass
 
 
+class BacktrackingCSP(CSP):
+    """A generalized framwork for implementing CSP assignment problems
+    that use backtracking. This class provides an interface through
+    which these types of CSP problems can be represented. This class
+    insures that any CSP problem that inherits from this class
+    implements their own versions of basic functions needed in order
+    to solve the problem.
+    """
     def add(self, value, current_node):
         """Hollow function used to ensure implementation by child
         classes.
@@ -66,20 +89,6 @@ class CSP(object):
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def MAXI(self, current_node):
-        """Hollow function used to ensure implementation by child
-        classes.
-        """
-        raise Exception(NOT_IMPLEMENTED)
-
-
-    def mini(self, current_node):
-        """Hollow function used to ensure implementation by child
-        classes.
-        """
-        raise Exception(NOT_IMPLEMENTED)
-
-
     def order_domain_values(self, var, current_node):
         """Hollow function used to ensure implementation by child
         classes.
@@ -99,66 +108,15 @@ class CSP(object):
         classes.
         """
         raise Exception(NOT_IMPLEMENTED)
-    #=================================================================
 
-    #=================================================================
-    # Display Functions Interface
-    #-----------------------------------------------------------------
-    def generate_solution_dict(self, solution_node):
-        """Hollow function used to ensure implementation by child
-        classes.
-        """
-        raise Exception(NOT_IMPLEMENTED)
-    #=================================================================
 
+class MinimaxCSP(CSP):
+    pass
+#####=================================================================
 
 class CSPAgent(object):
-    """A generalized framework for solving CSP problems. This
-    class provides the interface through which CSP problems are
-    solved. All data representation and manipulation within a CSP is
-    encapsulated by a CSP object, and the searching mechanisms are
-    encapsulated by the CSPAgent object. A CSPAgent object can use any
-    arbitrary CSP object so long as it implements the correct
-    interface functions.
-    """
-    #=================================================================
-    # Initialization Functions
-    #-----------------------------------------------------------------
     def __init__(self, csp):
-        """Initialize the CSPAgent.
-        Arguments:
-            csp:
-                An object that inherits from CSP
-        Members:
-            attempted_assignments:
-                int, A running count of how many times a newly
-                assigned variable to a value is checked against the
-                csp constraints.
-            csp:
-                SEE ARGUMENTS
-            default_search_name:
-                string, The search name used by default.
-            search_functions:
-                A dictionary where:
-                    KEYS = Names of valid early failure detection
-                        strategies used by backtracking search.
-                    VALUES = Functions to implement the early failure
-                        detection strategies per the CSP object.
-            start_node:
-                The root assignment of the CSPAgent.
-            solution_node:
-                Initialized to None. Holds the solution node of the
-                CSP after a search is executed.
-        """
-        self.attempted_assignments = 0
         self.csp = csp
-        self.default_search_name = 'backtracking'
-        self.search_functions = {
-            'ab-pruning': self._ab_pruning,
-            'min': self._minimax,
-            'MAX': self._MINIMAX,
-            self.default_search_name: self._dummy,
-        }
         self.solution_node = None
         self.start_node = self.get_start_node()
 
@@ -171,42 +129,165 @@ class CSPAgent(object):
         """
         start_node = self.csp.get_start_node()
         return start_node
-    #=================================================================
 
+
+    def end_search(self, toprint):
+        """c
+        """
+        if self.solution_node == FAILURE:
+            raise Exception("Search Failed.")
+        if toprint == True:
+            self.print_solution()
+
+
+    def search(self, toprint=False):
+        self.reset()
+        self.solution_node = self.search_algorithm(self.start_node)
+        self.end_search(toprint)
     #=================================================================
-    # Private Functions
+    # Display Functions
     #-----------------------------------------------------------------
-    def _check_search_name(self, search_name):
-        """Determines if a string is a valid search name by checking
-        it against the names found within search_strategies.
+    def generate_solution_dict(self):
+        """Function wrapper for a CSP problem. Uses the data with the
+        agent's csp to generate a value.
+        """
+        return self.csp.generate_solution_dict(self.solution_node)
+
+
+    def print_solution(self):
+        """Main driver of display functions.
+        """
+        solution_dict = self.generate_solution_dict()
+        data_dict = self.generate_data_dict()
+        self.print_solution_dict(solution_dict, data_dict)
+    #=================================================================
+    # CSP Interface Functions
+    #-----------------------------------------------------------------
+    def clean_solution_node(self, solution_node):
+        """Function wrapper for a CSP problem. Uses the data within
+        the agent's csp to generate a value.
         Arguments:
-            search_name:
-                string, A valid search name.
-        Exceptions:
-            Raised:
-                - On invalid search_name
+            solution_node:
+                Arbitrary Node whose type is known by csp
+        Returns:
+            clean_node:
+                Arbitrary Node from csp.
         """
-        if search_name not in self.search_functions:
-            msg = "Incorrect search name.\nSearch Names:\n%s" %\
-                list_string(self.search_functions.keys())
-            raise Exception(msg)
+        clean_node = self.csp.clean_solution_node(solution_node)
+        return clean_node
+
+
+    def print_solution_dict(self, solution_dict, data_dict):
+        """Prints the solution dict generated by the agent's csp to
+        stdout.
+        """
+        header = '\n########################################\n'
+        print header
+        for key in solution_dict:
+            print "%-20s\n\t%20s" %\
+                (str(key), str(solution_dict[key]))
+        for key in data_dict:
+            print "%-20s\n\t%20s" %\
+                (str(key), str(data_dict[key]))
+        print header
     #=================================================================
 
     #=================================================================
-    # Search Functions
+    # Subclass Interface Functions
     #-----------------------------------------------------------------
-    def _ab_pruning(self):
-        """Function wrapper for a CSP problem using alpha-beta
-        pruning. Executes the steps associated with the agent's csp.
+    def reset(self):
+        """c
         """
-        self.csp.ab_pruning()
+        raise Exception(NOT_IMPLEMENTED)
 
 
-    def _backtracking_search(self, search_name, current_node):
-        """The backbone of the CSP search algorithm. is executed
-        recursively until a valid assignment is achieved. If any
-        intervening steps are required, they are executed depending on
-        the given search_name.
+    def generate_data_dict(self):
+        """Implemented in child classes. Provide additional
+        information to be printed along with the csp's solution
+        node data. Must return a dictionary. The dictionary can be
+        empty.
+        """
+        raise Exception(NOT_IMPLEMENTED)
+
+
+    def search_algorithm(self, current_node):
+        """
+        """
+        raise Exception(NOT_IMPLEMENTED)
+    #=================================================================
+
+#=====================================================================
+
+#=====================================================================
+# Concrete Classes
+#---------------------------------------------------------------------
+class AlphaBetaPruningCSPAgent(CSPAgent):
+    def search_algorithm(self, current_node):
+        """
+        """
+        pass
+
+
+    def reset(self):
+        """c
+        """
+        pass
+
+
+    def generate_data_dict(self):
+        """
+        """
+        pass
+
+
+class BacktrackingCSPAgent(CSPAgent):
+    """A generalized framework for solving backtracking assignment CSP problems. This
+    class provides the interface through which these types of CSP problems are
+    solved. All data representation and manipulation within a CSP is
+    encapsulated by a BacktrackingCSP object, and the searching mechanisms are
+    encapsulated by the BacktrackingCSPAgent object.
+    """
+    def __init__(self, csp):
+        """Initialize the CSPAgent.
+        Arguments:
+            csp:
+                An object that inherits from BacktrackingCSP
+        Members:
+            attempted_assignments:
+                int, A running count of how many times a newly
+                assigned variable to a value is checked against the
+                csp constraints.
+            csp:
+                SEE ARGUMENTS
+            start_node:
+                The root assignment of the CSPAgent.
+            solution_node:
+                Initialized to None. Holds the solution node of the
+                CSP after a search is executed.
+        """
+        super(BacktrackingCSPAgent, self).__init__(csp)
+        self.attempted_assignments = 0
+    #=================================================================
+    # Main/CSP Interface Functions
+    #-----------------------------------------------------------------
+    def reset(self):
+        """Reset the CSPAgent for the next search.
+        """
+        self.attempted_assignments = 0
+
+
+    def generate_data_dict(self):
+        """c
+        """
+        data = {
+            'Attempted Assignments:': self.attempted_assignments,
+        }
+        return data
+
+
+    def search_algorithm(self, current_node):
+        """The backbone of a CSP assignment problem. This function is executed
+        recursively until a valid assignment is achieved. This function is an implemented interface funtion of CSPAgent.
         Arguments:
             search_name:
                 string, A valid search name
@@ -219,50 +300,58 @@ class CSPAgent(object):
                 Boolean, False when a Boolean
                 OR
                 Node, the type of which is arbitrary and known by csp
+        CSP Interface Functions Called:
+            add
+            assignment_is_complete
+            clean_solution_node
+            is_within_constraints
+            order_domain_values
+            remove
+            select_unassigned_variable
         """
         if self.assignment_is_complete(current_node):
-            solution_node = self.csp.clean_solution_node(current_node)
+            solution_node = self.clean_solution_node(current_node)
             return solution_node
-        var = self.csp.select_unassigned_variable(current_node)
-        for value in self.csp.order_domain_values(var,
-                                                  current_node):
+        var = self.select_unassigned_variable(current_node)
+        for value in self.order_domain_values(var, current_node):
             if self.is_within_constraints(current_node, value):
-                current_node = self.csp.add(value, current_node)
+                current_node = self.add(value, current_node)
                 #-----------------------------------------------------
-                # Apply inference to reduce the space of possible
-                # assignments and detect failure early.
-                self.search_functions[search_name](current_node)
+                # Recursive Search
+                result = self.search_algorithm(current_node)
                 #-----------------------------------------------------
-                result = self._backtracking_search(search_name,
-                                              current_node)
                 if result != FAILURE:
                     return result
-                current_node = self.csp.remove(value, current_node)
+                current_node = self.remove(value, current_node)
         return FAILURE
-
-
-    def _dummy(self, current_node):
-        """Function that does nothing.
-        """
-        pass
-
-    def _minimax(self, current_node):
-        """Function wrapper for a CSP problem using minimax. Executes
-        the steps associated with the agent's csp.
-        """
-        self.csp.mini()
-
-
-    def _MINIMAX(self, current_node):
-        """Function wrapper for a CSP problem using Minimax. Executes
-        the steps associated with the agent's csp.
-        """
-        self.csp.MAXI()
     #=================================================================
 
     #=================================================================
-    # Logic Functions
+    # BacktrackingCSP Interface Functions
+    #   All of these functions act as wrappers for a BacktrackingCSP
+    #   object's functions, but may provide some additional
+    #   bookkeeping needed by the BacktrackingCSPAgent object.
     #-----------------------------------------------------------------
+    def add(self, value, current_node):
+        """Function wrapper for a CSP problem. Uses the data within
+        the agent's csp to generate a value.
+        Arguments:
+            value:
+                Arbitrary value whose type is known by csp
+            current_node:
+                Arbitrary Node whose type is known by csp
+        Returns:
+            next_node:
+                Arbitrary Node from csp
+        """
+        #-------------------------------------------------------------
+        # Bookkeeping:
+        #   NONE
+        #-------------------------------------------------------------
+        next_node = self.csp.add(value, current_node)
+        return next_node
+
+
     def assignment_is_complete(self, current_node):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
@@ -274,6 +363,10 @@ class CSPAgent(object):
                 Boolean, True if the current node is a complete
                 assignment, false otherwise.
         """
+        #-------------------------------------------------------------
+        # Bookkeeping:
+        #   NONE
+        #-------------------------------------------------------------
         complete = self.csp.assignment_is_complete(current_node)
         return complete
 
@@ -291,68 +384,93 @@ class CSPAgent(object):
                 Boolean, True if current_node fulfills constraints of
                 csp, false otherwise.
         """
+        #-------------------------------------------------------------
+        # Bookkeeping:
         self.attempted_assignments += 1
+        #-------------------------------------------------------------
         valid = self.csp.is_within_constraints(current_node, value)
         return valid
 
 
-    def reset(self):
-        """Reset the CSPAgent for the next search.
-        """
-        self.attempted_assignments = 0
-
-
-    def search(self, search_name=None, toprint=False):
-        """The basic search function of a CSP agent. Does some initial
-        bookeeping, and then proceeds with the backtracking search.
+    def order_domain_values(self, var, current_node):
+        """Function wrapper for a CSP problem. Uses the data within
+        the agent's csp to generate a value.
         Arguments:
-            search_name:
-                string, a valid search name indicating which search
-                algorithm to use.
+            var:
+                Arbitrary variable whose type is known by csp
+            current_node:
+                Arbitrary Node whose type is known by csp
+        Returns:
+            domain:
+                Arbitrary collection of assignable values to the
+                variable known by csp
         """
-        self.reset()
-        if search_name == None:
-            search_name = self.default_search_name
-        self._check_search_name(search_name)
-        self.solution_node = self._backtracking_search(search_name,
-                                                  self.start_node)
-        if self.solution_node == FAILURE:
-            raise Exception("Search Failed.")
-        if toprint == True:
-            self.print_solution()
+        #-------------------------------------------------------------
+        # Bookkeeping:
+        #   NONE
+        #-------------------------------------------------------------
+        domain = self.csp.order_domain_values(var, current_node)
+        return domain
+
+
+    def remove(self, value, current_node):
+        """Function wrapper for a CSP problem. Uses the data within
+        the agent's csp to generate a value.
+        Arguments:
+            value:
+                Arbitrary value whose type is known by csp
+            current_node:
+                Arbitrary Node whose type is known by csp
+        Returns:
+            next_node:
+                Arbitrary Node from csp
+        """
+        #-------------------------------------------------------------
+        # Bookkeeping:
+        #   NONE
+        #-------------------------------------------------------------
+        next_node = self.csp.remove(value, current_node)
+        return next_node
+
+
+    def select_unassigned_variable(self, current_node):
+        """Function wrapper for a CSP problem. Uses the data within
+        the agent's csp to generate a value.
+        Arguments:
+            value:
+                Arbitrary value whose type is known by csp
+            current_node:
+                Arbitrary Node whose type is known by csp
+        Returns:
+            var:
+                Arbitrary variable type from csp
+        """
+        #-------------------------------------------------------------
+        # Bookkeeping:
+        #   NONE
+        #-------------------------------------------------------------
+        var = self.csp.select_unassigned_variable(current_node)
+        return var
     #=================================================================
 
-    #=================================================================
-    # Display Functions
-    #-----------------------------------------------------------------
-    def generate_solution_dict(self):
-        """Function wrapper for a CSP problem. Uses the data with the
-        agent's csp to generate a value.
+class MinimaxCSPAgent(CSPAgent):
+    def search_algorithm(self, current_node):
         """
-        return self.csp.generate_solution_dict(self.solution_node)
-
-
-    def print_solution(self):
-        """Main driver of display functions.
         """
-        solution_dict = self.generate_solution_dict()
-        self.print_solution_dict(solution_dict)
+        pass
 
 
-    def print_solution_dict(self, solution_dict):
-        """Prints the solution dict generated by the agent's csp to
-        stdout.
+    def reset(self):
+        """c
         """
-        header = '\n########################################\n'
-        print header
-        for key in solution_dict:
-            print "%-20s\n\t%20s" %\
-                (str(key), str(solution_dict[key]))
-        print "Attempted Assignments: %d" %\
-            (self.attempted_assignments)
-        print header
-    #=================================================================
+        pass
 
+
+    def generate_data_dict(self):
+        """
+        """
+        pass
+#=====================================================================
 
 #=====================================================================
 # Utilities
