@@ -3,7 +3,7 @@
 #=====================================================================
 # Imports
 #---------------------------------------------------------------------
-from csp import AlphaBetaPruningCSP, MinimaxCSP
+from csp import AdvesarialCSP
 #=====================================================================
 
 #=====================================================================
@@ -197,8 +197,5 @@ class Player(object):
 #=====================================================================
 # AI Implementation
 #---------------------------------------------------------------------
-class AlphaPlayer(AlphaBetaPruningCSP):
-    pass
-
-class MinimaxPlayer(MinimaxCSP):
+class WargameCSP(AdvesarialCSP):
     pass

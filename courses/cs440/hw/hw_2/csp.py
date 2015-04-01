@@ -8,12 +8,20 @@ approach, which is then subclassed by a specific CSP problem.
 The needed functions are overridden as needed within the concrete
 class definitions of the specific CSP problems.
 """
+#=====================================================================
+# Imports
+#---------------------------------------------------------------------
+import sys
+#=====================================================================
 
 #=====================================================================
 # Globals
 #---------------------------------------------------------------------
 NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
 FAILURE = False
+MAXINT = sys.maxint
+MININT = -sys.maxint - 1
+NONE = "KEY NOT USED IN SHARED DATA"
 #=====================================================================
 
 #=====================================================================
@@ -42,8 +50,43 @@ class CSP(object):
         raise Exception(NOT_IMPLEMENTED)
     #=================================================================
 
-class AlphaBetaPruningCSP(CSP):
-    pass
+class AdvesarialCSP(CSP):
+    """
+    """
+    def generate_successor(self, node, action):
+        """Hollow function used to ensure implementation by child
+        classes.
+        """
+        raise Exception(NOT_IMPLEMENTED)
+
+
+    def get_node_actions(self, node):
+        """Hollow function used to ensure implementation by child
+        classes.
+        """
+        raise Exception(NOT_IMPLEMENTED)
+
+
+    def get_node_from_value(self, value, terminal_nodes):
+        """Hollow function used to ensure implementation by child
+        classes.
+        """
+        raise Exception(NOT_IMPLEMENTED)
+
+
+    def get_utility_of(self, node):
+        """Hollow function used to ensure implementation by child
+        classes.
+        """
+        raise Exception(NOT_IMPLEMENTED)
+
+
+    def is_terminal(self, node):
+        """Hollow function used to ensure implementation by child
+        classes.
+        """
+        raise Exception(NOT_IMPLEMENTED)
+
 
 
 class BacktrackingCSP(CSP):
@@ -109,13 +152,11 @@ class BacktrackingCSP(CSP):
         """
         raise Exception(NOT_IMPLEMENTED)
 
-
-class MinimaxCSP(CSP):
-    pass
 #####=================================================================
 
 class CSPAgent(object):
-    def __init__(self, csp):
+    def __init__(self, csp, agency=None):
+        self.agency = agency
         self.csp = csp
         self.solution_node = None
         self.start_node = self.get_start_node()
@@ -221,23 +262,125 @@ class CSPAgent(object):
 #=====================================================================
 # Concrete Classes
 #---------------------------------------------------------------------
-class AlphaBetaPruningCSPAgent(CSPAgent):
+class Agency(object):
+    """A class designed to coordinate like-CSP Agents and shared
+    data.
+    """
+    def __init__(self, agents):
+        """
+        """
+        self.agents = agents
+        self.shared = {}
+
+    def get(self, key):
+        """
+        """
+        self.shared.get(key, NONE)
+
+class AdvesarialCSPAgent(CSPAgent):
+    """c
+    """
+    def __init__(self, csp, maximum=True, agency=None):
+        """
+        """
+        super(AdvesarialCSPAgent, self).__init__(csp, agency)
+        self.maximum = maximum
+
+    def get_value(self, current_node, min_or_max_func=max):
+        """Hollow for concrete agent.
+        """
+        pass
+
+
     def search_algorithm(self, current_node):
         """
         """
+        value = None
+        if self.maximum == True:
+            value = self.get_value(current_node)
+        else:
+            value = self.get_value(current_node, min_or_max_func=min)
+        node = self.get_node_from_value(value)
+        action = self.get_action_from_node(node)
+        return action
+
+
+    def add_to_terminal_nodes(self, utility, current_node):
+        """c
+        """
+        terminal_nodes = self.terminal_nodes
+        if utility in terminal_nodes:
+            terminal_nodes[utility].append(current_node)
+        else:
+            terminal_nodes[utility] = [current_node]
+        self.terminal_nodes = terminal_nodes
+
+    #=================================================================
+    # AdvesarialCSP Interface Functions
+    #-----------------------------------------------------------------
+    def generate_successor(self, node, action):
+        """c
+        """
+        #-------------------------------------------------------------
+        # Bookkeeping
+        #   NONE
+        #-------------------------------------------------------------
+        successor = self.csp.generate_successor(node, action)
+        return successor
+    def get_action_from_node(self, node):
+        """
+        """
         pass
 
+    def get_node_actions(self, node):
+        """c
+        """
+        #-------------------------------------------------------------
+        # Bookkeeping
+        #   NONE
+        #-------------------------------------------------------------
+        actions = self.csp.get_node_actions(node)
+        return actions
 
+    def get_node_from_value(self, value):
+        """Allow csp to prioritize nodes in dict.
+        """
+        #-------------------------------------------------------------
+        # Bookkeeping
+        #   NONE
+        #-------------------------------------------------------------
+        terminal_nodes = self.terminal_nodes
+        node = self.csp.get_node_from_value(value, terminal_nodes)
+        return node
+
+    def get_utility_of(self, node):
+        """c
+        """
+        #-------------------------------------------------------------
+        # Bookkeeping
+        #   NONE
+        #-------------------------------------------------------------
+        utility = self.csp.get_utility_of(node)
+        return utility
+
+
+    def is_terminal(self, node):
+        """c
+        """
+        terminal = self.csp.is_terminal(node)
+        utility = None
+        if terminal:
+            utility = self.get_utility_of(node)
+            #---------------------------------------------------------
+            # Bookkeeping
+            self.add_to_terminal_nodes(utility, node)
+            #---------------------------------------------------------
+        return terminal, utility
+    #=================================================================
     def reset(self):
         """c
         """
-        pass
-
-
-    def generate_data_dict(self):
-        """
-        """
-        pass
+        self.terminal_nodes = {}
 
 
 class BacktrackingCSPAgent(CSPAgent):
@@ -247,7 +390,7 @@ class BacktrackingCSPAgent(CSPAgent):
     encapsulated by a BacktrackingCSP object, and the searching mechanisms are
     encapsulated by the BacktrackingCSPAgent object.
     """
-    def __init__(self, csp):
+    def __init__(self, csp, agency=None):
         """Initialize the CSPAgent.
         Arguments:
             csp:
@@ -265,7 +408,7 @@ class BacktrackingCSPAgent(CSPAgent):
                 Initialized to None. Holds the solution node of the
                 CSP after a search is executed.
         """
-        super(BacktrackingCSPAgent, self).__init__(csp)
+        super(BacktrackingCSPAgent, self).__init__(csp, agency)
         self.attempted_assignments = 0
     #=================================================================
     # Main/CSP Interface Functions
@@ -453,23 +596,54 @@ class BacktrackingCSPAgent(CSPAgent):
         return var
     #=================================================================
 
-class MinimaxCSPAgent(CSPAgent):
-    def search_algorithm(self, current_node):
-        """
-        """
-        pass
-
-
-    def reset(self):
+class MinimaxCSPAgent(AdvesarialCSPAgent):
+    """MAXIMUM AS DEFAULT ALWAYS
+    """
+    def __init__(self, csp, maximum=True, agency=None):
         """c
         """
-        pass
+        super(MinimaxCSPAgent, self).__init__(csp, maximum, agency)
 
+    def get_value(self, current_node, min_or_max_func=max):
+        """c
+        """
+        node_is_terminal, utility = self.is_terminal(current_node)
+        if node_is_terminal:
+            return utility
+        #-------------------------------------------------------------
+        # Min and Max Diff
+        value = MININT
+        if min_or_max_func == min:
+            value = MAXINT
+        #-------------------------------------------------------------
+        for action in self.get_node_actions(current_node):
+            successor = \
+                self.generate_successor(current_node, action)
+            #---------------------------------------------------------
+            # Min and Max Diff: Determine Recursive Step
+            successor_value = None
+            if min_or_max_func == max:
+                successor_value = self.get_value(
+                    successor,
+                    min_or_max_func=min
+                )
+            elif min_or_max_func == min:
+                successor_value = self.get_value(
+                    successor,
+                    min_or_max_func=max
+                )
+            #---------------------------------------------------------
+            value = min_or_max_func(
+                value,
+                successor_value,
+            )
+        return value
 
     def generate_data_dict(self):
         """
         """
         pass
+    #=================================================================
 #=====================================================================
 
 #=====================================================================
