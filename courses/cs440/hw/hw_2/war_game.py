@@ -25,6 +25,7 @@ class Board(object):
         """
         self.board_file = board_file
         self.cells, self.board, self.array = self.generate_board()
+        self.empty_cells = []
 
     def get_cell(self, coords):
         """c
@@ -33,7 +34,6 @@ class Board(object):
             return self.board[coords]
         else:
             return None
-
 
     def generate_board(self, board_file=None):
         """c
@@ -66,7 +66,7 @@ class Board(object):
         msg = None
         array = self.array
         for row in range(len(array)):
-            for col in range(len(row)):
+            for col in range(len(array[row])):
                 cell = array[row][col]
                 letter = cell.owner.name[0].upper()
                 value = cell.value
@@ -77,7 +77,24 @@ class Board(object):
         msg = board_name + first_message_part + second_message_part
         return msg
 
+    def get_empty_cells(self):
+        if self.empty_cells:
+            return self.empty_cells
+        cells = []
+        for cell in self.cells:
+            if cell.owner == None:
+                cells.append(cell)
+        self.empty_cells = cells
+        return cells
 
+class BoardBoard(Board):
+    def __init__(self, board):
+        template = deepcopy(board)
+        self.board_file = template.board_file
+        self.cells = template.cells
+        self.board = template.board
+        self.array = template.array
+        self.empty_cells = []
 
 class Cell(object):
     """c
@@ -136,14 +153,15 @@ class Game(object):
         self.blue = None
         self.winner = None
         self.loser = None
+        self.tie = False
         self.matchup = matchup
         for player in players:
             if player.strategy.name.lower() == 'green':
                 self.green = player
             elif player.strategy.name.lower() == 'blue':
                 self.blue = player
-        self.current_player = self.blue
-        self.previous_player = self.green
+        self.current_player = self.green # switched right away
+        self.previous_player = self.blue
         self.action_log = []
 
 
@@ -152,12 +170,10 @@ class Game(object):
         """
         board = None
         while self.moves_left():
+            self.next_player()
             board = self.make_player_go()
             self.board = board
-            winning, losing = self.update_scores()
-            self.next_player()
-        self.winner = winning
-        self.loser = losing
+        self.determine_winner()
         if toprint == True:
             self.print_game_stats()
         self.current_player.clear()
@@ -166,27 +182,30 @@ class Game(object):
     def print_game_stats(self):
         print "%s as BLUE VS. %s as GREEN" %\
             (str(self.matchup[0]), str(self.matchup[1]))
-        message = "WINNER: %s" %(self.winner.strategy.name.upper())
-        self.winner.print_solution(message=message)
-        message = "LOSER: %s" %(self.loser.strategy.name.upper())
-        self.loser.print_solution(
-            message=message,
-            supress_solution=True
-        )
-
-    def give_control_of_board_to_current_player(self):
-        self.current_player.strategy.set_board(self.board)
-        self.previous_player.strategy.set_board(None)
+        if not self.tie:
+            message = "WINNER: %s" %(self.winner.strategy.name.upper())
+            self.winner.print_solution(message=message)
+            message = "LOSER: %s" %(self.loser.strategy.name.upper())
+            self.loser.print_solution(
+                message=message,
+                suppress_solution=True
+            )
+        else:
+            message = "TIE GAME"
+            self.blue.print_solution(message=message)
+            self.green.print_solution(suppress_solution=True)
 
     def make_player_go(self):
         """c
         """
+        board = self.board
         player = self.current_player
         start_node = player.get_start_node()
         player.search(start_node)
         solution_node = player.get_solution_node()
-        action, board = solution_node.resolve_round()
-        self.update_action_log(action)
+        if solution_node:
+            action, board = solution_node.resolve_round()
+            self.update_action_log(action)
         return board
 
     def update_action_log(self, action):
@@ -212,35 +231,31 @@ class Game(object):
         else:
             self.current_player = self.green
             self.previous_player = self.blue
-        self.give_control_of_board_to_current_player()
+        self.current_player.strategy.set_board(self.board)
+        self.previous_player.strategy.set_board(None)
 
-    def update_scores(self):
+    def determine_winner(self):
         """c
-        This function also looks like a duck, only it has eyes
-        AND a "tie" around its neck.
         """
         green_score = 0
         blue_score = 0
-        blue = self.blue.strategy
         green = self.green.strategy
-        cells = self.board.cells
-        winner = "tie"
-        loser = None
-        for cell in cells:
-            value = cell.value
-            if green.owns(cell):
-                green_score += value
-            elif blue.owns(cell):
-                blue_score += value
+        blue = self.blue.strategy
+        for cell in self.board.cells:
+            if green.owns_this(cell):
+                green_score += cell.value
+            elif blue.owns_this(cell):
+                blue_score += cell.value
         green.set_score(green_score)
         blue.set_score(blue_score)
         if green_score > blue_score:
-            winner = self.green
-            loser = self.blue
-        elif blue_score > green_score:
-            winner = self.blue
-            loser = self.blue
-        return winner, loser
+            self.winner = self.green
+            self.loser = self.blue
+        elif green_score < blue_score:
+            self.winner = self.blue
+            self.loser = self.green
+        elif green_score == blue_score:
+            self.tie = True
 
 
 class PlayerStrategy(AdvesarialStrategy):
@@ -254,18 +269,43 @@ class PlayerStrategy(AdvesarialStrategy):
         self.score = 0
 
     def generate_solution_dict(self, solution_node):
-        _, board = solution_node.reslove_round()
+        _, board = solution_node.resolve_round()
         solution_dict = {
             'Board:': board.stringify()
         }
         return solution_dict
 
-
     def set_score(self, score):
         self.score = score
 
+    def opponent_owns_this(self, cell):
+        opponent_owns = False
+        if not self.owns_this(cell):
+            if not cell.is_empty():
+                opponent_owns = True
+        return opponent_owns
+
+    def opponent_owns_these(self, cells):
+        opponent_owns = False
+        for cell in cells:
+            if cell.is_empty():
+                return opponent_owns
+            if self.owns_this(cell):
+                return opponent_owns
+        opponent_owns = True
+        return opponent_owns
+
+    def opponent_owns_which(self, cells):
+        opponent_owns = []
+        for cell in cells:
+            if self.opponent_owns_this(cell):
+                opponent_owns.append(cell)
+        return opponent_owns
+
     def owns_this(self, cell):
         owns = False
+        if cell.is_empty():
+            return owns
         if cell.owner == self:
             owns = True
         return owns
@@ -284,6 +324,10 @@ class PlayerStrategy(AdvesarialStrategy):
             if self.owns_this(cell):
                 owns.append(cell)
         return owns
+
+
+    def set_board(self, board):
+        self.board = board
 
     #=================================================================
     # CSP Interface Functions
@@ -315,7 +359,7 @@ class PlayerStrategy(AdvesarialStrategy):
         utility = node.get_utility()
         return utility
     #=================================================================
-
+# TODO INHERIT FROM BASE CSP NODE
 class Node(object):
     def __init__(self, parent, action):
         self.parent = parent
@@ -327,6 +371,9 @@ class Node(object):
         action = self.action
         board = action.get_board()
         return action, board
+
+    def get_action(self):
+        return self.action
 
     def get_actions(self):
         actions = self.action.get_further_actions()
@@ -348,6 +395,13 @@ class Node(object):
             depth += self.parent.get_depth()
             return depth
 
+    def is_locally_terminal(self):
+        terminal = True
+        empty_cells = self.action.board.get_empty_cells()
+        if empty_cells:
+            terminal = False
+        return terminal
+
 
 class Action(object):
     def __init__(
@@ -363,7 +417,7 @@ class Action(object):
         ])
         if self.legal_moves != LEGAL_MOVES:
             raise Exception("Non-matching legal moves.")
-        self.board = deepcopy(player.board)
+        self.board = BoardBoard(player.board)
         self.dst_cell = self.board.get_cell(dst_cell_coords)
         self.src_cell = self.board.get_cell(src_cell_coords)
         self.player = player
@@ -411,7 +465,7 @@ class Action(object):
         """Bonus: This source code looks like a duck with a
         lightsaber (at least with my .vimrc).
         """
-        cells = self.board.cells
+        cells = self.board.get_empty_cells()
         actions = []
         action = None
         command = None
@@ -425,25 +479,26 @@ class Action(object):
             valid_drop = self.check_valid_drop(dst_cell)
             valid_blitz, src_coordss = \
                 self.check_valid_blitz(dst_cell)
-            if valid_blitz:
-                command = "blitz"
-                for src_coords in src_coordss:
+            if valid_drop: # Valid blitz is also a valid drop
+                if valid_blitz:
+                    command = "blitz"
+                    for src_coords in src_coordss:
+                        action = Action(
+                            player,
+                            command,
+                            dst_coords,
+                            src_coords
+                        )
+                        actions.append(action)
+                    continue # Skip paradrop action, blitz is mandatory
+                else:
+                    command = "drop"
                     action = Action(
                         player,
                         command,
-                        dst_coords,
-                        src_coords
+                        dst_coords
                     )
                     actions.append(action)
-                continue # Skip paradrop action, blitz is mandatory
-            if valid_drop:
-                command = "drop"
-                action = Action(
-                    player,
-                    command,
-                    dst_coords
-                )
-                actions.append(action)
         return actions
 
     def check_valid_drop(self, cell):
@@ -456,13 +511,14 @@ class Action(object):
     def check_valid_blitz(self, cell):
         valid = False
         owned_coords = []
-        if cell.is_empty():
-            adjacent_cells = cell.get_adjacent_cells()
-            owned_cells = self.player.owns_which(adjacent_cells)
-            if owned_cells:
-                valid = True
-                for owned_cell in owned_cells:
-                    owned_coords.append(owned_cell.coords)
+        adjacent_cells = cell.get_adjacent_cells()
+        owned_cells = self.player.owns_which(adjacent_cells)
+        opponent_owned_cells =\
+            self.player.opponent_owns_which(adjacent_cells)
+        if owned_cells and opponent_owned_cells:
+            valid = True
+            for owned_cell in owned_cells:
+                owned_coords.append(owned_cell.coords)
         return valid, owned_coords
 
 
@@ -485,48 +541,17 @@ class AlphaPlayer(AlphaAgent):
             agency=agency
         )
 
-class BetaPlayer(AlphaAgent):
-    def __init__(
-        self,
-        strategy, # --> A PlayerStrategy
-        depth,
-        maximum=False, # --> Beta Pruning
-        agency=None):
-        super(BetaPlayer, self).__init__(
-            strategy,
-            depth,
-            maximum=maximum,
-            agency=agency
-        )
-
-class MaxiPlayer(MinimaxAgent):
+class MinimaxPlayer(MinimaxAgent):
     def __init__(
         self,
         strategy, # --> A PlayerStrategy
         depth,
         maximum=True, # --> Max
         agency=None):
-        super(MaxiPlayer, self).__init__(
+        super(MinimaxPlayer, self).__init__(
             strategy,
             depth,
             maximum=maximum,
             agency=agency
         )
-
-class MiniPlayer(MinimaxAgent):
-    def __init__(
-        self,
-        strategy, # --> A PlayerStrategy
-        depth,
-        maximum=False, # --> Min
-        agency=None):
-        super(MiniPlayer, self).__init__(
-            strategy,
-            depth,
-            maximum=maximum,
-            agency=agency
-        )
-
-
-
 

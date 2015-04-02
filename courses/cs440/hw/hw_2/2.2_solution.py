@@ -22,20 +22,20 @@ def main():
     alpha_beta_depth = 4
     matchups = [
         [
-            (war_game.MaxiPlayer, minimax_depth),
-            (war_game.MiniPlayer, minimax_depth)
+            (war_game.MinimaxPlayer, minimax_depth),
+            (war_game.MinimaxPlayer, minimax_depth)
         ],
         [
             (war_game.AlphaPlayer, alpha_beta_depth),
-            (war_game.BetaPlayer, alpha_beta_depth)
+            (war_game.AlphaPlayer, alpha_beta_depth)
         ],
         [
-            (war_game.MaxiPlayer, minimax_depth),
-            (war_game.BetaPlayer, alpha_beta_depth)
+            (war_game.MinimaxPlayer, minimax_depth),
+            (war_game.AlphaPlayer, alpha_beta_depth)
         ],
         [
             (war_game.AlphaPlayer, alpha_beta_depth),
-            (war_game.MiniPlayer, minimax_depth)
+            (war_game.MinimaxPlayer, minimax_depth)
         ]
     ]
     for board_file in board_files:

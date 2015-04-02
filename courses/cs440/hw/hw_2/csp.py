@@ -82,6 +82,13 @@ class AdvesarialStrategy(Strategy):
         classes.
         """
         raise Exception(NOT_IMPLEMENTED)
+
+    def get_action_from_node(self, node):
+        """Hollow function used to ensure implementation by child
+        classes.
+        """
+        action = node.get_action()
+        return action
     #=================================================================
 
     #=================================================================
@@ -92,6 +99,9 @@ class AdvesarialStrategy(Strategy):
         """
         node = nodes[0]
         return node
+
+    def clean_solution_node(self, solution_node):
+        return solution_node
     #=================================================================
 
 
@@ -200,7 +210,9 @@ class Agent(object):
             suppress_solution=False):
         """Main driver of display functions.
         """
-        solution_dict = self.generate_solution_dict()
+        solution_dict = {}
+        if not suppress_solution:
+            solution_dict = self.generate_solution_dict()
         data_dict = self.generate_data_dict()
         self.print_solution_dict(
             solution_dict,
@@ -347,8 +359,10 @@ class AdvesarialAgent(Agent):
         self.average_time_taken = 0
 
     def get_node_from_value(self, value):
-        nodes = self.terminal_nodes[value]
-        node = self.strategy.prioritize_nodes(nodes)
+        node = None
+        if value in self.terminal_nodes:
+            nodes = self.terminal_nodes[value]
+            node = self.strategy.prioritize_nodes(nodes)
         return node
 
     def search_algorithm(self, node):
@@ -363,13 +377,12 @@ class AdvesarialAgent(Agent):
         stop_time = datetime.datetime.now()
         self.time_taken += (stop_time - start_time).microseconds
         node = self.get_node_from_value(value)
-        action = self.get_action_from_node(node)
         self.turns_taken += 1
         self.average_time_taken =\
             float(self.time_taken)/float(self.turns_taken)/1000000.0
         self.average_nodes_expanded =\
             float(self.expanded_nodes)/float(self.turns_taken)
-        return action
+        return node
 
     def add_to_terminal_nodes(self, utility, node):
         """c
@@ -389,6 +402,9 @@ class AdvesarialAgent(Agent):
         terminal = False
         if node_depth == depth:
             terminal = True
+        else:
+            #TODO NODE INTERFACE
+            terminal = node.is_locally_terminal()
         utility = None
         if terminal:
             utility = self.get_utility_of(node)
