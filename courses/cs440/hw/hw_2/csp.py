@@ -30,13 +30,19 @@ NONE = "KEY NOT USED IN SHARED DATA"
 #####=================================================================
 ##### CSP Classes
 #####-----------------------------------------------------------------
-class CSP(object):
+class Strategy(object):
     """A class that contains all of the interfaces that
     backtracking, alpha-beta pruning, and minimax CSPs share.
     """
     #=================================================================
     # Mandatory Display Functions Interface
     #-----------------------------------------------------------------
+    def get_start_node(self):
+        """Hollow function used to ensure implementation by child
+        classes.
+        """
+        raise Exception(NOT_IMPLEMENTED)
+
     def generate_solution_dict(self, solution_node):
         """Hollow function used to ensure implementation by
         non-abstract child classes. Requires those classes to
@@ -50,7 +56,7 @@ class CSP(object):
         raise Exception(NOT_IMPLEMENTED)
     #=================================================================
 
-class AdvesarialCSP(CSP):
+class AdvesarialStrategy(Strategy):
     """
     """
     #=================================================================
@@ -88,7 +94,7 @@ class AdvesarialCSP(CSP):
     #=================================================================
 
 
-class BacktrackingCSP(CSP):
+class BacktrackingStrategy(Strategy):
     """A generalized framwork for implementing CSP assignment problems
     that use backtracking. This class provides an interface through
     which these types of CSP problems can be represented. This class
@@ -96,14 +102,14 @@ class BacktrackingCSP(CSP):
     implements their own versions of basic functions needed in order
     to solve the problem.
     """
-    def add(self, value, current_node):
+    def add(self, value, node):
         """Hollow function used to ensure implementation by child
         classes.
         """
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def assignment_is_complete(self, current_node):
+    def assignment_is_complete(self, node):
         """Hollow function used to ensure implementation by child
         classes.
         """
@@ -117,35 +123,28 @@ class BacktrackingCSP(CSP):
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def get_start_node(self):
+    def is_within_constraints(self, node, value):
         """Hollow function used to ensure implementation by child
         classes.
         """
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def is_within_constraints(self, current_node, value):
+    def order_domain_values(self, var, node):
         """Hollow function used to ensure implementation by child
         classes.
         """
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def order_domain_values(self, var, current_node):
+    def remove(self, value, node):
         """Hollow function used to ensure implementation by child
         classes.
         """
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def remove(self, value, current_node):
-        """Hollow function used to ensure implementation by child
-        classes.
-        """
-        raise Exception(NOT_IMPLEMENTED)
-
-
-    def select_unassigned_variable(self, current_node):
+    def select_unassigned_variable(self, node):
         """Hollow function used to ensure implementation by child
         classes.
         """
@@ -153,24 +152,15 @@ class BacktrackingCSP(CSP):
 
 #####=================================================================
 
-class CSPAgent(object):
-    def __init__(self, csp, agency=None):
+class Agent(object):
+    def __init__(self, strategy, agency=None):
         self.agency = agency
-        self.csp = csp
+        self.strategy = strategy
         self.solution_node = None
         self.start_node = self.get_start_node()
-
-
-    def get_start_node(self):
-        """A wrapper function to the CSPAgent's csp functionality.
-        Returns:
-            start_node:
-                Arbritrary node type known by csp
-        """
-        start_node = self.csp.get_start_node()
-        return start_node
-
-
+    #=================================================================
+    # Standard Functions
+    #-----------------------------------------------------------------
     def end_search(self, toprint):
         """c
         """
@@ -185,13 +175,15 @@ class CSPAgent(object):
         self.solution_node = self.search_algorithm(self.start_node)
         self.end_search(toprint)
     #=================================================================
+
+    #=================================================================
     # Display Functions
     #-----------------------------------------------------------------
     def generate_solution_dict(self):
         """Function wrapper for a CSP problem. Uses the data with the
         agent's csp to generate a value.
         """
-        return self.csp.generate_solution_dict(self.solution_node)
+        return self.strategy.generate_solution_dict(self.solution_node)
 
 
     def print_solution(self):
@@ -201,8 +193,19 @@ class CSPAgent(object):
         data_dict = self.generate_data_dict()
         self.print_solution_dict(solution_dict, data_dict)
     #=================================================================
-    # CSP Interface Functions
+
+    #=================================================================
+    # Strategy Interface Functions
     #-----------------------------------------------------------------
+    def get_start_node(self):
+        """A wrapper function to the CSPAgent's csp functionality.
+        Returns:
+            start_node:
+                Arbritrary node type known by csp
+        """
+        start_node = self.strategy.get_start_node()
+        return start_node
+
     def clean_solution_node(self, solution_node):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
@@ -213,7 +216,7 @@ class CSPAgent(object):
             clean_node:
                 Arbitrary Node from csp.
         """
-        clean_node = self.csp.clean_solution_node(solution_node)
+        clean_node = self.strategy.clean_solution_node(solution_node)
         return clean_node
 
 
@@ -233,7 +236,7 @@ class CSPAgent(object):
     #=================================================================
 
     #=================================================================
-    # Subclass Interface Functions
+    # Mandatory Subclass Interface Functions
     #-----------------------------------------------------------------
     def reset(self):
         """c
@@ -250,7 +253,7 @@ class CSPAgent(object):
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def search_algorithm(self, current_node):
+    def search_algorithm(self, node):
         """
         """
         raise Exception(NOT_IMPLEMENTED)
@@ -263,7 +266,7 @@ class CSPAgent(object):
 #---------------------------------------------------------------------
 class Agency(object):
     """A class designed to coordinate like-CSP Agents and shared
-    data.
+    data. Not fully implemented. More of a future project.
     """
     def __init__(self, agents):
         """
@@ -276,20 +279,20 @@ class Agency(object):
         """
         self.shared.get(key, NONE)
 
-class AdvesarialCSPAgent(CSPAgent):
+class AdvesarialAgent(Agent):
     """c
     """
-    def __init__(self, csp, depth, maximum=True, agency=None):
+    def __init__(self, strategy, depth, maximum=True, agency=None):
         """
         """
-        super(AdvesarialCSPAgent, self).__init__(csp, agency)
+        super(AdvesarialAgent, self).__init__(strategy, agency)
         self.maximum = maximum
         self.depth = depth
         self.terminal_nodes = {}
     #=================================================================
     # Mandatory Sub-class Interface
     #-----------------------------------------------------------------
-    def get_value(self, current_node, min_or_max_func=max):
+    def get_value(self, node, min_or_max_func=max):
         """Hollow for concrete agent.
         """
         raise Exception(NOT_IMPLEMENTED)
@@ -297,30 +300,29 @@ class AdvesarialCSPAgent(CSPAgent):
 
     def get_node_from_value(self, value):
         nodes = self.terminal_nodes[value]
-        node = self.csp.prioritize_nodes(nodes)
+        node = self.strategy.prioritize_nodes(nodes)
         return node
 
-    def search_algorithm(self, current_node):
+    def search_algorithm(self, node):
         """
         """
         value = None
         if self.maximum == True:
-            value = self.get_value(current_node)
+            value = self.get_value(node)
         else:
-            value = self.get_value(current_node, min_or_max_func=min)
+            value = self.get_value(node, min_or_max_func=min)
         node = self.get_node_from_value(value)
         action = self.get_action_from_node(node)
         return action
 
-
-    def add_to_terminal_nodes(self, utility, current_node):
+    def add_to_terminal_nodes(self, utility, node):
         """c
         """
         terminal_nodes = self.terminal_nodes
         if utility in terminal_nodes:
-            terminal_nodes[utility].append(current_node)
+            terminal_nodes[utility].append(node)
         else:
-            terminal_nodes[utility] = [current_node]
+            terminal_nodes[utility] = [node]
         self.terminal_nodes = terminal_nodes
 
     def is_terminal(self, node):
@@ -337,6 +339,11 @@ class AdvesarialCSPAgent(CSPAgent):
             self.add_to_terminal_nodes(utility, node)
         return terminal, utility
 
+    def reset(self):
+        """c
+        """
+        self.terminal_nodes = {}
+
     #=================================================================
     # CSP Interface Functions
     #-----------------------------------------------------------------
@@ -347,7 +354,7 @@ class AdvesarialCSPAgent(CSPAgent):
         # Bookkeeping
         #   NONE
         #-------------------------------------------------------------
-        successor = self.csp.generate_successor(node, action)
+        successor = self.strategy.generate_successor(node, action)
         return successor
 
     def get_action_from_node(self, node):
@@ -357,7 +364,7 @@ class AdvesarialCSPAgent(CSPAgent):
         # Bookkeeping
         #   NONE
         #-------------------------------------------------------------
-        action = self.csp.get_action_from_node(node)
+        action = self.strategy.get_action_from_node(node)
         return action
 
 
@@ -368,7 +375,7 @@ class AdvesarialCSPAgent(CSPAgent):
         # Bookkeeping
         #   NONE
         #-------------------------------------------------------------
-        actions = self.csp.get_node_actions(node)
+        actions = self.strategy.get_node_actions(node)
         return actions
 
 
@@ -379,23 +386,16 @@ class AdvesarialCSPAgent(CSPAgent):
         # Bookkeeping
         #   NONE
         #-------------------------------------------------------------
-        utility = self.csp.get_utility_of(node)
+        utility = self.strategy.get_utility_of(node)
         return utility
 
 
     #=================================================================
-    def reset(self):
-        """c
-        """
-        self.terminal_nodes = {}
-    def generate_data_dict(self):
-        """c
-        """
-        pass
 
-class AlphaCSPAgent(AdvesarialCSPAgent):
+
+class AlphaAgent(AdvesarialAgent):
     def __init__(self, csp, depth, maximum=True, agency=None):
-        super(AlphaCSPAgent, self).__init__(
+        super(AlphaAgent, self).__init__(
                 csp,
                 depth,
                 maximum=maximum,
@@ -403,8 +403,8 @@ class AlphaCSPAgent(AdvesarialCSPAgent):
         self.alpha = MININT
         self.beta = MAXINT
 
-    def get_value(self, current_node, min_or_max_func=max):
-        node_is_terminal, utility = self.is_terminal(current_node)
+    def get_value(self, node, min_or_max_func=max):
+        node_is_terminal, utility = self.is_terminal(node)
         if node_is_terminal:
             return utility
         a = self.alpha
@@ -415,9 +415,9 @@ class AlphaCSPAgent(AdvesarialCSPAgent):
         if min_or_max_func == min:
             value = MAXINT
         #-------------------------------------------------------------
-        for action in self.get_node_actions(current_node):
+        for action in self.get_node_actions(node):
             successor = \
-                self.generate_successor(current_node, action)
+                self.generate_successor(node, action)
             #---------------------------------------------------------
             # Min and Max Diff: Determine Recursive Step
             successor_value = None
@@ -451,10 +451,13 @@ class AlphaCSPAgent(AdvesarialCSPAgent):
             #---------------------------------------------------------
         return value
 
+    def reset(self):
+        super(AlphaAgent, self).reset()
+        self.alpha = MININT
+        self.beta = MAXINT
 
 
-
-class BacktrackingCSPAgent(CSPAgent):
+class BacktrackingAgent(Agent):
     """A generalized framework for solving backtracking assignment CSP problems. This
     class provides the interface through which these types of CSP problems are
     solved. All data representation and manipulation within a CSP is
@@ -479,7 +482,7 @@ class BacktrackingCSPAgent(CSPAgent):
                 Initialized to None. Holds the solution node of the
                 CSP after a search is executed.
         """
-        super(BacktrackingCSPAgent, self).__init__(csp, agency)
+        super(BacktrackingAgent, self).__init__(csp, agency)
         self.attempted_assignments = 0
     #=================================================================
     # Main/CSP Interface Functions
@@ -499,13 +502,13 @@ class BacktrackingCSPAgent(CSPAgent):
         return data
 
 
-    def search_algorithm(self, current_node):
+    def search_algorithm(self, node):
         """The backbone of a CSP assignment problem. This function is executed
         recursively until a valid assignment is achieved. This function is an implemented interface funtion of CSPAgent.
         Arguments:
             search_name:
                 string, A valid search name
-            current_node:
+            node:
                 Arbitrary Node type known by csp
         Globals:
             FAILURE
@@ -523,20 +526,20 @@ class BacktrackingCSPAgent(CSPAgent):
             remove
             select_unassigned_variable
         """
-        if self.assignment_is_complete(current_node):
-            solution_node = self.clean_solution_node(current_node)
+        if self.assignment_is_complete(node):
+            solution_node = self.clean_solution_node(node)
             return solution_node
-        var = self.select_unassigned_variable(current_node)
-        for value in self.order_domain_values(var, current_node):
-            if self.is_within_constraints(current_node, value):
-                current_node = self.add(value, current_node)
+        var = self.select_unassigned_variable(node)
+        for value in self.order_domain_values(var, node):
+            if self.is_within_constraints(node, value):
+                node = self.add(value, node)
                 #-----------------------------------------------------
                 # Recursive Search
-                result = self.search_algorithm(current_node)
+                result = self.search_algorithm(node)
                 #-----------------------------------------------------
                 if result != FAILURE:
                     return result
-                current_node = self.remove(value, current_node)
+                node = self.remove(value, node)
         return FAILURE
     #=================================================================
 
@@ -546,13 +549,13 @@ class BacktrackingCSPAgent(CSPAgent):
     #   object's functions, but may provide some additional
     #   bookkeeping needed by the BacktrackingCSPAgent object.
     #-----------------------------------------------------------------
-    def add(self, value, current_node):
+    def add(self, value, node):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
             value:
                 Arbitrary value whose type is known by csp
-            current_node:
+            node:
                 Arbitrary Node whose type is known by csp
         Returns:
             next_node:
@@ -562,15 +565,15 @@ class BacktrackingCSPAgent(CSPAgent):
         # Bookkeeping:
         #   NONE
         #-------------------------------------------------------------
-        next_node = self.csp.add(value, current_node)
+        next_node = self.strategy.add(value, node)
         return next_node
 
 
-    def assignment_is_complete(self, current_node):
+    def assignment_is_complete(self, node):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
-            current_node:
+            node:
                 Arbitrary Node type known by csp
         Returns:
             complete:
@@ -581,38 +584,38 @@ class BacktrackingCSPAgent(CSPAgent):
         # Bookkeeping:
         #   NONE
         #-------------------------------------------------------------
-        complete = self.csp.assignment_is_complete(current_node)
+        complete = self.strategy.assignment_is_complete(node)
         return complete
 
 
-    def is_within_constraints(self, current_node, value):
+    def is_within_constraints(self, node, value):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
-            current_node:
+            node:
                 Arbitrary Node type known by csp
             value:
                 Arbitrary value type known by csp
         Returns:
             valid:
-                Boolean, True if current_node fulfills constraints of
+                Boolean, True if node fulfills constraints of
                 csp, false otherwise.
         """
         #-------------------------------------------------------------
         # Bookkeeping:
         self.attempted_assignments += 1
         #-------------------------------------------------------------
-        valid = self.csp.is_within_constraints(current_node, value)
+        valid = self.strategy.is_within_constraints(node, value)
         return valid
 
 
-    def order_domain_values(self, var, current_node):
+    def order_domain_values(self, var, node):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
             var:
                 Arbitrary variable whose type is known by csp
-            current_node:
+            node:
                 Arbitrary Node whose type is known by csp
         Returns:
             domain:
@@ -623,17 +626,17 @@ class BacktrackingCSPAgent(CSPAgent):
         # Bookkeeping:
         #   NONE
         #-------------------------------------------------------------
-        domain = self.csp.order_domain_values(var, current_node)
+        domain = self.strategy.order_domain_values(var, node)
         return domain
 
 
-    def remove(self, value, current_node):
+    def remove(self, value, node):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
             value:
                 Arbitrary value whose type is known by csp
-            current_node:
+            node:
                 Arbitrary Node whose type is known by csp
         Returns:
             next_node:
@@ -643,17 +646,17 @@ class BacktrackingCSPAgent(CSPAgent):
         # Bookkeeping:
         #   NONE
         #-------------------------------------------------------------
-        next_node = self.csp.remove(value, current_node)
+        next_node = self.strategy.remove(value, node)
         return next_node
 
 
-    def select_unassigned_variable(self, current_node):
+    def select_unassigned_variable(self, node):
         """Function wrapper for a CSP problem. Uses the data within
         the agent's csp to generate a value.
         Arguments:
             value:
                 Arbitrary value whose type is known by csp
-            current_node:
+            node:
                 Arbitrary Node whose type is known by csp
         Returns:
             var:
@@ -663,17 +666,17 @@ class BacktrackingCSPAgent(CSPAgent):
         # Bookkeeping:
         #   NONE
         #-------------------------------------------------------------
-        var = self.csp.select_unassigned_variable(current_node)
+        var = self.strategy.select_unassigned_variable(node)
         return var
     #=================================================================
 
-class MiniCSPAgent(AdvesarialCSPAgent):
+class MinimaxAgent(AdvesarialAgent):
     """MAXIMUM AS DEFAULT ALWAYS
     """
-    def get_value(self, current_node, min_or_max_func=max):
+    def get_value(self, node, min_or_max_func=max):
         """c
         """
-        node_is_terminal, utility = self.is_terminal(current_node)
+        node_is_terminal, utility = self.is_terminal(node)
         if node_is_terminal:
             return utility
         #-------------------------------------------------------------
@@ -682,9 +685,9 @@ class MiniCSPAgent(AdvesarialCSPAgent):
         if min_or_max_func == min:
             value = MAXINT
         #-------------------------------------------------------------
-        for action in self.get_node_actions(current_node):
+        for action in self.get_node_actions(node):
             successor = \
-                self.generate_successor(current_node, action)
+                self.generate_successor(node, action)
             #---------------------------------------------------------
             # Min and Max Diff: Determine Recursive Step
             successor_value = None

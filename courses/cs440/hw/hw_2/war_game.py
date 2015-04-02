@@ -3,10 +3,17 @@
 #=====================================================================
 # Imports
 #---------------------------------------------------------------------
-from csp import AdvesarialCSP
+from csp import AdvesarialStrategy, AlphaAgent, MinimaxAgent
 from copy import deepcopy
 #=====================================================================
-
+#=====================================================================
+# Globals
+#---------------------------------------------------------------------
+LEGAL_MOVES = set([
+    'blitz',
+    'drop'
+])
+#=====================================================================
 #=====================================================================
 # Model Classes
 #---------------------------------------------------------------------
@@ -85,6 +92,17 @@ class Cell(object):
         self.adjacent_cells = adjacent
         return adjacent
 
+    def is_empty(self):
+        """c
+        """
+        empty = False
+        if self.owner == None:
+            empty = True
+        return empty
+
+    def is_full(self):
+        full = not self.is_empty()
+        return full
 
 class Game(object):
     """c
@@ -121,7 +139,7 @@ class Game(object):
         moves_left = False
         cells = self.board.cells
         for cell in cells:
-            if cell.owner == None:
+            if cell.is_empty():
                 moves_left = True
         return moves_left
 
@@ -154,78 +172,64 @@ class Game(object):
         elif blue_score == green_score:
             return "tie"
 
-class Player(AdvesarialCSP):
+
+class PlayerStrategy(AdvesarialStrategy):
     """c
     """
-    def __init__(self, csp, name, board, agency=None):
+    def __init__(self, name, board):
         """c
         """
-        super(Player, self).__init__(csp, agency)
         self.board = board
         self.name = name
         self.score = 0
 
+    def owns_this(self, cell):
+        owns = False
+        if cell.owner == self:
+            owns = True
+        return owns
 
-    def go(self, board):
-        """c
-        """
-        self.search()
+    def owns_these(self, cells):
+        owns = False
+        for cell in cells:
+            if not self.owns_this(cell):
+                return owns
+        owns = True
+        return owns
 
+    def owns_which(self, cells):
+        owns = []
+        for cell in cells:
+            if self.owns_this(cell):
+                owns.append(cell)
+        return owns
 
-    def commando_para_drop(self, cell):
-        """c
-        """
-        score = 0
-        if cell.owner == None:
-            cell.owner = self
-            score += cell.value
-        return score
-
-    def m1_death_blitz(self, from_cell, to_cell):
-        """c
-        """
-        score = 0
-        if from_cell.owner == self:
-            if to_cell.owner == None:
-                to_cell.owner = self
-                adjacent_cells = to_cell.get_adjacent_cells()
-                for cell in adjacent_cells:
-                    if cell.owner != None:
-                        cell.owner = self
-                        score += cell.value
-        return score
-
+    def go(self):
+        pass
     #=================================================================
     # CSP Interface Functions
     #-----------------------------------------------------------------
-    def clean_solution_node(self, solution_node):
-        return solution_node
-
     def generate_successor(self, node, action):
         successor = Node(node, action)
         return successor
 
     def generate_solution_dict(self, solution_node):
-        pass
+        solution_dict = {}
+        return solution_dict
 
     def get_node_actions(self, node):
         actions = node.get_actions()
         return actions
 
-    def get_node_from_value(self, value, terminal_nodes):
-        pass
-
     def get_start_node(self):
         player = self
         command = None
-        board = self.board
         to_cell_coords = None
         from_cell_coords = None
         parent = None
         action = Action(
             player,
             command,
-            board,
             to_cell_coords,
             from_cell_coords
         )
@@ -244,14 +248,18 @@ class Node(object):
         self.depth = None
         self.depth = self.get_depth()
 
+    def get_actions(self):
+        actions = self.action.get_further_actions()
+        return actions
+
     def get_utility(self):
-        utility = self.action.get_score()
+        utility = 0
+        utility += self.action.get_score()
         return utility
 
     def get_depth(self):
         if self.depth:
             return self.depth
-
         depth = 0
         if self.parent == None:
             return depth
@@ -261,32 +269,157 @@ class Node(object):
             return depth
 
 
-
 class Action(object):
     def __init__(
             self,
             player,
             command,
-            board,
-            to_cell_coords,
-            from_cell_coords=None):
+            dst_cell_coords,
+            src_cell_coords=None):
         self.command = command
-        self.board = deepcopy(board)
-        self.to_cell = self.board.get_cell(to_cell_coords)
-        self.from_cell = self.board.get_cell(from_cell_coords)
+        self.legal_moves = set([
+            'blitz',
+            'drop'
+        ])
+        if self.legal_moves != LEGAL_MOVES:
+            raise Exception("Non-matching legal moves.")
+        self.board = deepcopy(player.board)
+        self.dst_cell = self.board.get_cell(dst_cell_coords)
+        self.src_cell = self.board.get_cell(src_cell_coords)
         self.player = player
         self.score = self.execute_action()
 
     def execute_action(self):
         score = 0
         if self.command == "blitz":
-            score = self.player.m1_death_blitz(self.from_cell, self.to_cell)
+            score = self.m1_death_blitz(self.src_cell, self.dst_cell)
         elif self.command == "drop":
-            score = self.player.commando_para_drop(self.to_cell)
+            score = self.commando_para_drop(self.dst_cell)
         return score
 
 
+    def commando_para_drop(self, dst_cell):
+        """c
+        """
+        score = 0
+        if dst_cell.is_empty():
+            dst_cell.owner = self.player
+            score += dst_cell.value
+        return score
+
+
+    def m1_death_blitz(self, src_cell, dst_cell):
+        """c
+        """
+        score = 0
+        if src_cell.owner == self.player:
+            if dst_cell.is_empty():
+                dst_cell.owner = self.player
+                adjacent_cells = dst_cell.get_adjacent_cells()
+                for cell in adjacent_cells:
+                    if cell.owner != None:
+                        cell.owner = self.player
+                        score += cell.value
+        return score
+
+
+    def get_further_actions(self):
+        """Bonus: This source code looks like a duck with a
+        lightsaber (at least with my .vimrc).
+        """
+        cells = self.board.cells
+        actions = []
+        action = None
+        command = None
+        valid_blitz = False
+        valid_drop = False
+        player = self.player
+        dst_coords = None
+        src_coords = None
+        for dst_cell in cells:
+            dst_coords = dst_cell.coords
+            valid_drop = self.check_valid_drop(dst_cell)
+            valid_blitz, src_coordss = \
+                self.check_valid_blitz(dst_cell)
+            if valid_blitz:
+                command = "blitz"
+                for src_coords in src_coordss:
+                    action = Action(
+                        player,
+                        command,
+                        dst_coords,
+                        src_coords
+                    )
+                    actions.append(action)
+                continue # Skip paradrop action, blitz is mandatory
+            if valid_drop:
+                command = "drop"
+                action = Action(
+                    player,
+                    command,
+                    dst_coords
+                )
+                actions.append(action)
+        return actions
+
+    def check_valid_drop(self, cell):
+        valid = False
+        if cell.is_empty():
+            valid = True
+        return valid
+
+
+    def check_valid_blitz(self, cell):
+        valid = False
+        owned_coords = []
+        if cell.is_empty():
+            adjacent_cells = cell.get_adjacent_cells()
+            owned_cells = self.player.owns_which(adjacent_cells)
+            if owned_cells:
+                valid = True
+                for owned_cell in owned_cells:
+                    owned_coords.append(owned_cell.coords)
+        return valid, owned_coords
+
+
+
     def get_score(self):
-        return self.score
+        score = self.score
+        return score
+
+
+class AlphaPlayer(AlphaAgent):
+    def __init__(
+        self,
+        strategy,
+        depth,
+        player,
+        maximum=True,
+        agency=None):
+        super(AlphaPlayer, self).__init__(
+            strategy,
+            depth,
+            maximum=maximum,
+            agency=agency
+        )
+        self.player = player
+
+class MiniPlayer(MinimaxAgent):
+    def __init__(
+        self,
+        strategy,
+        depth,
+        player,
+        maximum=True,
+        agency=None):
+        super(MiniPlayer, self).__init__(
+            strategy,
+            depth,
+            maximum=maximum,
+            agency=agency
+        )
+        self.player = player
+
+
 
 

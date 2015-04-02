@@ -3,8 +3,8 @@
 # Imports
 #---------------------------------------------------------------------
 import os
-from csp import BacktrackingCSPAgent
-from course_plan import CourseAssignmentCSP
+from csp import BacktrackingAgent
+from course_plan import CourseAssignmentStrategy
 #=====================================================================
 
 def main():
@@ -20,8 +20,8 @@ def main():
             course_files.append(filename)
 
     for course_file in course_files:
-        csp = CourseAssignmentCSP(course_file)
-        agent = BacktrackingCSPAgent(csp)
+        strategy = CourseAssignmentStrategy(course_file)
+        agent = BacktrackingAgent(strategy)
         agent.search(toprint=True)
 
 

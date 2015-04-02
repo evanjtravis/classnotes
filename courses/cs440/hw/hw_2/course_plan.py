@@ -37,7 +37,7 @@ problem.
 # Imports
 #---------------------------------------------------------------------
 import os
-from csp import BacktrackingCSP
+from csp import BacktrackingStrategy
 from itertools import combinations
 #=====================================================================
 
@@ -94,7 +94,7 @@ class Course(object):
         self.prereqs = prereqs
 
 
-class CourseAssignmentCSP(BacktrackingCSP):
+class CourseAssignmentStrategy(BacktrackingStrategy):
     """This class represents the interface through which the csp is
     solved. CourseAssignmentsCSP inherits from csp.CSP, which provides
     the functions used by a CSPAgent to solve the problem.
@@ -169,7 +169,7 @@ class CourseAssignmentCSP(BacktrackingCSP):
         #-------------------------------------------------------------
         # Populate the variables with the correct values as they are
         # read in from the input file:
-        parser = CourseFileParser(course_file)
+        parser = FileParser(course_file)
         data = parser.read_search_file()
         self.set_vars(data)
         #-------------------------------------------------------------
@@ -335,7 +335,7 @@ class CourseAssignmentCSP(BacktrackingCSP):
     #=================================================================
     # CSP Logic Functions Interface
     #-----------------------------------------------------------------
-    def add(self, value, current_node):
+    def add(self, value, node):
         """A csp.CSP interface implementation. Represents the creation
         of a child node when given its parent and a new value to be
         assigned.
@@ -344,7 +344,7 @@ class CourseAssignmentCSP(BacktrackingCSP):
                 Not used. next_semester, which is derived from value,
                 is used instead. This occurs while the value is still
                 being tested against the CSP's constraints.
-            current_node:
+            node:
                 CourseAssignmentNode, the parent node of the returned
                 node.
         Returns:
@@ -352,16 +352,15 @@ class CourseAssignmentCSP(BacktrackingCSP):
                 CourseAssignmentNode
         """
         next_semester = self.next_semester
-        next_node = CourseAssignmentNode(current_node,
-                                         next_semester)
+        next_node = Node(node, next_semester)
         return next_node
 
 
-    def assignment_is_complete(self, current_node):
+    def assignment_is_complete(self, node):
         """A csp.CSP interface implementation. Implements the goal
         test of the CourseAssignmentCSP.
         Arguments:
-            current_node:
+            node:
                 CourseAssignmentNode
         Returns:
             complete:
@@ -369,7 +368,7 @@ class CourseAssignmentCSP(BacktrackingCSP):
                 otherwise.
         """
         complete = True
-        courses_taken = current_node.courses_taken
+        courses_taken = node.courses_taken
         if self.interesting.issubset(courses_taken):
             pass
         else:
@@ -405,19 +404,18 @@ class CourseAssignmentCSP(BacktrackingCSP):
                 all constraints and vice versa.
         """
         semester = Semester([], semester=None)
-        start_node = CourseAssignmentNode(parent=None,
-                                          semester=semester)
+        start_node = Node(parent=None, semester=semester)
         return start_node
 
 
-    def is_within_constraints(self, current_node, value):
+    def is_within_constraints(self, node, value):
         """A csp.CSP interface implementation. Creates a Semester
         object against the current node's semester list to ensure that
         if it were assigned to a following node that it would follow
         the constraints of the csp problem. The constraints are
         designed to pass a skeleton (or start) node.
         Arguments:
-            current_node:
+            node:
                 CourseAssignmentNode
             value:
                 set, Contains a combination of courses used to create
@@ -428,13 +426,13 @@ class CourseAssignmentCSP(BacktrackingCSP):
                 given, false otherwise.
         """
         valid = True
-        next_semester_season = current_node.get_next_semester()
+        next_semester_season = node.get_next_semester()
         next_semester = Semester(value, next_semester_season)
         self.next_semester = next_semester
         #-------------------------------------------------------------
         # A course can only be taken if its pre-requisite courses were
         # taken in a previous semester.
-        courses_taken = current_node.courses_taken
+        courses_taken = node.courses_taken
         prereqs = next_semester.prereqs
         if prereqs.issubset(courses_taken):
             valid = True and valid
@@ -444,14 +442,14 @@ class CourseAssignmentCSP(BacktrackingCSP):
         return valid
 
 
-    def order_domain_values(self, var, current_node):
+    def order_domain_values(self, var, node):
         """A csp.CSP interface implementation. Returns a subset of the
-        domain based off of the courses taken by the current_node.
+        domain based off of the courses taken by the node.
         Arguments:
             var:
                 Not Used. CSP assumes that the next variable to be
                 assigned is just an additional semester.
-            current_node:
+            node:
                 CourseAssignmentNode
         Returns:
             domain:
@@ -460,12 +458,12 @@ class CourseAssignmentCSP(BacktrackingCSP):
             new_domain:
                 A subset of domain.
         """
-        if current_node.parent == None:
+        if node.parent == None:
             return self.domain
         else:
             new_domain = []
-            bad_combos = current_node.bad_combos
-            courses_taken = current_node.courses_taken
+            bad_combos = node.bad_combos
+            courses_taken = node.courses_taken
             for course_combo in self.domain:
                 if ((not course_combo.intersection(courses_taken))\
                         and (course_combo not in bad_combos)):
@@ -473,34 +471,34 @@ class CourseAssignmentCSP(BacktrackingCSP):
             return new_domain
 
 
-    def remove(self, value, current_node):
+    def remove(self, value, node):
         """A csp.CSP interface implementation. Represents the
         backtracking action of the search algorithm.
         Arguments:
             value:
                 set, Contains an invalid collection of courses.
-            current_node:
+            node:
                 CourseAssignmentNode, An invalid node whose latest
                 assignment is a Semester whose course combination is
                 equal to value.
         Returns:
             parent:
-                CourseAssignmentNode, The parent of the current_node.
+                CourseAssignmentNode, The parent of the node.
                 The value argument is appended to its list of bad
                 course combinations in order to avoid re-creating the
-                current_node.
+                node.
         """
-        parent = current_node.parent
+        parent = node.parent
         parent.bad_combos.append(value)
         return parent
 
 
-    def select_unassigned_variable(self, current_node):
+    def select_unassigned_variable(self, node):
         """Not used for this implementation. Overwritten here to avoid
         exception from base class. Would normally return a variable to
         be assigned, but the CSP assumes that the next variable is
         always a Semester that would be present in the node that
-        follows the current_node.
+        follows the node.
         """
         pass
     #=================================================================
@@ -548,7 +546,7 @@ class CourseAssignmentCSP(BacktrackingCSP):
     #=================================================================
 
 
-class CourseAssignmentNode(object):
+class Node(object):
     """Represents a step in the assignment of an entire class schedule
     during the student's tenure at the educational institution. Where
     a Semester represents a collection of courses, a
@@ -683,7 +681,7 @@ class CourseAssignmentNode(object):
         return semester
 
 
-class CourseFileParser(object):
+class FileParser(object):
     """This class encapsulates all of the logic and temporary data
     structures needed to parse any given input file into usable data.
     A CourseFileParser object is instantiated by the
