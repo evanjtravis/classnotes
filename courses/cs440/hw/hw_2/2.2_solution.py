@@ -3,6 +3,7 @@
 # Imports
 #---------------------------------------------------------------------
 import os
+import war_game
 #=====================================================================
 
 def main():
@@ -17,8 +18,50 @@ def main():
                 os.path.splitext(filename)[1] == '.txt'):
             board_files.append(filename)
 
+    minimax_depth = 3
+    alpha_beta_depth = 4
+    matchups = [
+        [
+            (war_game.MaxiPlayer, minimax_depth),
+            (war_game.MiniPlayer, minimax_depth)
+        ],
+        [
+            (war_game.AlphaPlayer, alpha_beta_depth),
+            (war_game.BetaPlayer, alpha_beta_depth)
+        ],
+        [
+            (war_game.MaxiPlayer, minimax_depth),
+            (war_game.BetaPlayer, alpha_beta_depth)
+        ],
+        [
+            (war_game.AlphaPlayer, alpha_beta_depth),
+            (war_game.MiniPlayer, minimax_depth)
+        ]
+    ]
     for board_file in board_files:
-        # RUN THE GAMES HERE
+        board = war_game.Board(board_file)
+        for matchup in matchups:
+            player_one_class = matchup[0][0]
+            player_one_depth = matchup[0][1]
+            player_two_class = matchup[1][0]
+            player_two_depth = matchup[1][1]
+            game_matchup = (player_one_class, player_two_class)
+
+            player_one_strategy =\
+                war_game.PlayerStrategy('blue', board)
+            player_two_strategy =\
+                war_game.PlayerStrategy('green', board)
+            player_one = player_one_class(
+                player_one_strategy,
+                player_one_depth
+            )
+            player_two = player_two_class(
+                player_two_strategy,
+                player_two_depth
+            )
+            game_players = (player_one, player_two)
+            game = war_game.Game(board, game_players, game_matchup)
+            game.play()
 
 
 if __name__ == "__main__":

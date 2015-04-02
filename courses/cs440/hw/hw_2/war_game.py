@@ -60,15 +60,21 @@ class Board(object):
         return cells, board, array
 
     def stringify(self):
-        # TODO include original ints for output before and after
-        msg = '\t'
+        board_name = '\tBOARD NAME: %s\n\t' %(self.board_file)
+        first_message_part = '\tORIGINGAL BOARD:\n\t'
+        second_message_part = '\tRESULTING BOARD:\n\t'
+        msg = None
         array = self.array
         for row in range(len(array)):
             for col in range(len(row)):
                 cell = array[row][col]
                 letter = cell.owner.name[0].upper()
-                msg += "%s\t" %(letter)
-            msg += "\n\t"
+                value = cell.value
+                first_message_part += "%s\t" %(value)
+                second_message_part += "%s\t" %(letter)
+            first_message_part += "\n\t"
+            second_message_part += "\n\t"
+        msg = board_name + first_message_part + second_message_part
         return msg
 
 
@@ -122,17 +128,19 @@ class Cell(object):
 class Game(object):
     """c
     """
-    def __init__(self, board, players):
+    def __init__(self, board, players, matchup):
         """c
         """
         self.board = board
         self.green = None
         self.blue = None
         self.winner = None
+        self.loser = None
+        self.matchup = matchup
         for player in players:
-            if player.name == 'green':
+            if player.strategy.name.lower() == 'green':
                 self.green = player
-            elif player.name == 'blue':
+            elif player.strategy.name.lower() == 'blue':
                 self.blue = player
         self.current_player = self.blue
         self.previous_player = self.green
@@ -144,16 +152,27 @@ class Game(object):
         """
         board = None
         while self.moves_left():
-            self.give_control_of_board_to_current_player()
             board = self.make_player_go()
             self.board = board
-            winning = self.update_scores()
+            winning, losing = self.update_scores()
             self.next_player()
         self.winner = winning
-        if toprint==True:
-            self.winner.print_solution()
+        self.loser = losing
+        if toprint == True:
+            self.print_game_stats()
         self.current_player.clear()
         self.previous_player.clear()
+
+    def print_game_stats(self):
+        print "%s as BLUE VS. %s as GREEN" %\
+            (str(self.matchup[0]), str(self.matchup[1]))
+        message = "WINNER: %s" %(self.winner.strategy.name.upper())
+        self.winner.print_solution(message=message)
+        message = "LOSER: %s" %(self.loser.strategy.name.upper())
+        self.loser.print_solution(
+            message=message,
+            supress_solution=True
+        )
 
     def give_control_of_board_to_current_player(self):
         self.current_player.strategy.set_board(self.board)
@@ -193,6 +212,7 @@ class Game(object):
         else:
             self.current_player = self.green
             self.previous_player = self.blue
+        self.give_control_of_board_to_current_player()
 
     def update_scores(self):
         """c
@@ -205,6 +225,7 @@ class Game(object):
         green = self.green.strategy
         cells = self.board.cells
         winner = "tie"
+        loser = None
         for cell in cells:
             value = cell.value
             if green.owns(cell):
@@ -215,9 +236,11 @@ class Game(object):
         blue.set_score(blue_score)
         if green_score > blue_score:
             winner = self.green
+            loser = self.blue
         elif blue_score > green_score:
             winner = self.blue
-        return winner
+            loser = self.blue
+        return winner, loser
 
 
 class PlayerStrategy(AdvesarialStrategy):
@@ -231,7 +254,7 @@ class PlayerStrategy(AdvesarialStrategy):
         self.score = 0
 
     def generate_solution_dict(self, solution_node):
-        action, board = solution_node.reslove_round()
+        _, board = solution_node.reslove_round()
         solution_dict = {
             'Board:': board.stringify()
         }
