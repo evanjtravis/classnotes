@@ -24,7 +24,7 @@ class Board(object):
         """c
         """
         self.board_file = board_file
-        self.cells, self.board = self.generate_board()
+        self.cells, self.board, self.array = self.generate_board()
 
     def get_cell(self, coords):
         """c
@@ -37,6 +37,7 @@ class Board(object):
 
     def generate_board(self, board_file=None):
         """c
+        Do all functions look like ducks?
         """
         cells = []
         board = {}
@@ -55,7 +56,21 @@ class Board(object):
                 cell = Cell(self, coords, value)
                 board[coords] = cell
                 cells.append(board[coords])
-        return cells, board
+                array[line][element] = board[coords]
+        return cells, board, array
+
+    def stringify(self):
+        # TODO include original ints for output before and after
+        msg = '\t'
+        array = self.array
+        for row in range(len(array)):
+            for col in range(len(row)):
+                cell = array[row][col]
+                letter = cell.owner.name[0].upper()
+                msg += "%s\t" %(letter)
+            msg += "\n\t"
+        return msg
+
 
 
 class Cell(object):
@@ -120,18 +135,43 @@ class Game(object):
             elif player.name == 'blue':
                 self.blue = player
         self.current_player = self.blue
+        self.previous_player = self.green
+        self.action_log = []
 
 
-    def play(self):
+    def play(self, toprint=True):
         """c
         """
-        board = self.board
+        board = None
         while self.moves_left():
-            self.current_player.go(board)
+            self.give_control_of_board_to_current_player()
+            board = self.make_player_go()
+            self.board = board
             winning = self.update_scores()
             self.next_player()
         self.winner = winning
+        if toprint==True:
+            self.winner.print_solution()
+        self.current_player.clear()
+        self.previous_player.clear()
 
+    def give_control_of_board_to_current_player(self):
+        self.current_player.strategy.set_board(self.board)
+        self.previous_player.strategy.set_board(None)
+
+    def make_player_go(self):
+        """c
+        """
+        player = self.current_player
+        start_node = player.get_start_node()
+        player.search(start_node)
+        solution_node = player.get_solution_node()
+        action, board = solution_node.resolve_round()
+        self.update_action_log(action)
+        return board
+
+    def update_action_log(self, action):
+        self.action_log.append(action)
 
     def moves_left(self):
         """c
@@ -141,6 +181,7 @@ class Game(object):
         for cell in cells:
             if cell.is_empty():
                 moves_left = True
+                break
         return moves_left
 
     def next_player(self):
@@ -148,29 +189,35 @@ class Game(object):
         """
         if self.current_player == self.green:
             self.current_player = self.blue
+            self.previous_player = self.green
         else:
             self.current_player = self.green
+            self.previous_player = self.blue
 
     def update_scores(self):
         """c
+        This function also looks like a duck, only it has eyes
+        AND a "tie" around its neck.
         """
         green_score = 0
         blue_score = 0
+        blue = self.blue.strategy
+        green = self.green.strategy
         cells = self.board.cells
+        winner = "tie"
         for cell in cells:
             value = cell.value
-            if cell.owner == self.green:
+            if green.owns(cell):
                 green_score += value
-            elif cell.owner == self.blue:
+            elif blue.owns(cell):
                 blue_score += value
-        self.green.score = green_score
-        self.blue.score = blue_score
+        green.set_score(green_score)
+        blue.set_score(blue_score)
         if green_score > blue_score:
-            return self.green
+            winner = self.green
         elif blue_score > green_score:
-            return self.blue
-        elif blue_score == green_score:
-            return "tie"
+            winner = self.blue
+        return winner
 
 
 class PlayerStrategy(AdvesarialStrategy):
@@ -182,6 +229,17 @@ class PlayerStrategy(AdvesarialStrategy):
         self.board = board
         self.name = name
         self.score = 0
+
+    def generate_solution_dict(self, solution_node):
+        action, board = solution_node.reslove_round()
+        solution_dict = {
+            'Board:': board.stringify()
+        }
+        return solution_dict
+
+
+    def set_score(self, score):
+        self.score = score
 
     def owns_this(self, cell):
         owns = False
@@ -204,18 +262,12 @@ class PlayerStrategy(AdvesarialStrategy):
                 owns.append(cell)
         return owns
 
-    def go(self):
-        pass
     #=================================================================
     # CSP Interface Functions
     #-----------------------------------------------------------------
     def generate_successor(self, node, action):
         successor = Node(node, action)
         return successor
-
-    def generate_solution_dict(self, solution_node):
-        solution_dict = {}
-        return solution_dict
 
     def get_node_actions(self, node):
         actions = node.get_actions()
@@ -247,6 +299,11 @@ class Node(object):
         self.action = action
         self.depth = None
         self.depth = self.get_depth()
+
+    def resolve_round(self):
+        action = self.action
+        board = action.get_board()
+        return action, board
 
     def get_actions(self):
         actions = self.action.get_further_actions()
@@ -288,6 +345,10 @@ class Action(object):
         self.src_cell = self.board.get_cell(src_cell_coords)
         self.player = player
         self.score = self.execute_action()
+
+    def get_board(self):
+        board = self.board
+        return board
 
     def execute_action(self):
         score = 0
@@ -382,7 +443,6 @@ class Action(object):
         return valid, owned_coords
 
 
-
     def get_score(self):
         score = self.score
         return score
@@ -391,10 +451,9 @@ class Action(object):
 class AlphaPlayer(AlphaAgent):
     def __init__(
         self,
-        strategy,
+        strategy, # --> A PlayerStrategy
         depth,
-        player,
-        maximum=True,
+        maximum=True, # --> Alpha Pruning
         agency=None):
         super(AlphaPlayer, self).__init__(
             strategy,
@@ -402,15 +461,41 @@ class AlphaPlayer(AlphaAgent):
             maximum=maximum,
             agency=agency
         )
-        self.player = player
+
+class BetaPlayer(AlphaAgent):
+    def __init__(
+        self,
+        strategy, # --> A PlayerStrategy
+        depth,
+        maximum=False, # --> Beta Pruning
+        agency=None):
+        super(BetaPlayer, self).__init__(
+            strategy,
+            depth,
+            maximum=maximum,
+            agency=agency
+        )
+
+class MaxiPlayer(MinimaxAgent):
+    def __init__(
+        self,
+        strategy, # --> A PlayerStrategy
+        depth,
+        maximum=True, # --> Max
+        agency=None):
+        super(MaxiPlayer, self).__init__(
+            strategy,
+            depth,
+            maximum=maximum,
+            agency=agency
+        )
 
 class MiniPlayer(MinimaxAgent):
     def __init__(
         self,
-        strategy,
+        strategy, # --> A PlayerStrategy
         depth,
-        player,
-        maximum=True,
+        maximum=False, # --> Min
         agency=None):
         super(MiniPlayer, self).__init__(
             strategy,
@@ -418,7 +503,6 @@ class MiniPlayer(MinimaxAgent):
             maximum=maximum,
             agency=agency
         )
-        self.player = player
 
 
 

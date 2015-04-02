@@ -173,7 +173,13 @@ class Agent(object):
     def search(self, toprint=False):
         self.reset()
         self.solution_node = self.search_algorithm(self.start_node)
+        self.solution_node =\
+            self.clean_solution_node(self.solution_node)
         self.end_search(toprint)
+
+    def get_solution_node(self):
+        solution_node = self.solution_node
+        return solution_node
     #=================================================================
 
     #=================================================================
@@ -244,20 +250,26 @@ class Agent(object):
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def generate_data_dict(self):
-        """Implemented in child classes. Provide additional
-        information to be printed along with the csp's solution
-        node data. Must return a dictionary. The dictionary can be
-        empty.
-        """
-        raise Exception(NOT_IMPLEMENTED)
-
 
     def search_algorithm(self, node):
         """
         """
         raise Exception(NOT_IMPLEMENTED)
     #=================================================================
+
+    #=================================================================
+    # Optional Subclass Interface Functions
+    #-----------------------------------------------------------------
+    def generate_data_dict(self):
+        """Implemented in child classes. Provide additional
+        information to be printed along with the csp's solution
+        node data. Must return a dictionary. The dictionary can be
+        empty.
+        """
+        data_dict = {}
+        return data_dict
+    #=================================================================
+
 
 #=====================================================================
 
@@ -289,6 +301,9 @@ class AdvesarialAgent(Agent):
         self.maximum = maximum
         self.depth = depth
         self.terminal_nodes = {}
+        self.expanded_nodes = 0
+        self.turns_taken = 0
+        self.average_nodes_expanded = 0
     #=================================================================
     # Mandatory Sub-class Interface
     #-----------------------------------------------------------------
@@ -297,6 +312,11 @@ class AdvesarialAgent(Agent):
         """
         raise Exception(NOT_IMPLEMENTED)
     #=================================================================
+    def clear(self):
+        self.terminal_nodes = {}
+        self.expanded_nodes = 0
+        self.turns_taken = 0
+        self.average_nodes_expanded = 0
 
     def get_node_from_value(self, value):
         nodes = self.terminal_nodes[value]
@@ -313,6 +333,9 @@ class AdvesarialAgent(Agent):
             value = self.get_value(node, min_or_max_func=min)
         node = self.get_node_from_value(value)
         action = self.get_action_from_node(node)
+        self.turns_taken += 1
+        self.average_nodes_expanded =\
+            float(self.expanded_nodes)/float(self.turns_taken)
         return action
 
     def add_to_terminal_nodes(self, utility, node):
@@ -352,7 +375,7 @@ class AdvesarialAgent(Agent):
         """
         #-------------------------------------------------------------
         # Bookkeeping
-        #   NONE
+        self.expanded_nodes += 1
         #-------------------------------------------------------------
         successor = self.strategy.generate_successor(node, action)
         return successor
@@ -520,14 +543,13 @@ class BacktrackingAgent(Agent):
         CSP Interface Functions Called:
             add
             assignment_is_complete
-            clean_solution_node
             is_within_constraints
             order_domain_values
             remove
             select_unassigned_variable
         """
         if self.assignment_is_complete(node):
-            solution_node = self.clean_solution_node(node)
+            solution_node = node
             return solution_node
         var = self.select_unassigned_variable(node)
         for value in self.order_domain_values(var, node):
