@@ -35,7 +35,7 @@ class CSP(object):
     backtracking, alpha-beta pruning, and minimax CSPs share.
     """
     #=================================================================
-    # Display Functions Interface
+    # Mandatory Display Functions Interface
     #-----------------------------------------------------------------
     def generate_solution_dict(self, solution_node):
         """Hollow function used to ensure implementation by
@@ -53,6 +53,9 @@ class CSP(object):
 class AdvesarialCSP(CSP):
     """
     """
+    #=================================================================
+    # Mandatory Sub-Class Interface Functions
+    #-----------------------------------------------------------------
     def generate_successor(self, node, action):
         """Hollow function used to ensure implementation by child
         classes.
@@ -67,26 +70,22 @@ class AdvesarialCSP(CSP):
         raise Exception(NOT_IMPLEMENTED)
 
 
-    def get_node_from_value(self, value, terminal_nodes):
-        """Hollow function used to ensure implementation by child
-        classes.
-        """
-        raise Exception(NOT_IMPLEMENTED)
-
-
     def get_utility_of(self, node):
         """Hollow function used to ensure implementation by child
         classes.
         """
         raise Exception(NOT_IMPLEMENTED)
+    #=================================================================
 
-
-    def is_terminal(self, node):
-        """Hollow function used to ensure implementation by child
-        classes.
+    #=================================================================
+    # Optional Sub-class Interface
+    #-----------------------------------------------------------------
+    def prioritize_nodes(self, nodes):
         """
-        raise Exception(NOT_IMPLEMENTED)
-
+        """
+        node = nodes[0]
+        return node
+    #=================================================================
 
 
 class BacktrackingCSP(CSP):
@@ -280,17 +279,26 @@ class Agency(object):
 class AdvesarialCSPAgent(CSPAgent):
     """c
     """
-    def __init__(self, csp, maximum=True, agency=None):
+    def __init__(self, csp, depth, maximum=True, agency=None):
         """
         """
         super(AdvesarialCSPAgent, self).__init__(csp, agency)
         self.maximum = maximum
-
+        self.depth = depth
+        self.terminal_nodes = {}
+    #=================================================================
+    # Mandatory Sub-class Interface
+    #-----------------------------------------------------------------
     def get_value(self, current_node, min_or_max_func=max):
         """Hollow for concrete agent.
         """
-        pass
+        raise Exception(NOT_IMPLEMENTED)
+    #=================================================================
 
+    def get_node_from_value(self, value):
+        nodes = self.terminal_nodes[value]
+        node = self.csp.prioritize_nodes(nodes)
+        return node
 
     def search_algorithm(self, current_node):
         """
@@ -315,8 +323,22 @@ class AdvesarialCSPAgent(CSPAgent):
             terminal_nodes[utility] = [current_node]
         self.terminal_nodes = terminal_nodes
 
+    def is_terminal(self, node):
+        """c
+        """
+        depth = self.depth
+        node_depth = node.get_depth()
+        terminal = False
+        if node_depth == depth:
+            terminal = True
+        utility = None
+        if terminal:
+            utility = self.get_utility_of(node)
+            self.add_to_terminal_nodes(utility, node)
+        return terminal, utility
+
     #=================================================================
-    # AdvesarialCSP Interface Functions
+    # CSP Interface Functions
     #-----------------------------------------------------------------
     def generate_successor(self, node, action):
         """c
@@ -327,10 +349,17 @@ class AdvesarialCSPAgent(CSPAgent):
         #-------------------------------------------------------------
         successor = self.csp.generate_successor(node, action)
         return successor
+
     def get_action_from_node(self, node):
         """
         """
-        pass
+        #-------------------------------------------------------------
+        # Bookkeeping
+        #   NONE
+        #-------------------------------------------------------------
+        action = self.csp.get_action_from_node(node)
+        return action
+
 
     def get_node_actions(self, node):
         """c
@@ -342,16 +371,6 @@ class AdvesarialCSPAgent(CSPAgent):
         actions = self.csp.get_node_actions(node)
         return actions
 
-    def get_node_from_value(self, value):
-        """Allow csp to prioritize nodes in dict.
-        """
-        #-------------------------------------------------------------
-        # Bookkeeping
-        #   NONE
-        #-------------------------------------------------------------
-        terminal_nodes = self.terminal_nodes
-        node = self.csp.get_node_from_value(value, terminal_nodes)
-        return node
 
     def get_utility_of(self, node):
         """c
@@ -364,23 +383,75 @@ class AdvesarialCSPAgent(CSPAgent):
         return utility
 
 
-    def is_terminal(self, node):
-        """c
-        """
-        terminal = self.csp.is_terminal(node)
-        utility = None
-        if terminal:
-            utility = self.get_utility_of(node)
-            #---------------------------------------------------------
-            # Bookkeeping
-            self.add_to_terminal_nodes(utility, node)
-            #---------------------------------------------------------
-        return terminal, utility
     #=================================================================
     def reset(self):
         """c
         """
         self.terminal_nodes = {}
+    def generate_data_dict(self):
+        """c
+        """
+        pass
+
+class AlphaCSPAgent(AdvesarialCSPAgent):
+    def __init__(self, csp, depth, maximum=True, agency=None):
+        super(AlphaCSPAgent, self).__init__(
+                csp,
+                depth,
+                maximum=maximum,
+                agency=agency)
+        self.alpha = MININT
+        self.beta = MAXINT
+
+    def get_value(self, current_node, min_or_max_func=max):
+        node_is_terminal, utility = self.is_terminal(current_node)
+        if node_is_terminal:
+            return utility
+        a = self.alpha
+        b = self.beta
+        #-------------------------------------------------------------
+        # Min and Max Diff
+        value = MININT
+        if min_or_max_func == min:
+            value = MAXINT
+        #-------------------------------------------------------------
+        for action in self.get_node_actions(current_node):
+            successor = \
+                self.generate_successor(current_node, action)
+            #---------------------------------------------------------
+            # Min and Max Diff: Determine Recursive Step
+            successor_value = None
+            if min_or_max_func == max:
+                successor_value = self.get_value(
+                    successor,
+                    min_or_max_func=min
+                )
+            elif min_or_max_func == min:
+                successor_value = self.get_value(
+                    successor,
+                    min_or_max_func=max
+                )
+            #---------------------------------------------------------
+            value = min_or_max_func(
+                value,
+                successor_value,
+                a,
+                b
+            )
+            #---------------------------------------------------------
+            # Min and Max Diff
+            if min_or_max_func == max:
+                if value >= b:
+                    return value
+                self.alpha = max(a, value)
+            elif min_or_max_func == min:
+                if value <= a:
+                    return value
+                self.beta = min(b, value)
+            #---------------------------------------------------------
+        return value
+
+
 
 
 class BacktrackingCSPAgent(CSPAgent):
@@ -596,14 +667,9 @@ class BacktrackingCSPAgent(CSPAgent):
         return var
     #=================================================================
 
-class MinimaxCSPAgent(AdvesarialCSPAgent):
+class MiniCSPAgent(AdvesarialCSPAgent):
     """MAXIMUM AS DEFAULT ALWAYS
     """
-    def __init__(self, csp, maximum=True, agency=None):
-        """c
-        """
-        super(MinimaxCSPAgent, self).__init__(csp, maximum, agency)
-
     def get_value(self, current_node, min_or_max_func=max):
         """c
         """
@@ -638,11 +704,6 @@ class MinimaxCSPAgent(AdvesarialCSPAgent):
                 successor_value,
             )
         return value
-
-    def generate_data_dict(self):
-        """
-        """
-        pass
     #=================================================================
 #=====================================================================
 
