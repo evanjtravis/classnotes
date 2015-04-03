@@ -17,6 +17,8 @@ def main():
         if (os.path.isfile(filename) and\
                 os.path.splitext(filename)[1] == '.txt'):
             board_files.append(filename)
+    # Test only one file
+    board_files = ['game_boards/00_2x2Test.txt']
 
     minimax_depth = 3
     alpha_beta_depth = 4
@@ -25,18 +27,18 @@ def main():
             (war_game.MinimaxPlayer, minimax_depth),
             (war_game.MinimaxPlayer, minimax_depth)
         ],
-        [
-            (war_game.AlphaPlayer, alpha_beta_depth),
-            (war_game.AlphaPlayer, alpha_beta_depth)
-        ],
-        [
-            (war_game.MinimaxPlayer, minimax_depth),
-            (war_game.AlphaPlayer, alpha_beta_depth)
-        ],
-        [
-            (war_game.AlphaPlayer, alpha_beta_depth),
-            (war_game.MinimaxPlayer, minimax_depth)
-        ]
+#        [
+#            (war_game.AlphaPlayer, alpha_beta_depth),
+#            (war_game.AlphaPlayer, alpha_beta_depth)
+#        ],
+#        [
+#            (war_game.MinimaxPlayer, minimax_depth),
+#            (war_game.AlphaPlayer, alpha_beta_depth)
+#        ],
+#        [
+#            (war_game.AlphaPlayer, alpha_beta_depth),
+#            (war_game.MinimaxPlayer, minimax_depth)
+#        ]
     ]
     for board_file in board_files:
         board = war_game.Board(board_file)
