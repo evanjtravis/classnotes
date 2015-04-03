@@ -1,0 +1,48 @@
+<game_results>
+<class 'war_game.MinimaxPlayer'> as BLUE VS. <class 'war_game.MinimaxPlayer'> as GREEN
+
+########################################
+
+Board:              
+	IT'S A TIE!
+	Blue Score: 100	Green Score 100
+	BOARD NAME: game_boards/00_2x2Test.txt
+	ORIGINGAL BOARD:
+
+	99	1	
+	1	99	
+	RESULTING BOARD:
+
+	B	G	
+	B	G	
+	
+Total Time Taken (seconds):
+	                 0.0
+Average Time Taken per Turn:
+	                 0.0
+Turns Taken:        
+	                   2
+Expanded Node Count:
+	                  40
+Average Nodes Expanded per Turn:
+	                20.0
+
+########################################
+
+
+########################################
+
+Total Time Taken (seconds):
+	              0.0312
+Average Time Taken per Turn:
+	              0.0156
+Turns Taken:        
+	                   2
+Expanded Node Count:
+	                  68
+Average Nodes Expanded per Turn:
+	                34.0
+
+########################################
+
+</game_results>
