@@ -60,21 +60,37 @@ class Board(object):
         return cells, board, array
 
     def stringify(self):
-        board_name = '\tBOARD NAME: %s\n\t' %(self.board_file)
-        first_message_part = '\tORIGINGAL BOARD:\n\t'
-        second_message_part = '\tRESULTING BOARD:\n\t'
+        result = ''
+        board_name = 'BOARD NAME: %s\n\t' %(self.board_file)
+        first_message_part = 'ORIGINGAL BOARD:\n\n\t'
+        second_message_part = 'RESULTING BOARD:\n\n\t'
         msg = None
         array = self.array
+        green_score = 0
+        blue_score = 0
         for row in range(len(array)):
             for col in range(len(array[row])):
                 cell = array[row][col]
                 letter = cell.owner.name[0].upper()
                 value = cell.value
+                if letter == 'B':
+                    blue_score += value
+                else:
+                    green_score += value
                 first_message_part += "%s\t" %(value)
                 second_message_part += "%s\t" %(letter)
             first_message_part += "\n\t"
             second_message_part += "\n\t"
         msg = board_name + first_message_part + second_message_part
+        if blue_score == green_score:
+            result = "IT'S A TIE!\n"
+        elif blue_score > green_score:
+            result = "BLUE WINS!\n"
+        else:
+            result = "GREEN WINS!\n" + msg
+        result += "\tBlue Score: %d\tGreen Score %d\n\t" %\
+            (blue_score, green_score)
+        msg = result + msg
         return msg
 
     def get_empty_cells(self):
@@ -180,20 +196,14 @@ class Game(object):
         self.previous_player.clear()
 
     def print_game_stats(self):
+        print "<game_results>"
         print "%s as BLUE VS. %s as GREEN" %\
             (str(self.matchup[0]), str(self.matchup[1]))
-        if not self.tie:
-            message = "WINNER: %s" %(self.winner.strategy.name.upper())
-            self.winner.print_solution(message=message)
-            message = "LOSER: %s" %(self.loser.strategy.name.upper())
-            self.loser.print_solution(
-                message=message,
-                suppress_solution=True
-            )
-        else:
-            message = "TIE GAME"
-            self.blue.print_solution(message=message)
-            self.green.print_solution(suppress_solution=True)
+        self.winner.print_solution()
+        self.loser.print_solution(
+            suppress_solution=True
+        )
+        print "</game_results>"
 
     def make_player_go(self):
         """c
