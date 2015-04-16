@@ -86,14 +86,14 @@ class Decision(object):
         """c
         """
         decision = {
-            "digit": None,
+            "value": None,
             "P": None
         }
         for key in vals_dict:
             probability = vals_dict[key]
             if probability >= decision["P"]:
                 decision["P"] = probability
-                decision["digit"] = key
+                decision["value"] = key
         return decision
 
 class Evaluation(object):
@@ -274,14 +274,14 @@ class Agent(object):
             digit.determine_likelihood(len(training_labels))
 
     def print_confusion_matrix(self):
-        print "Digit, Correct MAP, Incorrect MAP, MAP Ratio, Correct ML, Incorrect ML, ML Ratio"
+        print "Class, Correct MAP, Incorrect MAP, MAP Ratio, Correct ML, Incorrect ML, ML Ratio"
         print "================================================================================"
         for key in self.confusion_matrix:
             evaluation = self.confusion_matrix[key]
             MAPc, MAPi, MAPr = evaluation.get_MAP_success_rate()
             MLc, MLi, MLr = evaluation.get_ML_success_rate()
-            print "%d\t%d\t%d\t%.2f%%\t%d\t%d\t%.2f%%" %\
-                (key, MAPc, MAPi, MAPr, MLc, MLi, MLr)
+            print "%s\t%d\t%d\t%.2f%%\t%d\t%d\t%.2f%%" %\
+                (str(key), MAPc, MAPi, MAPr, MLc, MLi, MLr)
 
 
     def generate_confusion_matrix(self):
@@ -334,8 +334,8 @@ class Agent(object):
             label = image_labels[i]
             evaluation = evaluations[label]
             classification = image_data[i]
-            MAP_digit = classification.MAP.decision["digit"]
-            ML_digit = classification.ML.decision["digit"]
+            MAP_digit = classification.MAP.decision["value"]
+            ML_digit = classification.ML.decision["value"]
             if MAP_digit == label:
                 evaluation.MAP_correct.append(i)
             else:

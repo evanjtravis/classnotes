@@ -1,5 +1,5 @@
 The Confusion Matrix:==========================
-Digit, Correct MAP, Incorrect MAP, MAP Ratio, Correct ML, Incorrect ML, ML Ratio
+Class, Correct MAP, Incorrect MAP, MAP Ratio, Correct ML, Incorrect ML, ML Ratio
 ================================================================================
 0	76	14	84.44%	76	14	84.44%
 1	104	4	96.30%	104	4	96.30%
