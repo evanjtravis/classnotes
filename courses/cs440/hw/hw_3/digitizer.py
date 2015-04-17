@@ -479,10 +479,12 @@ def color_text(text, color_num):
     """c
     """
     if sys.stdout.isatty():
-        text = color(color_num) + text
-        # revert back to white, makes string larger, but easier to
-        # manage.
-        text += color()
+        # Windows doesn't support ansi escape characters
+        if 'win32' != sys.platform:
+            text = color(color_num) + text
+            # revert back to white, makes string larger, but easier to
+            # manage.
+            text += color()
     return text
 
 
