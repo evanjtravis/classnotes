@@ -14,7 +14,7 @@ class Message(object):
         """c
         """
         self.classification = None # will be a classification object
-        # holding either "spam" or "mail" values
+        # holding labels identifying it as either spam or mail
         #-------------------------------------------------------------
         # Data to Store in Object from data_line
         word_dict = {}
@@ -23,10 +23,7 @@ class Message(object):
         label = None
         #-------------------------------------------------------------
         # Save label for evaluation
-        if data_line[0] == '1':
-            label = "spam"
-        else:
-            label = "mail"
+        label = data_line[0]
         data_line = data_line[1:]
 
         for i in range(len(data_line)):
@@ -46,6 +43,7 @@ class Message(object):
 
         self.word_dict = word_dict
         self.word_count = word_count
+        # A better name would be word_ratios
         self.word_probabilities = word_probabilities
         self.label = label
 
@@ -82,6 +80,10 @@ class Agent(digitizer.Agent):
         for i in range(len(messages)):
             message = messages[i]
             label = message.label
+            if label == '1':
+                label = "spam"
+            else:
+                label = "mail"
             evaluation = evaluations[label]
             classification = message.classification
             MAP_value = classification.MAP.decision["value"]
