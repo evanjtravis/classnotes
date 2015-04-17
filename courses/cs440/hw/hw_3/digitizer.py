@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import math
 from itertools import combinations
 
@@ -188,8 +189,7 @@ class Agent(object):
         """
         msg = ''
         write_string = None
-        write_strings = ['0','1','2','3','4','5','6','7','8','9',\
-                         '(','*','&','^','%','$','#','@','!']
+        write_strings = ['0','1','2','3','4','5','6', '7']
         odds_list = self.odds_list
         for odd in odds_list:
             odd_pixels = odd.pixels
@@ -208,12 +208,12 @@ class Agent(object):
                             num = int(aPixel)
                         except TypeError:
                             num = int(aPixel.one_likelihood * const)
-                        if num < -9:
-                            num = -9
-                        if num > 9:
-                            num = 9
+                        if num < 0:
+                            num = 0
+                        if num > 7:
+                            num = 7
                         write_string = write_strings[num]
-                        msg += write_string
+                        msg += color_text(write_string, num)
                     msg += '\n'
         print msg
 
@@ -445,6 +445,47 @@ def get_labels(filename):
 #=====================================================================
 # Utils
 #---------------------------------------------------------------------
+def color(num=7):
+    """c
+    """
+    esc = '\033['
+    color_labels = [
+        'black',
+        'red',
+        'yellow',
+        'green',
+        'blue',
+        'cyan',
+        'magenta',
+        'white'
+    ]
+    colors = {
+        'black': esc + '41;30m',
+        'red': esc + '40;31m',
+        'yellow': esc + '40;33m',
+        'green': esc + '40;32m',
+        'blue': esc + '40;34m',
+        'cyan': esc + '40;36m',
+        'magenta': esc + '40;35m',
+        'white': esc + '40;37m'
+    }
+    if num < 0:
+        num = 0
+    elif num > len(color_labels) - 1:
+        num = len(color_labels) - 1
+    return colors[color_labels[num]]
+
+def color_text(text, color_num):
+    """c
+    """
+    if sys.stdout.isatty():
+        text = color(color_num) + text
+        # revert back to white, makes string larger, but easier to
+        # manage.
+        text += color()
+    return text
+
+
 def get_images_and_labels(image_file, label_file):
     """c
     """
