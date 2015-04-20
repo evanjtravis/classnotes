@@ -188,8 +188,27 @@ class Agent(object):
         """c
         """
         msg = ''
-        write_string = None
-        write_strings = ['0','1','2','3','4','5','6', '7']
+        fg_colors = [
+            'black',
+            'red',
+            'yellow',
+            'green',
+            'blue',
+            'cyan',
+            'magenta',
+            'white'
+        ]
+        bg_colors = [
+            'black',
+            'red',
+            'yellow',
+            'green',
+            'blue',
+            'cyan',
+            'magenta',
+            'white'
+        ]
+        write_strings = ['0','1','2','3','4','5','6','7']
         odds_list = self.odds_list
         for odd in odds_list:
             odd_pixels = odd.pixels
@@ -199,21 +218,33 @@ class Agent(object):
             msg += "\n#################################\n%d and %d" %\
                 (odd.digit_1, odd.digit_2)
             for elem in range(len(pixels_list)):
-                msg += '\n\n'
+                max_odd = -sys.maxint - 1
+                min_odd = sys.maxint
+                # First determine max and min ranges
+                ratios = []
+                msg += "\n\n"
                 for row in range(len(pixels_list[elem])):
+                    ratios.append([])
                     for pixel in range(len(pixels_list[elem][row])):
                         aPixel = pixels_list[elem][row][pixel]
-                        const = 10
                         try:
-                            num = int(aPixel)
+                            num = log(aPixel)
                         except TypeError:
-                            num = int(aPixel.one_likelihood * const)
-                        if num < 0:
-                            num = 0
-                        if num > 7:
-                            num = 7
-                        write_string = write_strings[num]
-                        msg += color_text(write_string, num)
+                            num = log(
+                                aPixel.one_likelihood
+                            )
+                        ratios[row].append(num)
+                        max_odd = max(max_odd, num)
+                        min_odd = min(min_odd, num)
+                # Print colors based on max and min range
+                for row in range(len(ratios)):
+                    for col in range(len(ratios[row])):
+                        num = ratios[row][col]
+                        index = get_color_index(num, min_odd, max_odd)
+                        write_string = write_strings[index]
+                        fg = fg_colors[index]
+                        bg = bg_colors[index]
+                        msg += color_text(write_string, fg, bg)
                     msg += '\n'
         print msg
 
@@ -274,14 +305,30 @@ class Agent(object):
             digit.determine_likelihood(len(training_labels))
 
     def print_confusion_matrix(self):
+        MAP_total_wrong = 0
+        MAP_total_right = 0
+        ML_total_wrong = 0
+        ML_total_right = 0
         print "Class, Correct MAP, Incorrect MAP, MAP Ratio, Correct ML, Incorrect ML, ML Ratio"
         print "================================================================================"
         for key in self.confusion_matrix:
             evaluation = self.confusion_matrix[key]
             MAPc, MAPi, MAPr = evaluation.get_MAP_success_rate()
+            MAP_total_right += MAPc
+            MAP_total_wrong += MAPi
             MLc, MLi, MLr = evaluation.get_ML_success_rate()
+            ML_total_right += MLc
+            ML_total_wrong += MLi
             print "%s\t%d\t%d\t%.2f%%\t%d\t%d\t%.2f%%" %\
                 (str(key), MAPc, MAPi, MAPr, MLc, MLi, MLr)
+        MAP_total = MAP_total_wrong + MAP_total_right
+        ML_total = ML_total_wrong + ML_total_right
+        MAP_ratio = 100.0 * (float(MAP_total_right) / float(MAP_total))
+        ML_ratio = 100.0 * (float(ML_total_right) / float(ML_total))
+        print "------------------------------------------------------"
+        print "MAP Success Rate:\t%.2f%%" %(MAP_ratio)
+        print "ML Success Rate:\t%.2f%%" %(ML_ratio)
+
 
 
     def generate_confusion_matrix(self):
@@ -445,7 +492,7 @@ def get_labels(filename):
 #=====================================================================
 # Utils
 #---------------------------------------------------------------------
-def color(num=7):
+def color(fg="white", bg="black"):
     """c
     """
     esc = '\033['
@@ -459,29 +506,47 @@ def color(num=7):
         'magenta',
         'white'
     ]
-    colors = {
-        'black': esc + '41;30m',
-        'red': esc + '40;31m',
-        'yellow': esc + '40;33m',
-        'green': esc + '40;32m',
-        'blue': esc + '40;34m',
-        'cyan': esc + '40;36m',
-        'magenta': esc + '40;35m',
-        'white': esc + '40;37m'
+    bg_colors = {
+        'black': '40;',
+        'red': '41;',
+        'yellow': '43;',
+        'green': '42;',
+        'blue': '44;',
+        'cyan': '46;',
+        'magenta': '45;',
+        'white': '47;'
     }
-    if num < 0:
-        num = 0
-    elif num > len(color_labels) - 1:
-        num = len(color_labels) - 1
-    return colors[color_labels[num]]
+    fg_colors = {
+        'black': '30m',
+        'red': '31m',
+        'yellow': '33m',
+        'green': '32m',
+        'blue': '34m',
+        'cyan': '36m',
+        'magenta': '35m',
+        'white': '37m'
+    }
+    if type(fg) == int:
+        if fg < 0:
+            fg = 0
+        elif fg > len(color_labels) - 1:
+            fg = len(color_labels) - 1
+        fg = color_labels[fg]
+    if type(bg) == int:
+        if bg < 0:
+            bg = 0
+        elif bg > len(color_labels) - 1:
+            bg = len(color_labels) - 1
+    colors = esc + bg_colors[bg] + fg_colors[fg]
+    return colors
 
-def color_text(text, color_num):
+def color_text(text, fg_key, bg_key):
     """c
     """
     if sys.stdout.isatty():
         # Windows doesn't support ansi escape characters
-        if 'win32' != sys.platform:
-            text = color(color_num) + text
+        if sys.platform != 'win32':
+            text = color(fg_key, bg_key) + text
             # revert back to white, makes string larger, but easier to
             # manage.
             text += color()
@@ -512,6 +577,27 @@ def print_image(image):
             msg += "%d" %(image[x][y])
         msg += '\n'
     print msg
+
+def get_color_index(log_odd, min_odd, max_odd):
+    """c
+    """
+    num_of_colors = 7
+    the_range = max_odd - min_odd
+    chunk = the_range / num_of_colors
+    index = 0
+    found = False
+    if log_odd == min_odd:
+        return 0
+    elif log_odd == max_odd:
+        return num_of_colors
+    while (not found) and (index < num_of_colors):
+        index += 1
+        found = log_odd >= (max_odd - (chunk * index))
+    return index
+
+
+
+
 
 #=====================================================================
 
