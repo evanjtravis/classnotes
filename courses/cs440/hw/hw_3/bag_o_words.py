@@ -2,11 +2,13 @@
 
 from digitizer import Classification, Evaluation
 from digitizer import Agent as Digit_Agent
+#from spam_detector import Agent as Spam_Agent
 from copy import deepcopy
-import math
 from itertools import combinations
+from hw_3_utils import color_text, get_color_index, log, ratio
+import sys
 
-CLASSMAP = {
+CLASSMAP8 = {
     '0': 'sci.space',
     '1': 'comp.sys.ibm.pc.hardware',
     '2': 'rec.sport.baseball',
@@ -17,13 +19,16 @@ CLASSMAP = {
     '7': 'comp.graphics'
 }
 
+CLASSMAPSPAM = {
+    '0': "mail",
+    '1': "spam"
+}
+
 # P of word laplace
 PWL = 10.0
 
 # P of class laplace
 PCL = 5.0
-# P of class laplace V
-PCLV = len(CLASSMAP)
 
 
 class Message(object):
@@ -57,12 +62,10 @@ class Message(object):
         self.word_count = sum(word_dict.values())
 
 
-
-
 class Class(object):
     """c
     """
-    def __init__(self, label, messages):
+    def __init__(self, label, messages, agent_type):
         """c
         """
         # Label not needed, as Class objects are organized by Agent
@@ -70,11 +73,14 @@ class Class(object):
         # training_messages used to generate stats, not set as an
         # instance member
         self.label = label
-        self.alias = CLASSMAP[label]
+        if agent_type == "spam":
+            self.alias = CLASSMAPSPAM[label]
+        else:
+            self.alias = CLASSMAP8[label]
         self.count = len(messages)
         self.word_dict = self.get_words(messages)
         self.word_count = sum(self.word_dict.values())
-        self.top_words = top_words(20, self.word_dict())
+        self.top_words = top_words(20, self.word_dict)
 
 
     def get_words(self, messages):
@@ -101,9 +107,10 @@ class Class(object):
 class Agent(Digit_Agent):
     """c
     """
-    def __init__(self, training_file, test_file):
+    def __init__(self, training_file, test_file, agent_type):
         """c
         """
+        self.agent_type = agent_type
         self.test_messages = []
 
         self.word_dict = {}
@@ -139,17 +146,19 @@ class Agent(Digit_Agent):
         """
         evaluations = []
         confusion_matrix = self.confusion_matrix
-        while len(classifications) < 4:
+        to_do = min(4, len(confusion_matrix))
+        while len(evaluations) < to_do:
             success_rate = 100.0
             most_confusing_evaluation = ""
             for key in confusion_matrix:
-                if key not in evaluations:
-                    evaluation = confusion_matrix[key]
-                    e_success_rate = evaluation.get_MAP_success_rate()
-                    if e_success_rate < success_rate:
-                        success_rate = e_success_rate
-                        most_confusing_evaluation = key
-            evaluations.append(key)
+                if key in evaluations:
+                    continue
+                evaluation = confusion_matrix[key]
+                e_success_rate = evaluation.get_MAP_success_rate()[2]
+                if e_success_rate < success_rate:
+                    success_rate = e_success_rate
+                    most_confusing_evaluation = key
+            evaluations.append(most_confusing_evaluation)
         self.most_confusing_evaluations = evaluations
 
 
@@ -157,12 +166,13 @@ class Agent(Digit_Agent):
         """c
         """
         classes = self.classes
-        for aClass in classes:
+        for key in classes:
+            aClass = classes[key]
             top_dict = aClass.top_words
             print "%s: Top 20 Words" %(aClass.alias)
             for word in top_dict:
                 count = top_dict[word]
-                print "\t%10s\t%5d" %(word, count)
+                print "\t%-25s\t%5d" %(word, count)
 
     def print_odds(self):
         """c
@@ -179,16 +189,15 @@ class Agent(Digit_Agent):
             class_1 = classes[id1]
             class_2 = classes[id2]
             print "%s and %s" %(class_1.alias, class_2.alias)
-            twenty_odds = top_odds(class_1, class_2)
+            twenty_odds, min_odd, max_odd = top_odds(class_1, class_2)
+            print "Range: %.5f --> %.5f" %(min_odd, max_odd)
+            print "--------------------------------------------------"
             for word in twenty_odds:
                 word_odd = twenty_odds[word]
-                msg = "\t%s\t%.5f" %(word, word_odd)
-                if word_odd < 0:
-                    msg = color_text(msg, "cyan")
-                elif word_odd > 0:
-                    msg = color_text(msg, "red")
-                else:
-                    msg = color_text(msg, "yellow")
+                msg = "\t%-15s%6.5f" %(word, word_odd)
+                index = get_color_index(word_odd, min_odd, max_odd)
+                index = max(index, 1)
+                msg = color_text(msg, index, "black")
                 print msg
 
 
@@ -217,7 +226,7 @@ class Agent(Digit_Agent):
                     word_dict[word] = words[word]
 
         for key in classes:
-            classes[key] = Class(key, classes[key])
+            classes[key] = Class(key, classes[key], self.agent_type)
 
         self.classes = classes
         self.word_dict = word_dict
@@ -232,8 +241,12 @@ class Agent(Digit_Agent):
         classes = self.classes
 
         for message in messages:
-            MAP_values = deepcopy(CLASSMAP)
-            ML_values = deepcopy(CLASSMAP)
+            if self.agent_type == "spam":
+                to_copy = CLASSMAPSPAM
+            else:
+                to_copy = CLASSMAP8
+            MAP_values = deepcopy(to_copy)
+            ML_values = deepcopy(to_copy)
             for key in MAP_values:
                 aClass = classes[key]
                 P_aClass = log(self.p_of_class(aClass))
@@ -254,7 +267,11 @@ class Agent(Digit_Agent):
     def evaluate_classifications(self):
         """c
         """
-        evaluations = deepcopy(CLASSMAP)
+        if self.agent_type == "spam":
+            to_copy = CLASSMAPSPAM
+        else:
+            to_copy = CLASSMAP8
+        evaluations = deepcopy(to_copy)
         for key in evaluations:
             evaluations[key] = Evaluation()
         messages = self.test_messages
@@ -279,12 +296,15 @@ class Agent(Digit_Agent):
     def p_of_class(
             self,
             aClass,
-            smoothing=PCL,
-            v=PCLV):
+            smoothing=PCL):
         """c
         """
         class_count = aClass.count
         message_count = self.message_count
+        if self.agent_type == "spam":
+            v = len(CLASSMAPSPAM)
+        else:
+            v = len(CLASSMAP8)
         return ratio(
             class_count,
             message_count,
@@ -295,8 +315,6 @@ class Agent(Digit_Agent):
 #=====================================================================
 # Utils
 #---------------------------------------------------------------------
-
-
 def get_messages(filename):
     """c
     """
@@ -313,18 +331,6 @@ def get_messages(filename):
     return messages
 
 
-def ratio(numerator, denominator, smoothing=0.0, v=1.0):
-    """c
-    """
-    smoothing = float(smoothing)
-    v = float(v)
-    numerator = (float(numerator) + smoothing)
-    denominator = (float(denominator) + (smoothing * v))
-    if denominator == 0:
-        return 0
-    return numerator / denominator
-
-
 def p_of_word(word, aDict, word_count, smoothing=PWL):
     """c
     """
@@ -339,7 +345,6 @@ def p_of_word(word, aDict, word_count, smoothing=PWL):
         smoothing,
         v
     )
-
 
 def top_words(num, aDict):
     """c
@@ -360,17 +365,9 @@ def top_words(num, aDict):
                     most_common_word = word
                     most_common_count = count
         top.append(most_common_word)
-        top_dict[most_common_word] = count
+        top_dict[most_common_word] = most_common_count
     return top_dict
 
-
-def log(num):
-    """c
-    """
-    if num == 0:
-        return -100
-    else:
-        return math.log(num)
 
 def p_of_word_given_class(word, aClass):
     """c
@@ -384,29 +381,32 @@ def odds(word, class_1, class_2):
     """
     pwgc1 = p_of_word_given_class(word, class_1)
     pwgc2 = p_of_word_given_class(word, class_2)
-    if pwgc2 == 0:
-        return 0.0
-    return log(pwgc1/pwgc2)
+    return log(ratio(pwgc1, pwgc2))
 
 def top_odds(class_1, class_2):
     """c
     """
-    words_checked = {}
-    top_words1 = class_1.top_words
-    top_words2 = class_2.top_words
+    common_words = {}
+    top_words1 = class_1.word_dict
+    top_words2 = class_2.word_dict
+    the_20_top_odds = {}
     for word in top_words1:
+        if word not in top_words2:
+            continue
         the_odds = odds(word, class_1, class_2)
-        words_checked[word] = the_odds
-    for word in top_words2:
-        if word not in words_checked:
-            the_odds = odds(word, class_1, class_2)
-            words_checked[word] = the_odds
-    return words_checked
-
-
-
-
-
-
-
+        common_words[word] = the_odds
+    while len(the_20_top_odds) < 20:
+        max_odds = -sys.maxint - 1
+        the_word = ""
+        for word in common_words:
+            if word in the_20_top_odds:
+                continue
+            the_odds = common_words[word]
+            if the_odds > max_odds:
+                max_odds = the_odds
+                the_word = word
+        the_20_top_odds[the_word] = max_odds
+    min_odds = min(the_20_top_odds.values())
+    max_odds = max(the_20_top_odds.values())
+    return the_20_top_odds, min_odds, max_odds
 

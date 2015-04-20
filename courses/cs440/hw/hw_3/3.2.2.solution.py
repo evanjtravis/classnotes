@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from eight_newsgroups import Agent
+from bag_o_words import Agent
 import os
 
 DATADIR = "8category"
@@ -14,7 +14,7 @@ TESTF = os.path.join(DATADIR, "8category.testing.txt")
 def main():
     """c
     """
-    agent = Agent(TRAINF, TESTF)
+    agent = Agent(TRAINF, TESTF, "8category")
     agent.whole_shebang()
 
 
