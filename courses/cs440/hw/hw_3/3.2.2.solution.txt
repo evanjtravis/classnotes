@@ -1,0 +1,295 @@
+The Classification Methods Comparison Table:==========
+Class, Correct MAP, Incorrect MAP, MAP Ratio, Correct ML, Incorrect ML, ML Ratio
+================================================================================
+1	25	8	75.76%	25	8	75.76%
+0	33	1	97.06%	33	1	97.06%
+3	25	3	89.29%	25	3	89.29%
+2	35	1	97.22%	35	1	97.22%
+5	6	4	60.00%	6	4	60.00%
+4	47	0	100.00%	47	0	100.00%
+7	25	4	86.21%	25	4	86.21%
+6	45	1	97.83%	45	1	97.83%
+------------------------------------------------------
+MAP Success Rate:	91.63%
+ML Success Rate:	91.63%
+======================================================
+The Confusion Matrix:=================================
+       0   1   2   3   4   5   6   7
+------------------------------------
+  0|   _   0   0   0   1   0   0   0
+  1|   1   _   0   5   1   0   0   1
+  2|   0   0   _   0   0   0   1   0
+  3|   0   0   0   _   0   0   0   3
+  4|   0   0   0   0   _   0   0   0
+  5|   1   1   0   0   1   _   0   1
+  6|   0   0   0   0   1   0   _   0
+  7|   1   1   0   1   1   0   0   _
+======================================================
+The Top 20 Words per Class:===========================
+comp.sys.ibm.pc.hardware: Top 20 Words
+	also                     	  152
+	use                      	  204
+	disk                     	  216
+	system                   	  216
+	would                    	  203
+	get                      	  177
+	bus                      	  189
+	hard                     	  191
+	controller               	  229
+	drive                    	  496
+	one                      	  262
+	m                        	  176
+	drives                   	  232
+	data                     	  164
+	edu                      	  198
+	scsi                     	  416
+	ide                      	  306
+	nt                       	  392
+	card                     	  253
+	subject                  	  205
+sci.space: Top 20 Words
+	mission                  	  249
+	like                     	  304
+	would                    	  560
+	launch                   	  352
+	data                     	  253
+	writes                   	  271
+	space                    	 1030
+	system                   	  278
+	us                       	  280
+	one                      	  384
+	also                     	  277
+	nasa                     	  345
+	time                     	  253
+	edu                      	  251
+	earth                    	  332
+	first                    	  253
+	nt                       	  593
+	could                    	  263
+	orbit                    	  251
+	subject                  	  328
+comp.windows.x: Top 20 Words
+	available                	  312
+	program                  	  256
+	use                      	  455
+	motif                    	  284
+	get                      	  312
+	windows                  	  247
+	sun                      	  256
+	c                        	  254
+	m                        	  248
+	system                   	  270
+	server                   	  363
+	also                     	  323
+	window                   	  522
+	version                  	  277
+	file                     	  396
+	edu                      	  286
+	x                        	 3598
+	one                      	  252
+	nt                       	  433
+	subject                  	  426
+rec.sport.baseball: Top 20 Words
+	good                     	  299
+	last                     	  288
+	like                     	  267
+	would                    	  454
+	writes                   	  355
+	year                     	  427
+	well                     	  222
+	one                      	  316
+	better                   	  240
+	players                  	  275
+	game                     	  316
+	games                    	  242
+	baseball                 	  255
+	time                     	  219
+	edu                      	  416
+	article                  	  287
+	team                     	  294
+	nt                       	  936
+	think                    	  287
+	subject                  	  293
+misc.forsale: Top 20 Words
+	good                     	  101
+	art                      	  135
+	system                   	   95
+	comics                   	  109
+	list                     	  112
+	price                    	  115
+	edu                      	  189
+	cover                    	  115
+	sale                     	  145
+	shipping                 	  117
+	one                      	  112
+	wolverine                	  128
+	vs                       	   98
+	hulk                     	  104
+	dos                      	  160
+	new                      	  218
+	drive                    	  108
+	nt                       	  105
+	appears                  	  144
+	subject                  	  132
+talk.politics.misc: Top 20 Words
+	stephanopoulos           	  452
+	right                    	  331
+	like                     	  404
+	would                    	  951
+	people                   	  831
+	writes                   	  552
+	government               	  497
+	us                       	  417
+	one                      	  601
+	q                        	  692
+	going                    	  372
+	know                     	  448
+	get                      	  331
+	mr                       	  599
+	edu                      	  413
+	president                	  552
+	article                  	  509
+	nt                       	 1400
+	think                    	  571
+	subject                  	  378
+comp.graphics: Top 20 Words
+	available                	  301
+	files                    	  242
+	use                      	  289
+	version                  	  221
+	format                   	  240
+	data                     	  369
+	image                    	  889
+	graphics                 	  346
+	system                   	  219
+	jpeg                     	  468
+	one                      	  259
+	also                     	  365
+	program                  	  252
+	file                     	  406
+	edu                      	  438
+	images                   	  389
+	ftp                      	  211
+	get                      	  235
+	nt                       	  419
+	software                 	  315
+rec.sport.hockey: Top 20 Words
+	play                     	  374
+	la                       	  262
+	like                     	  254
+	would                    	  402
+	get                      	  262
+	season                   	  333
+	year                     	  283
+	nhl                      	  327
+	period                   	  338
+	one                      	  312
+	players                  	  271
+	game                     	  653
+	games                    	  322
+	hockey                   	  564
+	team                     	  635
+	edu                      	  259
+	first                    	  290
+	nt                       	  838
+	think                    	  276
+	subject                  	  339
+======================================================
+The Top 20 Odds Ratios for Confusing Messages:========
+##################################################
+comp.graphics and comp.windows.x
+Range: 1.63744 --> 3.76400
+--------------------------------------------------
+	visualization  2.01323
+	search         1.95700
+	den            1.80854
+	algorithm      1.74845
+	image          2.83753
+	processing     1.64194
+	gopher         2.06343
+	analysis       2.15874
+	sgi            1.75327
+	gif            2.55956
+	points         1.87106
+	jpeg           3.76400
+	surface        1.87106
+	mirror         1.65483
+	images         2.57175
+	phigs          1.72555
+	shareware      1.63744
+	quality        2.23603
+	gamma          1.79908
+	siggraph       1.75327
+##################################################
+comp.graphics and talk.politics.misc
+Range: 2.42753 --> 4.25900
+--------------------------------------------------
+	files          2.83300
+	fax            2.86713
+	z              2.47632
+	version        2.65502
+	objects        2.43790
+	format         3.30460
+	color          2.56918
+	sun            2.45831
+	image          4.25900
+	library        2.57272
+	pc             2.49349
+	computer       2.66063
+	user           2.61942
+	file           3.33425
+	images         3.93916
+	mail           2.42753
+	ray            2.56367
+	bits           2.49349
+	display        2.85721
+	software       3.56697
+##################################################
+comp.windows.x and comp.graphics
+Range: 1.54433 --> 3.16997
+--------------------------------------------------
+	printf         1.77460
+	widget         1.96840
+	font           1.75898
+	motif          1.94072
+	entry          1.73374
+	xview          1.73599
+	xlib           1.97716
+	xterm          2.77813
+	openwindows    2.41666
+	manager        1.81590
+	sunos          1.54433
+	window         2.22706
+	shell          1.73778
+	shared         1.84030
+	h              1.62149
+	x              3.16997
+	null           1.85464
+	mit            1.54581
+	xt             2.04097
+	tcpip          1.58986
+##################################################
+comp.sys.ibm.pc.hardware and comp.windows.x
+Range: 2.08386 --> 4.16801
+--------------------------------------------------
+	meg            2.18957
+	heads          2.18957
+	pin            2.53132
+	motherboard    2.41377
+	bus            3.40688
+	chip           2.75446
+	hard           2.34644
+	drives         3.60251
+	drivers        2.11483
+	drive          3.29866
+	floppy         2.35849
+	gateway        2.20792
+	board          2.31914
+	transfer       2.23261
+	jumpers        2.08386
+	mhz            2.14440
+	isa            2.74830
+	modem          2.40060
+	scsi           4.16801
+	jumper         2.53241
+======================================================

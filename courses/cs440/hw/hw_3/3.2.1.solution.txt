@@ -1,0 +1,109 @@
+The Classification Methods Comparison Table:==========
+Class, Correct MAP, Incorrect MAP, MAP Ratio, Correct ML, Incorrect ML, ML Ratio
+================================================================================
+1	127	3	97.69%	127	3	97.69%
+0	128	2	98.46%	128	2	98.46%
+------------------------------------------------------
+MAP Success Rate:	98.08%
+ML Success Rate:	98.08%
+======================================================
+The Confusion Matrix:=================================
+       0   1
+------------
+  0|   _   2
+  1|   3   _
+======================================================
+The Top 20 Words per Class:===========================
+spam: Top 20 Words
+	nt                       	  520
+	mail                     	  923
+	business                 	  608
+	receive                  	  662
+	money                    	  722
+	work                     	  528
+	list                     	  713
+	send                     	  800
+	order                    	 1159
+	d                        	  541
+	s                        	 1207
+	program                  	  828
+	free                     	  744
+	address                  	  954
+	report                   	 1053
+	our                      	  965
+	one                      	  553
+	com                      	  524
+	email                    	 1380
+	name                     	  627
+mail: Top 20 Words
+	conference               	  378
+	information              	  444
+	e                        	  314
+	language                 	 1130
+	university               	  906
+	de                       	  445
+	please                   	  278
+	http                     	  264
+	abstract                 	  253
+	one                      	  280
+	paper                    	  320
+	s                        	  661
+	workshop                 	  360
+	research                 	  259
+	english                  	  312
+	edu                      	  271
+	linguistic               	  477
+	include                  	  277
+	email                    	  321
+	address                  	  252
+======================================================
+The Top 20 Odds Ratios for Confusing Messages:========
+##################################################
+mail and spam
+Range: 1.95753 --> 3.60033
+--------------------------------------------------
+	conference     3.00806
+	linguistics    2.61794
+	submission     1.95753
+	language       3.60033
+	author         2.10442
+	german         2.12223
+	science        2.34537
+	university     2.87846
+	de             3.04957
+	analysis       2.26199
+	et             2.06212
+	session        2.60180
+	speech         2.63919
+	papers         2.79987
+	english        2.76098
+	edu            2.51356
+	speaker        2.35862
+	linguist       2.37757
+	discussion     2.15997
+	structure      2.20227
+##################################################
+spam and mail
+Range: 2.69266 --> 4.00355
+--------------------------------------------------
+	product        3.26837
+	financial      2.86024
+	business       3.66241
+	income         2.85220
+	money          4.00355
+	ll             2.74896
+	million        3.10352
+	cash           2.94772
+	free           3.16816
+	bulk           3.48624
+	cost           2.75337
+	every          2.69266
+	remove         3.56936
+	easy           2.81430
+	internet       2.89037
+	report         2.92970
+	advertise      3.05674
+	save           3.01890
+	click          2.96727
+	market         2.77241
+======================================================

@@ -4,6 +4,73 @@ import math
 import sys
 
 #=====================================================================
+# Classes
+#---------------------------------------------------------------------
+class Decision(object):
+    """c
+    """
+    def __init__(self, vals_dict):
+        """c
+        """
+        self.decision = self.decide(vals_dict)
+
+
+    def decide(self, vals_dict):
+        """c
+        """
+        decision = {
+            "value": None,
+            "P": None
+        }
+        for key in vals_dict:
+            probability = vals_dict[key]
+            if probability >= decision["P"]:
+                decision["P"] = probability
+                decision["value"] = key
+        return decision
+
+
+class Evaluation(object):
+    """c
+    """
+    def __init__(self):
+        """c
+        """
+        self.MAP_correct = []
+        self.MAP_incorrect = []
+        self.ML_correct = []
+        self.ML_incorrect = []
+
+
+    def get_MAP_success_rate(self):
+        """c
+        """
+        MAPc = len(self.MAP_correct)
+        MAPi = len(self.MAP_incorrect)
+        total = MAPc + MAPi
+        return (MAPc, MAPi, 100.0 * (float(MAPc) / float(total)))
+
+
+    def get_ML_success_rate(self):
+        """c
+        """
+        MLc = len(self.ML_correct)
+        MLi = len(self.ML_incorrect)
+        total = MLc + MLi
+        return (MLc, MLi, 100.0 * (float(MLc) / float(total)))
+
+
+class Classification(object):
+    """c
+    """
+    def __init__(self, MAP_vals, ML_vals):
+        """c
+        """
+        self.MAP = Decision(MAP_vals)
+        self.ML = Decision(ML_vals)
+#=====================================================================
+
+#=====================================================================
 # Utils
 #---------------------------------------------------------------------
 def color(fg="white", bg="black"):
@@ -54,6 +121,7 @@ def color(fg="white", bg="black"):
     colors = esc + bg_colors[bg] + fg_colors[fg]
     return colors
 
+
 def color_text(text, fg_key, bg_key):
     """c
     """
@@ -65,6 +133,7 @@ def color_text(text, fg_key, bg_key):
             # manage.
             text += color()
     return text
+
 
 def get_color_index(log_odd, min_odd, max_odd):
     """c
@@ -82,6 +151,7 @@ def get_color_index(log_odd, min_odd, max_odd):
         index += 1
         found = log_odd >= (max_odd - (chunk * index))
     return index
+
 
 def ratio(numerator, denominator, smoothing=0.0, v=1.0):
     """c
@@ -102,4 +172,4 @@ def log(num):
         return -25
     else:
         return math.log(num)
-
+#---------------------------------------------------------------------

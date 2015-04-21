@@ -3,8 +3,8 @@
 import os
 import sys
 import math
-from itertools import combinations
 from hw_3_utils import color_text, get_color_index, log
+from hw_3_utils import Classification, Evaluation
 
 DIGITS_DIR = "digitdata/"
 BLOCK_SIZE = 28
@@ -76,70 +76,13 @@ class Digit(object):
             float(number_count)
 
 
-class Decision(object):
-    """c
-    """
-    def __init__(self, vals_dict):
-        """c
-        """
-        self.decision = self.decide(vals_dict)
-
-    def decide(self, vals_dict):
-        """c
-        """
-        decision = {
-            "value": None,
-            "P": None
-        }
-        for key in vals_dict:
-            probability = vals_dict[key]
-            if probability >= decision["P"]:
-                decision["P"] = probability
-                decision["value"] = key
-        return decision
-
-class Evaluation(object):
-    """c
-    """
-    def __init__(self):
-        """c
-        """
-        self.MAP_correct = []
-        self.MAP_incorrect = []
-        self.ML_correct = []
-        self.ML_incorrect = []
-
-    def get_MAP_success_rate(self):
-        """c
-        """
-        MAPc = len(self.MAP_correct)
-        MAPi = len(self.MAP_incorrect)
-        total = MAPc + MAPi
-        return (MAPc, MAPi, 100.0 * (float(MAPc) / float(total)))
-
-    def get_ML_success_rate(self):
-        """c
-        """
-        MLc = len(self.ML_correct)
-        MLi = len(self.ML_incorrect)
-        total = MLc + MLi
-        return (MLc, MLi, 100.0 * (float(MLc) / float(total)))
-
-class Classification(object):
-    """c
-    """
-    def __init__(self, MAP_vals, ML_vals):
-        """c
-        """
-        self.MAP = Decision(MAP_vals)
-        self.ML = Decision(ML_vals)
-
 class Odds(object):
     """c
     """
-    def __init__(self, digit_1, digit_2):
+    def __init__(self, count, digit_1, digit_2):
         """c
         """
+        self.count = count
         self.digit_1 = digit_1
         self.digit_2 = digit_2
         array = []
@@ -168,22 +111,60 @@ class Agent(object):
             8: Digit(8),
             9: Digit(9)
         }
-        self.confusion_matrix = None
+        self.confusion_matrix = self.base_confusion_matrix()
+        self.classification_table = None
         self.most_confusing = None
         self.odds_list = None
         self.train()
 
+    def base_confusion_matrix(self):
+        """c
+        """
+        matrix = []
+        for i in range(len(self.digits)):
+            matrix.append([])
+            for _ in range(len(self.digits)):
+                matrix[i].append(0)
+        return matrix
+
     def whole_shebang(self):
         """c
         """
-        self.generate_confusion_matrix()
-        print "The Confusion Matrix:=========================="
+        self.generate_classification_table()
+        print "The Classification Methods Comparison Table:=========="
+        self.print_classification_table()
+        print "======================================================"
+        print "The Confusion Matrix:================================="
         self.print_confusion_matrix()
-        print "=============================================\n"
+        print "======================================================"
         self.generate_most_confusing_odds()
-        print "Odds Ratios:==================================="
+        print "Odds Ratios Of Most Confusing Digits:================="
         self.print_odds()
-        print "=============================================\n"
+        print "======================================================"
+
+    def print_confusion_matrix(self):
+        """c
+        """
+        matrix = self.confusion_matrix
+        msg = ' ' * 4
+        for i in range(len(self.digits)):
+            msg += "%4d" %(i)
+        msg += '\n'
+        msg += ('-' * 4 * len(self.digits))
+        msg += ('-' * 4)
+        for i in range(len(matrix)):
+            msg += '\n'
+            msg += '%3d|' %(i)
+            for j in range(len(matrix[i])):
+                if i == j:
+                    value = '_'
+                    msg += "%4s" %(value)
+                else:
+                    value = matrix[i][j]
+                    msg += "%4d" %(value)
+        print msg
+
+
 
     def print_odds(self):
         """c
@@ -213,11 +194,13 @@ class Agent(object):
         odds_list = self.odds_list
         for odd in odds_list:
             odd_pixels = odd.pixels
+            odd_count = odd.count
             d1_pixels = self.digits[odd.digit_1].pixels
             d2_pixels = self.digits[odd.digit_2].pixels
             pixels_list = [d1_pixels, d2_pixels, odd_pixels]
-            msg += "\n#################################\n%d and %d" %\
-                (odd.digit_1, odd.digit_2)
+            msg += "\n###############################################"
+            msg += "\n%d and %d, %d Incorrect Assignments." %\
+                (odd.digit_1, odd.digit_2, odd_count)
             for elem in range(len(pixels_list)):
                 max_odd = -sys.maxint - 1
                 min_odd = sys.maxint
@@ -255,12 +238,11 @@ class Agent(object):
         """
         odds_list = []
         confusing = self.most_confusing
-        con_combos = combinations(confusing, 2)
-        for combo in con_combos:
-            d1, d2 = combo
+        for combo in confusing:
+            count, d1, d2 = combo
             digit_1 = self.digits[d1]
             digit_2 = self.digits[d2]
-            odds_obj = Odds(d1, d2)
+            odds_obj = Odds(count, d1, d2)
             pixels = digit_1.pixels
             for i in range(len(pixels)): # Row
                 for j in range(len(pixels[i])): # Col
@@ -305,15 +287,15 @@ class Agent(object):
             digit.determine_pixel_likelihoods()
             digit.determine_likelihood(len(training_labels))
 
-    def print_confusion_matrix(self):
+    def print_classification_table(self):
         MAP_total_wrong = 0
         MAP_total_right = 0
         ML_total_wrong = 0
         ML_total_right = 0
         print "Class, Correct MAP, Incorrect MAP, MAP Ratio, Correct ML, Incorrect ML, ML Ratio"
         print "================================================================================"
-        for key in self.confusion_matrix:
-            evaluation = self.confusion_matrix[key]
+        for key in self.classification_table:
+            evaluation = self.classification_table[key]
             MAPc, MAPi, MAPr = evaluation.get_MAP_success_rate()
             MAP_total_right += MAPc
             MAP_total_wrong += MAPi
@@ -332,7 +314,7 @@ class Agent(object):
 
 
 
-    def generate_confusion_matrix(self):
+    def generate_classification_table(self):
         """c
         """
         image_data, image_labels = self.digitize()
@@ -340,7 +322,7 @@ class Agent(object):
             image_data,
             image_labels
         )
-        self.confusion_matrix = evaluations
+        self.classification_table = evaluations
         self.generate_most_confusing(4)
         return evaluations
 
@@ -349,19 +331,15 @@ class Agent(object):
         matrix = self.confusion_matrix
 
         most_confusing = []
-        while len(most_confusing) < num:
-            most_confusing_digit = None
-            most_confusing_ratio = 100.0
-            for key in matrix:
-                if key in most_confusing:
+        for i in range(len(matrix)):
+            for j in range(len(matrix[i])):
+                if i == j:
                     continue
-                evaluation = matrix[key]
-                _, _, MAPr = evaluation.get_MAP_success_rate()
-                if MAPr < most_confusing_ratio:
-                    most_confusing_ratio = MAPr
-                    most_confusing_digit = key
-            most_confusing.append(most_confusing_digit)
-        self.most_confusing = most_confusing
+                count = matrix[i][j]
+                item = (count, i, j)
+                most_confusing.append(item)
+        most_confusing.sort()
+        self.most_confusing = most_confusing[-num:]
 
     def evaluate_classifications(self, image_data, image_labels):
         """c
@@ -387,6 +365,7 @@ class Agent(object):
             if MAP_digit == label:
                 evaluation.MAP_correct.append(i)
             else:
+                self.confusion_matrix[label][MAP_digit] += 1
                 evaluation.MAP_incorrect.append(i)
 
             if ML_digit == label:
@@ -406,7 +385,6 @@ class Agent(object):
             # Replace image with extracted data
             test_images[i] = classification
         return test_images, test_labels
-
 
 
     def classify(self, image):
@@ -517,14 +495,12 @@ def print_image(image):
             msg += "%d" %(image[x][y])
         msg += '\n'
     print msg
-
 #=====================================================================
 
 
 #=====================================================================
 # Debugging
 #---------------------------------------------------------------------
-
 def count_bad_images(num, image_list):
     """c
     """

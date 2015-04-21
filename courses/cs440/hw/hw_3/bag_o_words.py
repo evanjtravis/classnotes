@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
-from digitizer import Classification, Evaluation
 from digitizer import Agent as Digit_Agent
-#from spam_detector import Agent as Spam_Agent
 from copy import deepcopy
-from itertools import combinations
 from hw_3_utils import color_text, get_color_index, log, ratio
+from hw_3_utils import Classification, Evaluation
 import sys
 
 CLASSMAP8 = {
@@ -112,12 +110,13 @@ class Agent(Digit_Agent):
         """
         self.agent_type = agent_type
         self.test_messages = []
+        self.confusion_matrix = self.base_confusion_matrix()
 
         self.word_dict = {}
         self.message_count = 0
         self.word_count = 0
         self.classes = {}
-        self.confusion_matrix = {}
+        self.classification_table = {}
         self.most_confusing_evaluations = []
 
         # Generate classes and word_dict from test messages
@@ -125,41 +124,79 @@ class Agent(Digit_Agent):
         self.test_messages = get_messages(test_file)
         self.classify_messages()
         self.evaluate_classifications()
-        self.set_most_confusing_evaluations()
+        self.generate_most_confusing(4)
+
+    def print_confusion_matrix(self):
+        """c
+        """
+        matrix = self.confusion_matrix
+        msg = ' ' * 4
+        map_dict = CLASSMAP8
+        if self.agent_type == "spam":
+            map_dict = CLASSMAPSPAM
+        for i in range(len(map_dict)):
+            msg += "%4d" %(i)
+        msg += '\n'
+        msg += ('-' * 4 * len(map_dict))
+        msg += ('-' * 4)
+        for i in range(len(matrix)):
+            msg += '\n'
+            msg += '%3d|' %(i)
+            for j in range(len(matrix[i])):
+                if i == j:
+                    value = '_'
+                    msg += "%4s" %(value)
+                else:
+                    value = matrix[i][j]
+                    msg += "%4d" %(value)
+        print msg
+
+    def base_confusion_matrix(self):
+        """c
+        """
+        matrix = []
+        map_dict = CLASSMAP8
+        if self.agent_type == "spam":
+            map_dict = CLASSMAPSPAM
+        for i in range(len(map_dict)):
+            matrix.append([])
+            for _ in range(len(map_dict)):
+                matrix[i].append(0)
+        return matrix
 
     def whole_shebang(self):
         """c
         """
+        print "The Classification Methods Comparison Table:=========="
+        self.print_classification_table()
+        print "======================================================"
         print "The Confusion Matrix:================================="
         self.print_confusion_matrix()
         print "======================================================"
         print "The Top 20 Words per Class:==========================="
         self.print_top_20_words()
         print "======================================================"
-        print "The Odds:============================================="
+        print "The Top 20 Odds Ratios for Confusing Messages:========"
         self.print_odds()
         print "======================================================"
 
 
-    def set_most_confusing_evaluations(self):
+    def generate_most_confusing(self, num):
         """c
         """
-        evaluations = []
-        confusion_matrix = self.confusion_matrix
-        to_do = min(4, len(confusion_matrix))
-        while len(evaluations) < to_do:
-            success_rate = 100.0
-            most_confusing_evaluation = ""
-            for key in confusion_matrix:
-                if key in evaluations:
+        most_confusing = []
+        matrix = self.confusion_matrix
+        for i in range(len(matrix)):
+            for j in range(len(matrix[i])):
+                if i == j:
                     continue
-                evaluation = confusion_matrix[key]
-                e_success_rate = evaluation.get_MAP_success_rate()[2]
-                if e_success_rate < success_rate:
-                    success_rate = e_success_rate
-                    most_confusing_evaluation = key
-            evaluations.append(most_confusing_evaluation)
-        self.most_confusing_evaluations = evaluations
+                count = matrix[i][j]
+                item = (count, i, j)
+                most_confusing.append(item)
+        most_confusing.sort()
+        if len(most_confusing) >= num:
+            most_confusing = most_confusing[-num:]
+        self.most_confusing_evaluations = most_confusing
 
 
     def print_top_20_words(self):
@@ -178,16 +215,12 @@ class Agent(Digit_Agent):
         """c
         """
         classes = self.classes
-        most_confusing_combos = combinations(
-            self.most_confusing_evaluations,
-            2
-        )
-        for combo in most_confusing_combos:
+        most_confusing = self.most_confusing_evaluations
+        for combo in most_confusing:
             print "##################################################"
-            id1 = combo[0]
-            id2 = combo[1]
-            class_1 = classes[id1]
-            class_2 = classes[id2]
+            _, id1, id2 = combo
+            class_1 = classes[str(id1)]
+            class_2 = classes[str(id2)]
             print "%s and %s" %(class_1.alias, class_2.alias)
             twenty_odds, min_odd, max_odd = top_odds(class_1, class_2)
             print "Range: %.5f --> %.5f" %(min_odd, max_odd)
@@ -286,11 +319,12 @@ class Agent(Digit_Agent):
                 evaluation.MAP_correct.append(i)
             else:
                 evaluation.MAP_incorrect.append(i)
+                self.confusion_matrix[int(label)][int(MAP_value)] += 1
             if ML_value == label:
                 evaluation.ML_correct.append(i)
             else:
                 evaluation.ML_incorrect.append(i)
-        self.confusion_matrix = evaluations
+        self.classification_table = evaluations
 
 
     def p_of_class(
