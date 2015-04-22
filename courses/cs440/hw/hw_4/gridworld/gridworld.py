@@ -1,20 +1,5 @@
 #!/usr/bin/env python
 
-PLUS =    '+'
-MINUS =   '-'
-WALL =    '%'
-START =   'p'
-DEFAULT = "DEFAULT"
-
-
-VALUES = {
-    PLUS:       1,
-    MINUS:     -1,
-    WALL:       0,
-    START:      0,
-    DEFAULT:    0
-}
-
 BASE_REWARD =    -0.04
 # Discount factor
 Y =       0.99
@@ -22,36 +7,94 @@ P_CHILD = 0.8
 # Perpendicular
 P_PERP =  0.1
 
+class Action(object):
+    """c
+    """
+    def __init__(self, name, coords, label, utility):
+        """c
+        """
+        self.name = name
+        self.coords = coords
+        self.label = label
+        self.utility = utility
+
 
 class State(object):
     """Cell
     """
-    UP =    (0,  1)
-    DOWN =  (0, -1)
-    RIGHT = (UP[1], UP[0])
-    LEFT =  (DOWN[1], DOWN[0])
-    ACTIONS = {
+    UP =    "UP"
+    DOWN =  "DOWN"
+    RIGHT = "RIGHT"
+    LEFT =  "LEFT"
+    ACTION_COORDS = {
+        UP:    (0,  1),
+        DOWN:  (0, -1),
+        RIGHT: (1,  0),
+        LEFT:  (-1, 0)
+    }
+    ACTION_UTILITIES = {
+        UP:     BASE_REWARD,
+        DOWN:   BASE_REWARD,
+        LEFT:   BASE_REWARD,
+        RIGHT:  BASE_REWARD,
+    }
+    ACTION_CHARS = {
         UP:    '^',
         DOWN:  'v',
         LEFT:  '<',
         RIGHT: '>'
     }
-    VERT = [UP, DOWN]
-    HORIZ = [LEFT, RIGHT]
-    def __init__(self, char, value, coords):
+    ACTIONS = []
+    for name in ACTION_COORDS:
+        action = Action(
+            name,
+            ACTION_COORDS[name],
+            ACTION_CHARS[name],
+            ACTION_UTILITIES[name]
+        )
+        ACTIONS.append(action)
+    VERT = [ACTION_COORDS[UP], ACTION_COORDS[DOWN]]
+    HORIZ = [ACTION_COORDS[LEFT], ACTION_COORDS[RIGHT]]
+    def __init__(
+        self,
+        char,
+        utility,
+        coords,
+        terminal):
         """c
         """
         self.char = char
-        self.value = value
+        self.utility = utility
         self.coords = coords
-        # Action = diff(s.coords, s`.coords), indicating direction
+        self.terminal = terminal
         self.action = None
+        self.utility = None
+
+    def add(self, next_state):
+        """add together 2 xy coords, make sure they are non-negative
+        coords.
+        """
+        x1, y1 = self.coords
+        if type(next_state) != tuple:
+            x2, y2 = next_state.coords
+        else:
+            x2, y2 = next_state
+        x = x1 + x2
+        y = y1 + y2
+        if (x < 0) or (y < 0):
+            Add = None
+        else:
+            Add = (x, y)
+        return Add
 
     def diff(self, next_state):
-        """c
+        """Get diff of two xy coords
         """
         srcX, srcY = self.coords
-        destX, destY = next_state.coords
+        if type(next_state) != tuple:
+            destX, destY = next_state.coords
+        else:
+            destX, destY = next_state
         Diff = (
             srcX - destX,
             srcY - destY
@@ -106,15 +149,32 @@ class State(object):
         return is_perpendicular
 
 
-
 class Agent(object):
     """c
     """
+    PLUS =    '+'
+    MINUS =   '-'
+    WALL =    '%'
+    START =   'p'
+    DEFAULT = "DEFAULT"
+
+    VALUES = {
+        PLUS:       1.0,
+        MINUS:     -1.0,
+        WALL:       0.0,
+        START:      1.0,
+        DEFAULT:    0.0
+    }
+    TERMINAL = [PLUS, MINUS]
     def __init__(self, mapfile):
         """c
         """
         self.mapfile = mapfile
-        self.cells = self.read_map(mapfile)
+        self.map_cells, self.start_coords = self.read_map(mapfile)
+        if None in self.start_coords:
+            raise Exception(
+                "No start character '%s' found in mapfile '%s'."%\
+                            (self.START, self.mapfile))
 
     def read_map(self, mapfile):
         """c
@@ -122,6 +182,9 @@ class Agent(object):
         f = open(mapfile, 'r')
         array = f.read().splitlines()
         f.close()
+        VALUES = self.VALUES
+        TERMINAL = self.TERMINAL
+        start_coords = (None, None)
 
         for i in range(len(array)):
             array[i] = list(array[i])
@@ -129,10 +192,40 @@ class Agent(object):
                 char = array[i][j]
                 coords = (i, j)
                 if char in VALUES:
-                    array[i][j] = State(char, VALUES[char], coords)
+                    terminal = False
+                    if char in TERMINAL:
+                        terminal = True
+                    array[i][j] = State(
+                        char,
+                        VALUES[char],
+                        coords,
+                        terminal
+                    )
+                    if char == self.START:
+                        start_coords = (i, j)
                 else:
-                    array[i][j] = State(char, VALUES[DEFAULT], coords)
-        return array
+                    array[i][j] = State(char, VALUES[self.DEFAULT], coords)
+        return array, start_coords
+
+    def value_iteration_method(self):
+        """c
+        """
+        start_state = self.map_cells[i][j]
+        actions = state.ACTIONS
+        iterate_values(start_state, actions)
+
+
+def iterate_values(state, actions):
+    """c
+    """
+    children = []
+    max_value = None
+    for action in actions:
+        next_state = action.execute(state)
+        max_value =
+
+
+
 
 def U(*args):
     """The utility of a sequence of states.
@@ -179,5 +272,7 @@ def P(prev_state, state):
 def R(state):
     """Reward function of a state
     """
-    value = state.value
+    value = state.utility
+    if state.terminal:
+        return value
     return value + BASE_REWARD
