@@ -237,34 +237,32 @@ class Agent(object):
             for i in range(len(states)):
                 for j in range(len(states[i])):
                     old_util = state.utility
+                    max_util = old_util
                     state = states[i][j]
-                    state.utility = U(state)
-                    u_diff =
+                    actions = state.get_actions()
+                    for action in actions:
+                        child_states = state.get_children()
+                        for child in children:
+                            temp_utility = \
+                                R(state) + y *\
+                                (P(child_state, state, action) * U(
+                                    state, action, child_state
+                                ))
+                        u_diff = abs(old_util - state.utility)
+                        delta = max(u_diff, delta)
+        return states
 
 
-def iterate_values(state):
-    """c
+
+def U(parent, parent_action, state):
+    """The utility of a state.
     """
-    children = state.get_children()
-    R_state = R(state)
-    if state.is_terminal:
-        return R_state
-    else:
-        actions = state.get_valid_actions()
-        for action in actions:
-            for child in children:
-                # Test each action on each child
-                # Return max result == action, child pair
-
-
-
-def U(states, actions):
-    """The utility of a sequence of states.
-    """
-    total = 0.0
-    for i in range(len(args)):
-        state = args[i]
-        R_of_state = R(state) * (Y ** i)
+    utility = 0.0
+    actions = state.get_actions()
+    P_state
+    for action in actions:
+        child = state.execute(action)
+        R_of_state = R(child) * (Y ** i)
         total += R_of_state
     return total
 
