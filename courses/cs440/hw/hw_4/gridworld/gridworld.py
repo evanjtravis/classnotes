@@ -1,74 +1,100 @@
 #!/usr/bin/env python
+import sys
 
-BASE_REWARD =    -0.04
+R_MAX =        1.0
+R_MIN =       -1.0
+BASE_REWARD = -0.04
+ERR_C =        0.1
+
 # Discount factor
 Y =       0.99
 P_CHILD = 0.8
 # Perpendicular
 P_PERP =  0.1
 
+MAX_ITERATIONS = 50
+MAXINT = sys.maxint
+MININT = -MAXINT - 1
+
+# Action Configuration Settings
+UP =    "UP"
+DOWN =  "DOWN"
+RIGHT = "RIGHT"
+LEFT =  "LEFT"
+ACTION_COORDS = {
+    UP:    (0,  1),
+    DOWN:  (0, -1),
+    RIGHT: (1,  0),
+    LEFT:  (-1, 0)
+}
+ACTION_CHARS = {
+    UP:    '^',
+    DOWN:  'v',
+    LEFT:  '<',
+    RIGHT: '>'
+}
+
+ACTIONS = []
+for name in ACTION_COORDS:
+    action = Action(
+        name,
+        ACTION_COORDS[name],
+        ACTION_CHARS[name],
+    )
+ACTIONS.append(action)
+
 class Action(object):
     """c
     """
-    def __init__(self, name, coords, label, utility):
+    def __init__(self, name, coords, label):
         """c
         """
         self.name = name
         self.coords = coords
         self.label = label
-        self.utility = utility
 
 
 class State(object):
     """Cell
     """
-    UP =    "UP"
-    DOWN =  "DOWN"
-    RIGHT = "RIGHT"
-    LEFT =  "LEFT"
-    ACTION_COORDS = {
-        UP:    (0,  1),
-        DOWN:  (0, -1),
-        RIGHT: (1,  0),
-        LEFT:  (-1, 0)
+    # State Configuration Settings
+    PLUS =    '+'
+    MINUS =   '-'
+    WALL =    '%'
+    START =   'p'
+    DEFAULT = ' '
+
+    REWARDS = {
+        PLUS:    R_MAX,
+        MINUS:   R_MIN,
+        WALL:    BASE_REWARD,
+        START:   BASE_REWARD,
+        DEFAULT: BASE_REWARD
     }
-    ACTION_UTILITIES = {
-        UP:     BASE_REWARD,
-        DOWN:   BASE_REWARD,
-        LEFT:   BASE_REWARD,
-        RIGHT:  BASE_REWARD,
-    }
-    ACTION_CHARS = {
-        UP:    '^',
-        DOWN:  'v',
-        LEFT:  '<',
-        RIGHT: '>'
-    }
-    ACTIONS = []
-    for name in ACTION_COORDS:
-        action = Action(
-            name,
-            ACTION_COORDS[name],
-            ACTION_CHARS[name],
-            ACTION_UTILITIES[name]
-        )
-        ACTIONS.append(action)
-    VERT = [ACTION_COORDS[UP], ACTION_COORDS[DOWN]]
-    HORIZ = [ACTION_COORDS[LEFT], ACTION_COORDS[RIGHT]]
+    TERMINAL = [PLUS, MINUS]
     def __init__(
         self,
         char,
-        utility,
         coords,
-        terminal):
+        is_terminal):
         """c
         """
         self.char = char
-        self.utility = utility
         self.coords = coords
-        self.terminal = terminal
-        self.action = None
-        self.utility = None
+        self.is_terminal, self.reward = self.process_char(char)
+        self.utility = 0.0
+
+    def process_char(char):
+        """c
+        """
+        is_terminal = False
+        reward = self.REWARDS[self.DEFAULT]
+        if char in self.REWARD:
+            if char in self.TERMINAL:
+                is_terminal = True
+            reward = self.REWARDS[char]
+        return is_terminal, reward
+
 
     def add(self, next_state):
         """add together 2 xy coords, make sure they are non-negative
@@ -101,46 +127,42 @@ class State(object):
         )
         return Diff
 
-    def set_action(self, next_state):
-        """c
-        """
-        action = self.diff(next_state)
-        self.action = action
 
-    def is_child_of(self, prev_state):
+    def is_child_of(self, state, action):
         """Is given state a parent based from previous action?
         """
-        return prev_state.has_child(self)
+        return state.has_child(self, action)
 
-    def is_parent_of(self, next_state):
+    def is_parent_of(self, state, action):
         """Is given state a child based from the action?
         """
-        child_is = False
-        action = self.diff(next_state)
-        if self.action == action:
-            child_is = True
-        return child_is
+        is_parent = False
+        if action in self.ACTIONS:
+            next_state = self.test(action)
+            if next_state == state:
+                is_child = True
+        return is_child
 
     def is_adjacent_to(self, state):
         """Are this state and the given state adjacent?
         """
         adjacent = False
-        diff = self.diff(state)
-        if diff in self.ACTIONS:
+        i, j = self.coords
+        x, y = self.diff(state)
+        if ((i == x) and (abs(y) == 1)) or\
+                ((j == y) and (abs(x) == 1)):
             adjacent = True
         return adjacent
 
-    def is_perpendicular_to(self, prev_state):
+    def is_perpendicular_to(self, state, action):
         """c
         """
         is_perpendicular = False
-        if prev_state.is_adjacent_to(self):
-            VERT = self.VERT
-            HORIZ = self.HORIZ
-            action = self.action
+        if state.is_adjacent_to(self):
             # diff --> guaranteed to be in HORIZ or VERT and therefore
             # not None
-            diff = self.diff(prev_state)
+            next_state = self.test(action)
+            diff = self.diff(state)
             if diff in VERT:
                 if action in HORIZ:
                     is_perpendicular = True
@@ -152,20 +174,6 @@ class State(object):
 class Agent(object):
     """c
     """
-    PLUS =    '+'
-    MINUS =   '-'
-    WALL =    '%'
-    START =   'p'
-    DEFAULT = "DEFAULT"
-
-    VALUES = {
-        PLUS:       1.0,
-        MINUS:     -1.0,
-        WALL:       0.0,
-        START:      1.0,
-        DEFAULT:    0.0
-    }
-    TERMINAL = [PLUS, MINUS]
     def __init__(self, mapfile):
         """c
         """
@@ -192,42 +200,65 @@ class Agent(object):
                 char = array[i][j]
                 coords = (i, j)
                 if char in VALUES:
-                    terminal = False
+                    is_terminal = False
                     if char in TERMINAL:
-                        terminal = True
+                        is_terminal = True
                     array[i][j] = State(
                         char,
                         VALUES[char],
                         coords,
-                        terminal
+                        is_terminal
                     )
                     if char == self.START:
                         start_coords = (i, j)
                 else:
-                    array[i][j] = State(char, VALUES[self.DEFAULT], coords)
+                    array[i][j] = State(
+                        char,
+                        VALUES[self.DEFAULT],
+                        coords,
+                        is_terminal
+                    )
         return array, start_coords
 
     def value_iteration_method(self):
         """c
         """
-        start_state = self.map_cells[i][j]
-        actions = state.ACTIONS
-        iterate_values(start_state, actions)
+        states = self.map_cells
+        c = ERR_C
+        r_max = R_MAX
+        e = c * r_max
+        y = Y
+        delta = MAXINT
+        min_delta = (e * ((1.0 - y) / y))
+        iterations = 0
+        while (delta >= min_delta) and (iterations < MAX_ITERATIONS):
+            delta = 0.0
+            iterations += 1
+            for i in range(len(states)):
+                for j in range(len(states[i])):
+                    old_util = state.utility
+                    state = states[i][j]
+                    state.utility = U(state)
+                    u_diff =
 
 
-def iterate_values(state, actions):
+def iterate_values(state):
     """c
     """
-    children = []
-    max_value = None
-    for action in actions:
-        next_state = action.execute(state)
-        max_value =
+    children = state.get_children()
+    R_state = R(state)
+    if state.is_terminal:
+        return R_state
+    else:
+        actions = state.get_valid_actions()
+        for action in actions:
+            for child in children:
+                # Test each action on each child
+                # Return max result == action, child pair
 
 
 
-
-def U(*args):
+def U(states, actions):
     """The utility of a sequence of states.
     """
     total = 0.0
@@ -239,7 +270,7 @@ def U(*args):
 
 
 
-def expU(*args):
+def expU(states, actions):
     """Expected Utility of a sequence of states.
     """
     total = 0.0
@@ -254,15 +285,15 @@ def expU(*args):
     return total
 
 
-def P(prev_state, state):
+def P(state, prev_state, action):
     """Probability of moving from prev_state to state.
     """
     probs = 1.0
     # If start state, just return 1
     if prev_state != None:
-        if prev_state.is_parent_of(state):
+        if prev_state.is_parent_of(state, action):
             probs = P_CHILD
-        elif prev_state.is_perpendicular_to(state):
+        elif prev_state.is_perpendicular_to(state, action):
             probs = P_PERP
         else:
             probs = 0.0
@@ -270,9 +301,7 @@ def P(prev_state, state):
 
 
 def R(state):
-    """Reward function of a state
+    """Reward function of an action
     """
     value = state.utility
-    if state.terminal:
-        return value
-    return value + BASE_REWARD
+    return value
