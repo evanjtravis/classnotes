@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 import sys
 
+class Action(object):
+    """c
+    """
+    def __init__(self, name, coords, label):
+        """c
+        """
+        self.name = name
+        self.coords = coords
+        self.label = label
+
+
 R_MAX =        1.0
 R_MIN =       -1.0
 BASE_REWARD = -0.04
@@ -34,24 +45,15 @@ ACTION_CHARS = {
     RIGHT: '>'
 }
 
-ACTIONS = []
-for name in ACTION_COORDS:
-    action = Action(
-        name,
-        ACTION_COORDS[name],
-        ACTION_CHARS[name],
+ACTIONS = {}
+for _name in ACTION_COORDS:
+    _action = Action(
+        _name,
+        ACTION_COORDS[_name],
+        ACTION_CHARS[_name],
     )
-ACTIONS.append(action)
+    ACTIONS[_name] = _action
 
-class Action(object):
-    """c
-    """
-    def __init__(self, name, coords, label):
-        """c
-        """
-        self.name = name
-        self.coords = coords
-        self.label = label
 
 
 class State(object):
@@ -75,21 +77,38 @@ class State(object):
     def __init__(
         self,
         char,
-        coords,
-        is_terminal):
+        coords):
         """c
         """
         self.char = char
         self.coords = coords
         self.is_terminal, self.reward = self.process_char(char)
-        self.utility = 0.0
+        self.utility = (0.0, None)
+        self.actions = {
+            UP:    BASE_REWARD, # TO BE FLOATS
+            DOWN:  BASE_REWARD,
+            LEFT:  BASE_REWARD,
+            RIGHT: BASE_REWARD
+        }
 
-    def process_char(char):
+    def get_children_coords(self):
+        """c
+        """
+        children_coords = []
+        for action_key in self.actions:
+            action_coords = ACTION_COORDS[action_key]
+            child_coords = self.add(action_coords)
+            if child_coords not in children_coords:
+                children_coords.append(child_coords)
+        return children_coords
+
+
+    def process_char(self, char):
         """c
         """
         is_terminal = False
         reward = self.REWARDS[self.DEFAULT]
-        if char in self.REWARD:
+        if char in self.REWARDS:
             if char in self.TERMINAL:
                 is_terminal = True
             reward = self.REWARDS[char]
@@ -137,11 +156,9 @@ class State(object):
         """Is given state a child based from the action?
         """
         is_parent = False
-        if action in self.ACTIONS:
-            next_state = self.test(action)
-            if next_state == state:
-                is_child = True
-        return is_child
+        if(self.add(action.coords) == state.coords):
+            is_parent = True
+        return is_parent
 
     def is_adjacent_to(self, state):
         """Are this state and the given state adjacent?
@@ -157,17 +174,12 @@ class State(object):
     def is_perpendicular_to(self, state, action):
         """c
         """
-        is_perpendicular = False
+        is_perpendicular = True
         if state.is_adjacent_to(self):
-            # diff --> guaranteed to be in HORIZ or VERT and therefore
-            # not None
-            next_state = self.test(action)
-            diff = self.diff(state)
-            if diff in VERT:
-                if action in HORIZ:
-                    is_perpendicular = True
-            elif action in VERT:
-                is_perpendicular = True
+            a_diff = self.diff(action)
+            s_diff = self.diff(state)
+            if add_coords(a_diff, s_diff) == (0, 0):
+                is_perpendicular = False
         return is_perpendicular
 
 
@@ -179,10 +191,11 @@ class Agent(object):
         """
         self.mapfile = mapfile
         self.map_cells, self.start_coords = self.read_map(mapfile)
+        START = self.map_cells[0][0].START
         if None in self.start_coords:
             raise Exception(
                 "No start character '%s' found in mapfile '%s'."%\
-                            (self.START, self.mapfile))
+                            (START, self.mapfile))
 
     def read_map(self, mapfile):
         """c
@@ -190,8 +203,6 @@ class Agent(object):
         f = open(mapfile, 'r')
         array = f.read().splitlines()
         f.close()
-        VALUES = self.VALUES
-        TERMINAL = self.TERMINAL
         start_coords = (None, None)
 
         for i in range(len(array)):
@@ -199,26 +210,26 @@ class Agent(object):
             for j in range(len(array[i])):
                 char = array[i][j]
                 coords = (i, j)
-                if char in VALUES:
-                    is_terminal = False
-                    if char in TERMINAL:
-                        is_terminal = True
-                    array[i][j] = State(
-                        char,
-                        VALUES[char],
-                        coords,
-                        is_terminal
-                    )
-                    if char == self.START:
-                        start_coords = (i, j)
-                else:
-                    array[i][j] = State(
-                        char,
-                        VALUES[self.DEFAULT],
-                        coords,
-                        is_terminal
-                    )
+                array[i][j] = State(char, coords)
         return array, start_coords
+
+
+
+    def coord_is_valid(self, coord):
+        """c
+        """
+        valid = False
+        if coord >= 0 and coord < len(self.map_cells):
+            valid = True
+        return valid
+
+    def coords_are_valid(self, coords):
+        """c
+        """
+        x, y = coords
+        valid = self.coord_is_valid(x) and self.coord_is_valid(y)
+        return valid
+
 
     def value_iteration_method(self):
         """c
@@ -228,7 +239,7 @@ class Agent(object):
         r_max = R_MAX
         e = c * r_max
         y = Y
-        delta = MAXINT
+        delta = MININT
         min_delta = (e * ((1.0 - y) / y))
         iterations = 0
         while (delta >= min_delta) and (iterations < MAX_ITERATIONS):
@@ -236,70 +247,67 @@ class Agent(object):
             iterations += 1
             for i in range(len(states)):
                 for j in range(len(states[i])):
-                    old_util = state.utility
-                    max_util = old_util
-                    state = states[i][j]
-                    actions = state.get_actions()
-                    for action in actions:
-                        child_states = state.get_children()
-                        for child in children:
-                            temp_utility = \
-                                R(state) + y *\
-                                (P(child_state, state, action) * U(
-                                    state, action, child_state
-                                ))
-                        u_diff = abs(old_util - state.utility)
-                        delta = max(u_diff, delta)
+                    delta = self.U(i, j, delta)
         return states
 
 
+    def U(self, i, j, delta=0.0):
+        """c
+        """
+        state = self.map_cells[i][j]
+        if state.is_terminal:
+            return delta
+        reward = R(state)
+        old_utility = state.action[0]
+        children_coords = state.get_children_coords()
+        actions = state.actions
+        for action_key in actions:
+            q_value = 0.0
+            ACTION = ACTIONS[action_key]
+            for child_coords in children_coords:
+                if not self.coords_are_valid(child_coords):
+                    q_value += BASE_REWARD
+                else:
+                    i, j = child_coords
+                    child = self.map_cells[i][j]
+                    p_of_child = P(child, state, ACTION)
+                    child_utility = child.action[0]
+                    q_value += (p_of_child * child_utility)
+            q_value = reward + (q_value * Y)
+            state.actions[action_key] = q_value
+            if q_value > old_utility:
+                state.action = (q_value, action_key)
+            utility_diff = abs(q_value - old_utility)
+            if utility_diff > delta:
+                delta = utility_diff
+        self.map_cells[i][j] = state
+        return delta
 
-def U(parent, parent_action, state):
-    """The utility of a state.
-    """
-    utility = 0.0
-    actions = state.get_actions()
-    P_state
-    for action in actions:
-        child = state.execute(action)
-        R_of_state = R(child) * (Y ** i)
-        total += R_of_state
-    return total
 
 
-
-def expU(states, actions):
-    """Expected Utility of a sequence of states.
-    """
-    total = 0.0
-    prev_state = None
-    for i in range(len(args)):
-        if i > 0:
-            prev_state = args[i -1]
-        state = args[i]
-        P_of_state = P(prev_state, state)
-        R_of_state = R(state) * (Y ** i)
-        total += P_of_state * R_of_state
-    return total
-
-
-def P(state, prev_state, action):
+def P(state, parent_state, action):
     """Probability of moving from prev_state to state.
     """
-    probs = 1.0
-    # If start state, just return 1
-    if prev_state != None:
-        if prev_state.is_parent_of(state, action):
-            probs = P_CHILD
-        elif prev_state.is_perpendicular_to(state, action):
-            probs = P_PERP
-        else:
-            probs = 0.0
+    probs = 0.0
+    if parent_state.is_parent_of(state, action):
+        probs = P_CHILD
+    elif parent_state.is_perpendicular_to(state, action):
+        probs = P_PERP
     return probs
 
 
 def R(state):
     """Reward function of an action
     """
-    value = state.utility
+    value = state.reward
     return value
+
+
+def add_coords(coord_1, coord_2):
+    """Like add() for State class, but two separate coords.
+    """
+    i, j = coord_1
+    x, y = coord_2
+    a = i + x
+    b = j + y
+    return (a, b)
