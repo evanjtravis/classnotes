@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-
+from utils import color_text
 class Action(object):
     """c
     """
@@ -18,14 +18,13 @@ BASE_REWARD = -0.04
 ERR_C =        0.1
 
 # Discount factor
-Y =       0.9
+Y =       0.99
 P_CHILD = 0.8
 # Perpendicular
 P_PERP =  0.1
 
 MAX_ITERATIONS = 50
 MAXINT = sys.maxint
-MININT = -MAXINT - 1
 
 # Action Configuration Settings
 UP =    "UP"
@@ -85,7 +84,7 @@ class State(object):
         self.coords = coords
         self.is_terminal, self.reward = self.process_char(char)
 
-        self.utility = (0.0, None)
+        self.utility = (None, None)
         #if self.is_terminal:
         #    self.utility = (self.reward, None)
         self.actions = {
@@ -99,15 +98,19 @@ class State(object):
     def __str__(self):
         """c
         """
-        print_var = None
+        print_var = ' '
         if self.is_terminal:
-            print_var = self.char
+            print_var = self.char + print_var
+            if self.char == self.PLUS:
+                print_var = color_text(print_var, "green")
+            else:
+                print_var = color_text(print_var, "red")
         elif self.is_invalid():
-            print_var = self.char
+            print_var = color_text(self.char + print_var, "yellow")
         else:
             action = self.utility[1]
-            print_var = ACTION_CHARS[action]
-        return "| %s " %(print_var)
+            print_var = ACTION_CHARS[action] + print_var
+        return print_var
 
     def set_max_utility(self):
         """
@@ -119,7 +122,11 @@ class State(object):
             if actions[key] > max_utility:
                 max_utility = actions[key]
                 max_key = key
-        self.utility = (max_utility, max_key)
+        new_utility = (max_utility, max_key)
+        if self.utility[0] == None:
+            self.utility = new_utility
+        else:
+            self.utility = max(self.utility, new_utility)
 
     def is_invalid(self):
         """c
@@ -136,8 +143,7 @@ class State(object):
         for action_key in self.actions:
             action_coords = ACTION_COORDS[action_key]
             child_coords = self.add(action_coords)
-            if child_coords not in children_coords:
-                children_coords.append(child_coords)
+            children_coords.append(child_coords)
         return children_coords
 
 
@@ -317,14 +323,14 @@ found in mapfile '%s'" %(start_char, mapfile)
         """c
         """
         state = self.map_cells[i][j]
-        if state.is_invalid():
-            return delta
+        #if state.is_invalid():
+        #    return delta
         #if state.is_terminal:
         #    return delta
         reward = R(state)
         old_utility = state.utility[0]
         if old_utility == None:
-            old_utility = MININT
+            old_utility = 0.0
         children_coords = state.get_children_coords()
         actions = state.actions
         for action_key in actions:
@@ -333,6 +339,7 @@ found in mapfile '%s'" %(start_char, mapfile)
             for child_coords in children_coords:
                 if not self.coords_are_valid(child_coords):
                     i, j = state.coords
+                    reward += BASE_REWARD
                 else:
                     i, j = child_coords
                 child = self.map_cells[i][j]
@@ -341,9 +348,8 @@ found in mapfile '%s'" %(start_char, mapfile)
                 p_of_child = P(child, state, ACTION, self.map_cells)
                 child_utility = child.utility[0]
                 if child_utility == None:
-                    child_utility = MININT
-                else:
-                    q_value += (p_of_child * child_utility)
+                    child_utility = 0.0
+                q_value += (p_of_child * child_utility)
             q_value = reward + (Y * q_value)
             state.actions[action_key] = q_value
             utility_diff = abs(q_value - old_utility)
@@ -357,32 +363,18 @@ found in mapfile '%s'" %(start_char, mapfile)
         """
         msg = ''
         msg_lines = []
-        filler_lines = []
-        max_len = 0
         states = self.map_cells
         for i in range(len(states)):
             msg_line = ''
-            filler_line = ''
             for j in range(len(states[i])):
                 state = states[i][j]
                 nxt_str = str(state)
                 msg_line += nxt_str
-                padding = len(nxt_str) - 1
-                filler_line += "|%s" %(' ' * padding)
-            max_len = max(max_len, len(msg_line))
-            msg_line += '|\n'
+            msg_line += '\n'
             msg_lines.append(msg_line)
-            filler_line = filler_line + '|\n'
-            filler_lines.append(filler_line)
-        top_bottom_border = '-' + ('-' * max_len) + '\n'
-        msg += top_bottom_border
         for i in range(len(msg_lines)):
             line = msg_lines[i]
-            filler = filler_lines[i]
-            msg += filler
             msg += line
-            msg += filler
-            msg += top_bottom_border
         print msg
 
 
@@ -416,10 +408,11 @@ def P(state, parent_state, action, map_cells):
     """Probability of moving from prev_state to state.
     """
     probs = 0.0
-    if parent_state.is_parent_of(state, action, map_cells):
-        probs = P_CHILD
-    elif parent_state.is_perpendicular_to(state, action):
-        probs = P_PERP
+    if parent_state.coords != state.coords:
+        if parent_state.is_parent_of(state, action, map_cells):
+            probs = P_CHILD
+        elif parent_state.is_perpendicular_to(state, action):
+            probs = P_PERP
     return probs
 
 
@@ -446,12 +439,11 @@ def add_coords(coord_1, coord_2):
 def demo():
     """c
     """
-    mapfile = "map"
+    mapfile = "gridworld/map"
     agent = Agent(mapfile)
     agent.value_iteration_method()
     agent.print_mdp_solution()
     import pdb; pdb.set_trace()
-
 
 
 #=====================================================================
