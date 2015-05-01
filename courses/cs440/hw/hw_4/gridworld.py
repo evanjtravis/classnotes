@@ -32,10 +32,10 @@ DOWN =  "DOWN"
 RIGHT = "RIGHT"
 LEFT =  "LEFT"
 ACTION_COORDS = {
-    UP:    (0,  1),
-    DOWN:  (0, -1),
-    RIGHT: (1,  0),
-    LEFT:  (-1, 0)
+    UP:    (-1,  0),
+    DOWN:  ( 1,  0),
+    RIGHT: ( 0,  1),
+    LEFT:  ( 0, -1)
 }
 ACTION_CHARS = {
     None:  '.',
@@ -85,8 +85,6 @@ class State(object):
         self.is_terminal, self.reward = self.process_char(char)
 
         self.utility = (None, None)
-        #if self.is_terminal:
-        #    self.utility = (self.reward, None)
         self.actions = {
             UP:    0.0,
             DOWN:  0.0,
@@ -191,21 +189,13 @@ class State(object):
         return Diff
 
 
-    def is_parent_of(self, state, action, map_cells):
+    def is_parent_of(self, state, action):
         """Is given state a child based from the action?
         """
         is_parent = False
         new_coords = self.add(action.coords)
         if(new_coords == state.coords):
             is_parent = True
-        elif new_coords != None:
-            i, j = new_coords
-            try:
-                next_state = map_cells[i][j]
-                if next_state.is_invalid():
-                    is_parent = True
-            except IndexError:
-                is_parent = True
         return is_parent
 
     def is_adjacent_to(self, state):
@@ -339,13 +329,13 @@ found in mapfile '%s'" %(start_char, mapfile)
             for child_coords in children_coords:
                 if not self.coords_are_valid(child_coords):
                     i, j = state.coords
-                    reward += BASE_REWARD
+                    #reward += BASE_REWARD
                 else:
                     i, j = child_coords
                 child = self.map_cells[i][j]
                 if child.is_invalid():
                     child = state
-                p_of_child = P(child, state, ACTION, self.map_cells)
+                p_of_child = P(child, state, ACTION)
                 child_utility = child.utility[0]
                 if child_utility == None:
                     child_utility = 0.0
@@ -404,12 +394,12 @@ found in mapfile '%s'" %(start_char, mapfile)
 #=====================================================================
 # Utils
 #---------------------------------------------------------------------
-def P(state, parent_state, action, map_cells):
+def P(state, parent_state, action):
     """Probability of moving from prev_state to state.
     """
     probs = 0.0
     if parent_state.coords != state.coords:
-        if parent_state.is_parent_of(state, action, map_cells):
+        if parent_state.is_parent_of(state, action):
             probs = P_CHILD
         elif parent_state.is_perpendicular_to(state, action):
             probs = P_PERP
