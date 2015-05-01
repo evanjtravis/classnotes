@@ -11,7 +11,10 @@ class Action(object):
         self.coords = coords
         self.label = label
 
-
+A =            60
+TIME_LIMIT =   5000
+TIME_LIMIT +=  1 # Range from 1 --> TIME_LIMIT inclusive
+#------------------
 R_MAX =        1.0
 R_MIN =       -1.0
 BASE_REWARD = -0.04
@@ -270,8 +273,6 @@ found in mapfile '%s'" %(start_char, mapfile)
                 array[i][j] = State(char, coords)
         return array, start_coords, start_char
 
-
-
     def coord_is_valid(self, coord):
         """c
         """
@@ -292,6 +293,49 @@ found in mapfile '%s'" %(start_char, mapfile)
                 if state.is_invalid():
                     valid = False
         return valid
+
+
+
+    def td_q_learning(self, Q=None, Nsa=None):
+        """c
+        """
+        states = self.map_cells
+        actions = ACTIONS
+        if Q == None:
+            # Table of action values indexed by state and action
+            Q = []
+            for i in range(len(states)):
+                Q.append([])
+                for j in range(len(states[i])):
+                    Q[i].append({})
+                    for action_name in actions:
+                        Q[i][j][action_name] = 0.0
+
+        if Nsa == None:
+            # Table of frequencies for state-action pairs
+            Nsa = []
+            for i in range(len(states)):
+                Nsa.append([])
+                for j in range(len(states[i])):
+                    Nsa[i].append({})
+                    for action_name in actions:
+                        Nsa[i][j][action_name] = 0
+
+        # Previous State
+        s = None
+        # Action
+        a = None
+        # Reward
+        r = None
+
+        for t in range(1, TIME_LIMIT):
+            alph = alpha(t)
+            print alph, s, a, r
+
+        return Q, Nsa
+
+
+
 
 
     def value_iteration_method(self):
@@ -321,10 +365,8 @@ found in mapfile '%s'" %(start_char, mapfile)
         """c
         """
         state = self.map_cells[i][j]
-        #if state.is_invalid():
-        #    return delta
-        #if state.is_terminal:
-        #    return delta
+        if state.is_invalid():
+            return delta
         reward = R(state)
         old_utility = state.utility[0]
         if old_utility == None:
@@ -337,7 +379,6 @@ found in mapfile '%s'" %(start_char, mapfile)
             for child_coords in children_coords:
                 if not self.coords_are_valid(child_coords):
                     i, j = state.coords
-                    #reward += BASE_REWARD
                 else:
                     i, j = child_coords
                 child = self.map_cells[i][j]
@@ -384,11 +425,10 @@ found in mapfile '%s'" %(start_char, mapfile)
         for i in range(len(states)):
             for j in range(len(states[i])):
                 state = states[i][j]
-                if state.is_invalid():
-                    continue
                 utility = state.utility[0]
-                msg += "(%d,%d): %-.6f\n" %\
+                msg += "(%d,%d): %-.6f, " %\
                     (j, i, utility)
+                msg += str(state) + '\n'
         print msg
 
 
@@ -429,6 +469,13 @@ def add_coords(coord_1, coord_2):
     a = i + x
     b = j + y
     return (a, b)
+
+def alpha(t):
+    """c
+    """
+    denom = float(A)
+    numer = float(A - 1)
+    return (denom/(numer + t))
 #=====================================================================
 
 #=====================================================================
@@ -441,7 +488,6 @@ def demo():
     agent = Agent(mapfile)
     agent.value_iteration_method()
     agent.print_mdp_solution()
-    import pdb; pdb.set_trace()
 
 
 #=====================================================================
