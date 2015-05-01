@@ -32,9 +32,17 @@ DOWN =  "DOWN"
 RIGHT = "RIGHT"
 LEFT =  "LEFT"
 ACTION_COORDS = {
+    # Moving 'up' a 2D array is moving toward the beginning where the
+    # beginning is the 0th index of a row.
     UP:    (-1,  0),
+    # Moving 'down' a 2D array is moving toward the end where the end
+    # is the length of a column.
     DOWN:  ( 1,  0),
+    # Moving to the 'right' in a 2D array is moving toward the end
+    # where the end is the length of the row
     RIGHT: ( 0,  1),
+    # Moving to the 'left' in a 2D array is moving toward the
+    # beginning where the beginning is the 0th index of a column.
     LEFT:  ( 0, -1)
 }
 ACTION_CHARS = {
