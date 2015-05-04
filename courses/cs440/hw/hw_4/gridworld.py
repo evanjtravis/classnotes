@@ -11,9 +11,10 @@ class Action(object):
         self.coords = coords
         self.label = label
 
-A =            60
-TIME_LIMIT =   5000
-TIME_LIMIT +=  1 # Range from 1 --> TIME_LIMIT inclusive
+A =        60
+TRIALS = 5000
+R_PLUS =    1.0
+Ne =        5
 #------------------
 R_MAX =        1.0
 R_MIN =       -1.0
@@ -241,12 +242,14 @@ class Agent(object):
         """c
         """
         self.mapfile = mapfile
-        self.map_cells, self.start_coords, START =\
+        self.map_cells, self.start_coords, self.map_sz, START =\
             self.read_map(mapfile)
         if None in self.start_coords:
             raise Exception(
                 "No start character '%s' found in mapfile '%s'."%\
                             (START, self.mapfile))
+        self.Nsa = None
+        self.Q = None
 
     def read_map(self, mapfile):
         """c
@@ -256,10 +259,12 @@ class Agent(object):
         f.close()
         start_coords = (None, None)
         start_char = State.START
+        map_sz = 0
 
         for i in range(len(array)):
             array[i] = list(array[i])
             for j in range(len(array[i])):
+                map_sz += 1
                 char = array[i][j]
                 if char == start_char:
                     if start_coords == (None, None):
@@ -271,7 +276,7 @@ found in mapfile '%s'" %(start_char, mapfile)
                         )
                 coords = (i, j)
                 array[i][j] = State(char, coords)
-        return array, start_coords, start_char
+        return array, start_coords, map_sz, start_char
 
     def coord_is_valid(self, coord):
         """c
@@ -295,6 +300,30 @@ found in mapfile '%s'" %(start_char, mapfile)
         return valid
 
 
+    def get_max_action_value(self, state):
+        """c
+        """
+        max_action_value = None
+        max_action_key = None
+        max_action_coords = None
+        Nsa = self.Nsa
+        Q = self.Q
+
+        children_coords = state.get_children_coords()
+
+        for coords in children_coords:
+            if self.coords_are_valid(coords):
+                i, j = coords
+                for action_key in ACTIONS:
+                    action_value = Q[i][j][action_key]
+                    if action_value > max_action_value:
+                        max_action_value = action_value
+                        max_action_key = action_key
+                        max_action_coords = coords
+        return max_action_key, max_action_value, max_action_coords
+
+
+
 
     def td_q_learning(self, Q=None, Nsa=None):
         """c
@@ -310,6 +339,7 @@ found in mapfile '%s'" %(start_char, mapfile)
                     Q[i].append({})
                     for action_name in actions:
                         Q[i][j][action_name] = 0.0
+        self.Q = Q
 
         if Nsa == None:
             # Table of frequencies for state-action pairs
@@ -320,17 +350,41 @@ found in mapfile '%s'" %(start_char, mapfile)
                     Nsa[i].append({})
                     for action_name in actions:
                         Nsa[i][j][action_name] = 0
+        self.Nsa = Nsa
 
-        # Previous State
-        s = None
-        # Action
-        a = None
-        # Reward
-        r = None
+        x, y = self.start_coords
+        start_state = self.map_cells[x][y]
+        trial_travel_limit = (self.map_sz * 2) + 1
 
-        for t in range(1, TIME_LIMIT):
-            alph = alpha(t)
-            print alph, s, a, r
+        for trial in range(TRIALS):
+            # Previous State
+            s = start_state
+            # Action
+            a = None
+            # Reward
+            r = None
+            # Allow for some exploration while avoiding infinite loops
+            for t in range(1, trial_travel_limit):
+                alph = alpha(t)
+                max_action_value = None
+                max_action_key = None
+                max_action_coords = None
+                if s is not None:
+                    i, j = s.coords
+                    max_action_key, max_action_value, max_action_coords =\
+                        self.get_max_action_value(s)
+                    a = max_action_key
+                    N[i][j][a] += 1
+                    current = Q[i][j][a]
+                    Q[i][j][a] += (
+                        alph *\
+                        (N[i][j][a]) *\
+                        (r + Y * max_action_value - current)
+                    )
+                i, j = max_action_coords
+                s = self.map_cells[i][j]
+
+
 
         return Q, Nsa
 
@@ -473,9 +527,9 @@ def add_coords(coord_1, coord_2):
 def alpha(t):
     """c
     """
-    denom = float(A)
-    numer = float(A - 1)
-    return (denom/(numer + t))
+    numerator = float(A)
+    denominator = float(A - 1)
+    return (numerator/(denominator + t))
 #=====================================================================
 
 #=====================================================================
@@ -484,7 +538,7 @@ def alpha(t):
 def demo():
     """c
     """
-    mapfile = "gridworld/map"
+    mapfile = "data_gridworld/1_map"
     agent = Agent(mapfile)
     agent.value_iteration_method()
     agent.print_mdp_solution()
