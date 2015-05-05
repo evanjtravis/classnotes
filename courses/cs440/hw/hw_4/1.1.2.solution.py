@@ -12,7 +12,6 @@ def main():
     agent = Agent(mapfile)
     agent.td_q_learning_method()
     agent.print_mdp_solution()
-    import pdb; pdb.set_trace()
     if not sys.stdout.isatty():
         agent.print_RMSE_csv()
 
