@@ -62,3 +62,15 @@ def color_text(text, fg_key="white", bg_key="black"):
             # manage.
             text += color()
     return text
+
+def get_max_keyvalue(aDict):
+    """c
+    """
+    max_key = None
+    max_value = None
+    for key in aDict:
+        new_value = aDict[key]
+        if new_value > max_value:
+            max_value = new_value
+            max_key = key
+    return max_key, max_value

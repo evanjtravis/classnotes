@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
-from utils import color_text
+import math
+from utils import color_text, get_max_keyvalue
 class Action(object):
     """c
     """
@@ -103,6 +104,20 @@ class State(object):
             LEFT:  0.0,
             RIGHT: 0.0
 
+        }
+        self.Q = {
+            None:  R(self),
+            UP:    0.0,
+            DOWN:  0.0,
+            LEFT:  0.0,
+            RIGHT: 0.0
+        }
+        self.N = {
+            None:  0,
+            UP:    0,
+            DOWN:  0,
+            LEFT:  0,
+            RIGHT: 0
         }
 
     def __str__(self):
@@ -248,8 +263,7 @@ class Agent(object):
             raise Exception(
                 "No start character '%s' found in mapfile '%s'."%\
                             (START, self.mapfile))
-        self.Nsa = None
-        self.Q = None
+        self.RMSE = None
 
     def read_map(self, mapfile):
         """c
@@ -306,57 +320,37 @@ found in mapfile '%s'" %(start_char, mapfile)
         max_action_value = None
         max_action_key = None
         max_action_coords = None
-        Nsa = self.Nsa
-        Q = self.Q
 
         children_coords = state.get_children_coords()
-
-        for coords in children_coords:
-            if self.coords_are_valid(coords):
-                i, j = coords
-                for action_key in ACTIONS:
-                    action_value = Q[i][j][action_key]
-                    if action_value > max_action_value:
-                        max_action_value = action_value
-                        max_action_key = action_key
+        Q = state.Q
+        for action_key in Q:
+            if action_key == None:
+                continue
+            action_value = Q[action_key]
+            if action_value > max_action_value:
+                coords = add_coords(
+                    state.coords,
+                    ACTION_COORDS[action_key]
+                )
+                if coords in children_coords:
+                    if not self.coords_are_valid(coords):
+                        max_action_coords = state.coords
+                    else:
                         max_action_coords = coords
+                    max_action_value = action_value
+                    max_action_key = action_key
         return max_action_key, max_action_value, max_action_coords
 
 
-
-
-    def td_q_learning(self, Q=None, Nsa=None):
+    def td_q_learning_method(self):
         """c
         """
-        states = self.map_cells
-        actions = ACTIONS
-        if Q == None:
-            # Table of action values indexed by state and action
-            Q = []
-            for i in range(len(states)):
-                Q.append([])
-                for j in range(len(states[i])):
-                    Q[i].append({})
-                    for action_name in actions:
-                        Q[i][j][action_name] = 0.0
-        self.Q = Q
-
-        if Nsa == None:
-            # Table of frequencies for state-action pairs
-            Nsa = []
-            for i in range(len(states)):
-                Nsa.append([])
-                for j in range(len(states[i])):
-                    Nsa[i].append({})
-                    for action_name in actions:
-                        Nsa[i][j][action_name] = 0
-        self.Nsa = Nsa
-
         x, y = self.start_coords
         start_state = self.map_cells[x][y]
         trial_travel_limit = (self.map_sz * 2) + 1
-
-        for trial in range(TRIALS):
+        RMSE = [None]
+        for _ in range(TRIALS):
+            delta = 0.0
             # Previous State
             s = start_state
             # Action
@@ -366,30 +360,50 @@ found in mapfile '%s'" %(start_char, mapfile)
             # Allow for some exploration while avoiding infinite loops
             for t in range(1, trial_travel_limit):
                 alph = alpha(t)
-                max_action_value = None
-                max_action_key = None
-                max_action_coords = None
-                if s is not None:
-                    i, j = s.coords
+                i, j = s.coords
+                r = R(s)
+                delta += (self.U(i, j) ** 2)
+                if not s.is_terminal:
                     max_action_key, max_action_value, max_action_coords =\
                         self.get_max_action_value(s)
                     a = max_action_key
-                    N[i][j][a] += 1
-                    current = Q[i][j][a]
-                    Q[i][j][a] += (
+                    s.N[a] += 1
+                    current = s.Q[a]
+                    s.Q[a] += (
                         alph *\
-                        (N[i][j][a]) *\
+                        (s.N[a]) *\
                         (r + Y * max_action_value - current)
                     )
-                i, j = max_action_coords
+                    a = self.argmax_a_F(s)
+                    i, j = max_action_coords
+                else:
+                    u_val = s.utility[0]
+                    try:
+                        new_util = u_val + r
+                    except TypeError:
+                        new_util = r
+                    s.utility = (new_util, None)
+                    a = None
+                    i, j = s.coords
                 s = self.map_cells[i][j]
+            delta *= float(1.0/float(self.map_sz))
+            delta = math.sqrt(delta)
+            RMSE.append(delta)
+        self.RMSE = RMSE
 
 
-
-        return Q, Nsa
-
-
-
+    def argmax_a_F(self, state):
+        """c
+        """
+        value = R_PLUS
+        utility_val, utility_key = state.utility
+        if utility_key == None or utility_val == None:
+            utility_key, utility_val = get_max_keyvalue(state.actions)
+        if not state.N[utility_key] < Ne:
+            value = state.Q[utility_key]
+        state.utility = (utility_val + value, utility_key)
+        state.actions[utility_key] = state.utility[0]
+        return utility_key
 
 
     def value_iteration_method(self):
@@ -480,9 +494,15 @@ found in mapfile '%s'" %(start_char, mapfile)
             for j in range(len(states[i])):
                 state = states[i][j]
                 utility = state.utility[0]
-                msg += "(%d,%d): %-.6f, " %\
+                if utility == None:
+                # Space never visited by agent
+                    utility = 0.0
+                msg += "(%d,%d): %-15.6f, " %\
                     (j, i, utility)
-                msg += str(state) + '\n'
+                msg += str(state)
+                if state.coords == self.start_coords:
+                    msg += state.char
+                msg += '\n'
         print msg
 
 
@@ -491,6 +511,15 @@ found in mapfile '%s'" %(start_char, mapfile)
         """
         self.print_mdp_solution_utility_values()
         self.print_mdp_solution_map()
+
+    def print_RMSE_csv(self):
+        """c
+        """
+        msg = ''
+        RMSE = self.RMSE
+        for i in range(1, len(RMSE)):
+            msg += "%d,%f\n" %(i, RMSE[i])
+        print msg
 
 
 #=====================================================================
@@ -531,22 +560,3 @@ def alpha(t):
     denominator = float(A - 1)
     return (numerator/(denominator + t))
 #=====================================================================
-
-#=====================================================================
-# Program Execution
-#---------------------------------------------------------------------
-def demo():
-    """c
-    """
-    mapfile = "data_gridworld/1_map"
-    agent = Agent(mapfile)
-    agent.value_iteration_method()
-    agent.print_mdp_solution()
-
-
-#=====================================================================
-
-
-
-if __name__ == "__main__":
-    demo()
