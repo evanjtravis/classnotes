@@ -531,10 +531,12 @@ found in mapfile '%s'" %(start_char, mapfile)
         for i in range(len(states)):
             for j in range(len(states[i])):
                 state = states[i][j]
-                for k in state.previous_utilities:
+                msg += "(%d %d), " %(i, j)
+                for k in range(len(state.previous_utilities)):
                     utility = state.previous_utilities[k]
-                    msg += "(%d %d), %d, %f\n" %\
-                        (i, j, k, utility)
+                    msg += "%f, " %\
+                        (utility)
+                msg += "\n"
         print msg
 
 
