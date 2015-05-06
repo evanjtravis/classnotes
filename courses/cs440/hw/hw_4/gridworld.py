@@ -96,6 +96,7 @@ class State(object):
         self.char = char
         self.coords = coords
         self.is_terminal, self.reward = self.process_char(char)
+        self.previous_utilities = []
 
         self.utility = (None, None)
         self.actions = {
@@ -439,6 +440,7 @@ found in mapfile '%s'" %(start_char, mapfile)
         old_utility = state.utility[0]
         if old_utility == None:
             old_utility = 0.0
+        state.previous_utilities.append(old_utility)
         children_coords = state.get_children_coords()
         actions = state.actions
         for action_key in actions:
@@ -519,6 +521,20 @@ found in mapfile '%s'" %(start_char, mapfile)
         RMSE = self.RMSE
         for i in range(1, len(RMSE)):
             msg += "%d,%f\n" %(i, RMSE[i])
+        print msg
+
+    def print_utility_by_iteration(self):
+        """c
+        """
+        msg = ''
+        states = self.map_cells
+        for i in range(len(states)):
+            for j in range(len(states[i])):
+                state = states[i][j]
+                for k in state.previous_utilities:
+                    utility = state.previous_utilities[k]
+                    msg += "(%d %d), %d, %f\n" %\
+                        (i, j, k, utility)
         print msg
 
 
